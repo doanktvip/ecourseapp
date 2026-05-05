@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
 from ckeditor.fields import RichTextField
+from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Max
 from django.db.models.aggregates import Sum, Avg
@@ -41,7 +42,7 @@ class InstructorApplication(BaseModel):
         APPROVED = 'APPROVED', 'Đã duyệt'
         REJECTED = 'REJECTED', 'Bị từ chối'
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='instructorapplication')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='instructor')
     cv_file = models.FileField(upload_to='cvs/', null=True, blank=True)
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
 
@@ -62,14 +63,18 @@ class Course(BaseModel):
     description = models.TextField(null=True, blank=True)
     image = CloudinaryField('image')
     intro_video = CloudinaryField(resource_type='video', null=True, blank=True)
-    fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0,
+                              validators=[MinValueValidator(Decimal('0.00'))])
     average_rating = models.FloatField(default=0.0)
     total_duration_video = models.PositiveIntegerField(default=0, help_text="Tổng số phút video")
 
+    total_students = models.PositiveIntegerField(default=0, help_text="Tổng số học viên")
+    total_revenue = models.DecimalField(max_digits=15, decimal_places=2, default=0.0,
+                                        validators=[MinValueValidator(Decimal('0.00'))], help_text="Tổng doanh thu")
+
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='courses')
-    instructor = models.ForeignKey(User, on_delete=models.CASCADE,
-                                   limit_choices_to={'role': 'INSTRUCTOR', 'instructorapplication__status': 'APPROVED'},
-                                   related_name='teaching_courses')
+    instructor = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='teaching_courses',
+                                   limit_choices_to={'role': 'INSTRUCTOR', 'instructor__status': 'APPROVED'})
 
     def __str__(self):
         return self.subject
@@ -83,6 +88,13 @@ class Course(BaseModel):
         rating = self.reviews.aggregate(avg=Avg('rating'))
         self.average_rating = round(rating['avg'] or 0.0, 1)
         self.save(update_fields=['average_rating'])
+
+    def update_stats(self):
+        successful_enrollments = self.enrollments.filter(payment__is_successful=True)
+        self.total_students = successful_enrollments.count()
+        total_rev = successful_enrollments.aggregate(total=Sum('payment__amount'))['total']
+        self.total_revenue = total_rev or 0.0
+        self.save(update_fields=['total_students', 'total_revenue'])
 
 
 class Tag(BaseModel):
@@ -127,9 +139,9 @@ class Lesson(BaseModel):
 # ==========================================
 
 class Enrollment(BaseModel):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'STUDENT'},
+    student = models.ForeignKey(User, on_delete=models.RESTRICT, limit_choices_to={'role': 'STUDENT'},
                                 related_name='enrollments')
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
+    course = models.ForeignKey(Course, on_delete=models.RESTRICT, related_name='enrollments')
     progress = models.FloatField(default=0.0, help_text="Tiến độ học tập (%)")
 
     class Meta:
@@ -138,16 +150,22 @@ class Enrollment(BaseModel):
     def update_progress(self):
         total_lessons = self.course.lessons.count()
         if total_lessons > 0:
-            completed = self.completed_lessons.count()
+            completed = self.lesson_progresses.filter(status='COMPLETED').count()
             self.progress = round((completed / total_lessons) * 100, 2)
         else:
             self.progress = 0.0
         self.save(update_fields=['progress'])
 
 
-class CompletedLesson(BaseModel):
-    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='completed_lessons')
+class LessonProgress(BaseModel):
+    class Status(models.TextChoices):
+        IN_PROGRESS = 'IN_PROGRESS', 'Đang học'
+        COMPLETED = 'COMPLETED', 'Đã hoàn thành'
+
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='lesson_progresses')
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.IN_PROGRESS)
+    watched_seconds = models.PositiveIntegerField(default=0, help_text="Đã xem đến giây thứ")
 
     class Meta:
         unique_together = ('enrollment', 'lesson')
@@ -170,11 +188,16 @@ class Payment(BaseModel):
         MOMO = 'MOMO', 'MoMo'
         ZALOPAY = 'ZALOPAY', 'ZaloPay'
 
-    enrollment = models.OneToOneField(Enrollment, on_delete=models.CASCADE, related_name='payment')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    enrollment = models.OneToOneField(Enrollment, on_delete=models.RESTRICT, related_name='payment')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))])
     payment_method = models.CharField(max_length=20, choices=Method.choices)
     is_successful = models.BooleanField(default=False)
-    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    transaction_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.is_successful:
+            self.enrollment.course.update_stats()
 
 
 # ==========================================
@@ -191,6 +214,7 @@ class Interaction(BaseModel):
 class Comment(Interaction):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='comments')
     content = models.CharField(max_length=255)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
 
 
 class Like(Interaction):
@@ -216,7 +240,7 @@ class CourseReview(Interaction):
         enrollment = self.user.enrollments.filter(course=self.course, payment__is_successful=True).first()
 
         if not enrollment:
-            raise ValidationError("Bạn chưa khóa học khóa học này hoặc thanh toán chưa thành công.")
+            raise ValidationError("Bạn chưa đăng ký khóa học này hoặc thanh toán chưa thành công.")
 
         if enrollment.progress < MIN_PROGRESS:
             raise ValidationError(
