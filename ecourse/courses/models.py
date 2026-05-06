@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
 from ckeditor.fields import RichTextField
 from decimal import Decimal
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
 from django.db.models import Max
 from django.db.models.aggregates import Sum, Avg
 
@@ -19,7 +19,8 @@ class User(AbstractUser):
         INSTRUCTOR = 'INSTRUCTOR', 'Giảng viên'
         STUDENT = 'STUDENT', 'Sinh viên'
 
-    avatar = CloudinaryField('avatar', null=True, blank=True)
+    avatar = CloudinaryField('avatar', null=True, blank=True,
+                             default="https://res.cloudinary.com/db4bjqp4f/image/upload/v1765436438/shtnr60mecp057e2uctk.jpg")
     role = models.CharField(max_length=15, choices=Role.choices, default=Role.STUDENT)
 
     def __str__(self):
@@ -43,7 +44,8 @@ class InstructorApplication(BaseModel):
         REJECTED = 'REJECTED', 'Bị từ chối'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='instructor')
-    cv_file = models.FileField(upload_to='cvs/', null=True, blank=True)
+    cv_file = models.FileField(upload_to='cvs/', null=True, blank=True,
+                               validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
 
 
