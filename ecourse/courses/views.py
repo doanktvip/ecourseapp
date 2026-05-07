@@ -1,5 +1,6 @@
 from decimal import Decimal
 from rest_framework.decorators import action
+from rest_framework import mixins
 from rest_framework import viewsets, generics,filters
 from courses.models import Course,Category,User
 from courses import serializers,paginators
@@ -8,7 +9,7 @@ class CategoryViewSet(viewsets.ViewSet,generics.ListAPIView):
     queryset=Category.objects.all()
     serializer_class=serializers.CategorySerializer
 
-class CourseViewSet(viewsets.ViewSet,generics.ListAPIView,generics.RetrieveAPIView,generics.CreateAPIView):
+class CourseViewSet(viewsets.GenericViewSet,mixins.ListModelMixin,mixins.RetrieveModelMixin,mixins.CreateModelMixin):
     queryset=Course.objects.filter(active=True)
     pagination_class = paginators.ItemPaginator
     filter_backends = [filters.OrderingFilter,filters.SearchFilter]
@@ -16,7 +17,7 @@ class CourseViewSet(viewsets.ViewSet,generics.ListAPIView,generics.RetrieveAPIVi
     ordering_fields=['id']
 
     def get_serializer_class(self):
-        if self.action in ['retrieve','create']:
+        if self.action in ['retrieve']:
             return serializers.CourseDetailSerializer
         return serializers.CourseSerializer
 
