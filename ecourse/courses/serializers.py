@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from courses.models import Course, Category, Tag
-
+from courses.models import Course, Category, Tag,User
+from django.contrib.auth.password_validation import validate_password
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -35,3 +35,50 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields=['id','name']
+
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name','last_name','email','avatar']
+
+class UserSerializer(SimpleUserSerializer):
+    class Meta:
+        model = SimpleUserSerializer.Meta.model
+        fields=SimpleUserSerializer.Meta.fields+['id','username','password']
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+            }
+        }
+    def create(self, validated_data):
+        user = User(**validated_data)
+        user.set_password(user.password)
+        user.save()
+        return user
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(
+        required=True,
+        write_only=True,
+        validators=[validate_password]  # kiểm tra độ mạnh mật khẩu của Django
+    )
+
+    def validate_old_password(self, value):
+        # Lấy user hiện tại từ request của View
+        user = self.context['request'].user
+        # Kiểm tra old_password so sánh với mk của user hiện tại
+        #value = old_password
+        if not user.check_password(value):
+            raise serializers.ValidationError("Mật khẩu cũ không chính xác.")
+        return value
+
+    def validate(self, data):
+        # Kiểm tra không trùng mk
+        if data['old_password'] == data['new_password']:
+            raise serializers.ValidationError({
+                "new_password": "Mật khẩu mới không được trùng với mật khẩu cũ."
+            })
+
+        return data

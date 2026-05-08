@@ -42,7 +42,14 @@ INSTALLED_APPS = [
     'courses.apps.CoursesConfig',
     'drf_yasg',
     'rest_framework',
+    'oauth2_provider'
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -72,6 +79,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'ecourse.wsgi.application'
 
@@ -128,3 +136,5 @@ cloudinary.config(
     api_key="644913513335787",
     api_secret="3GyWpk9k_hVPbrHy1blNOyjIwyA"
 )
+CLIENT_ID='6jdbH6w5OPQ8qsbXhnTb20wmUTVKe1oRajGxaasC'
+CLIENT_SECRET='OqM03kxqmgUIwxkrwEMZCPB4LVHaxraubQw9MtpX7xBWgoBjNdSCA3t5edfJkMFSoA8UmEeorYvkrmJpAVO4tSNph0IP4kzkbDMHX5JLj99WWDBY7JR6FErybKKzN4s6'
