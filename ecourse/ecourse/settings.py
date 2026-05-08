@@ -83,7 +83,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ecoursedb',
         'USER': 'root',
-        'PASSWORD': 'hod2t123',
+        'PASSWORD': 'root',
         'HOST': ''  # mặc định localhost
     }
 }
