@@ -68,7 +68,7 @@ class Course(BaseModel):
     fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0,
                               validators=[MinValueValidator(Decimal('0.00'))])
     average_rating = models.FloatField(default=0.0)
-    total_duration_video = models.PositiveIntegerField(default=0, help_text="Tổng số phút video")
+    total_duration_video = models.PositiveIntegerField(default=0, help_text="Tổng số giây video")
 
     total_students = models.PositiveIntegerField(default=0, help_text="Tổng số học viên")
     total_revenue = models.DecimalField(max_digits=15, decimal_places=2, default=0.0,
@@ -82,7 +82,7 @@ class Course(BaseModel):
         return self.subject
 
     def update_duration(self):
-        duration = self.lessons.aggregate(total=Sum('video_minutes'))
+        duration = self.lessons.aggregate(total=Sum('video_seconds'))
         self.total_duration_video = duration['total'] or 0
         self.save(update_fields=['total_duration_video'])
 
@@ -111,7 +111,7 @@ class Lesson(BaseModel):
     content = RichTextField()
     image = CloudinaryField('image', null=True, blank=True)
     video = CloudinaryField(resource_type='video', null=True, blank=True)
-    video_minutes = models.PositiveIntegerField(default=0, blank=True, help_text="Thời lượng video (tính bằng phút)")
+    video_seconds = models.PositiveIntegerField(default=0, blank=True, help_text="Thời lượng video (tính bằng giây)")
     order = models.PositiveIntegerField(default=1, help_text="Thứ tự bài học trong khóa")
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
