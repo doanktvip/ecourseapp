@@ -59,7 +59,7 @@ class UserViewSet(viewsets.ViewSet,generics.CreateAPIView):
             u=s.save()
         return Response(serializers.UserSerializer(u).data,status=status.HTTP_200_OK)
 
-    @action(methods=['post'], detail=False, url_path='me/change-password')
+    @action(methods=['post'], detail=False, url_path='me/change-password',permission_classes=[permissions.IsAuthenticated])
     def change_password(self, request):
 
         s=serializers.ChangePasswordSerializer(data=request.data, context={'request': request})
