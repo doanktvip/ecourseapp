@@ -21,11 +21,11 @@ gv_da_duyet = User.objects.create_user(
     first_name='Trang', last_name='Phạm Bích',
 )
 gv_chua_duyet = User.objects.create_user(
-    username='gv_phong', email='phong@gmail.com', password=PASSWORD, role='INSTRUCTOR',
+    username='gv_phong', email='phong@gmail.com', password=PASSWORD,
     first_name='Phong', last_name='Lê Quang'
 )
 gv_bi_tu_choi = User.objects.create_user(
-    username='gv_duc', email='duc@gmail.com', password=PASSWORD, role='INSTRUCTOR',
+    username='gv_duc', email='duc@gmail.com', password=PASSWORD,
     first_name='Duc', last_name='Nguyễn Văn'
 )
 
@@ -56,7 +56,7 @@ print("\n[4/7] Đang tạo các Khóa học (Có phí & Miễn phí)...")
 course_python = Course.objects.create(
     subject='Lập trình python từ Zero đến Hero',
     description='Khóa học cung cấp kiến thức nền tảng vững chắc về Python.',
-    image='https://res.cloudinary.com/db4bjqp4f/image/upload/v1778204592/lap_trinh_python_r6koh9.png',
+    image='image/upload/v1778204592/lap_trinh_python_r6koh9.png',
     fee=1200000.00,
     category=cat_cntt,
     instructor=gv_da_duyet
@@ -65,7 +65,7 @@ course_python = Course.objects.create(
 course_free = Course.objects.create(
     subject='Nhập môn lập trình Javascript',
     description='Khóa học làm quen Javascript cho người mới.',
-    image='https://res.cloudinary.com/db4bjqp4f/image/upload/v1778204630/nhap_mon_lap_trinh_javascript_znpncy.jpg',
+    image='image/upload/v1778204630/nhap_mon_lap_trinh_javascript_znpncy.jpg',
     fee=0.00,
     category=cat_cntt,
     instructor=gv_da_duyet
@@ -75,16 +75,16 @@ print("\n[5/7] Đang tạo Bài học (Video)...")
 # Các bài học của khóa Python
 l1 = Lesson.objects.create(
     subject='Bài 1: Cài đặt môi trường', content='<p>Hướng dẫn cài đặt.</p>',
-    image='https://res.cloudinary.com/db4bjqp4f/image/upload/v1778204683/cai_dat_moi_truong_gnrtvq.jpg',
-    video='https://res.cloudinary.com/db4bjqp4f/video/upload/v1778204725/cai_dat_moi_truong_wklmse.mp4',
+    image='image/upload/v1778204683/cai_dat_moi_truong_gnrtvq.jpg',
+    video='video/upload/v1778204725/cai_dat_moi_truong_wklmse.mp4',
     video_seconds=334, course=course_python
 )
 l1.tags.add(tag_py)
 
 l2 = Lesson.objects.create(
     subject='Bài 2: Biến và kiểu dữ liệu', content='<p>Kiểu dữ liệu cơ bản.</p>',
-    image='https://res.cloudinary.com/db4bjqp4f/image/upload/v1778204812/bien_va_kieu_du_lieu_l55uoq.jpg',
-    video='https://res.cloudinary.com/db4bjqp4f/video/upload/v1778204823/bien_va_kieu_du_lieu_phytrl.mp4',
+    image='image/upload/v1778204812/bien_va_kieu_du_lieu_l55uoq.jpg',
+    video='video/upload/v1778204823/bien_va_kieu_du_lieu_phytrl.mp4',
     video_seconds=198, course=course_python
 )
 l2.tags.add(tag_py)
@@ -92,8 +92,8 @@ l2.tags.add(tag_py)
 # Bài học của khóa Miễn phí
 l_free = Lesson.objects.create(
     subject='Bài 1: Javascript cơ bản', content='<p>Lý thuyết.</p>',
-    image='https://res.cloudinary.com/db4bjqp4f/image/upload/v1778204930/javascript_co_ban_g14h1l.jpg',
-    video='https://res.cloudinary.com/db4bjqp4f/video/upload/v1778204938/javascript_co_ban_ljztix.mp4',
+    image='image/upload/v1778204930/javascript_co_ban_g14h1l.jpg',
+    video='video/upload/v1778204938/javascript_co_ban_ljztix.mp4',
     video_seconds=259, course=course_free
 )
 l_free.tags.add(tag_js)

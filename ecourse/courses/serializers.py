@@ -1,55 +1,64 @@
 from rest_framework import serializers
-from courses.models import Course, Category, Tag,User
+from courses.models import Course, Category, Tag, User, InstructorApplication
 from django.contrib.auth.password_validation import validate_password
 
-class CategorySerializer(serializers.ModelSerializer):
 
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields='__all__'
+        fields = '__all__'
+
 
 class ItemSerializer(serializers.ModelSerializer):
-    def to_representation(self,instance):
+    def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.image:
             data['image'] = instance.image.url
         if instance.category:
-            data['category_name']=instance.category.name
+            data['category_name'] = instance.category.name
         if instance.intro_video:
             data['intro_video'] = instance.intro_video.url
         return data
 
+
 class CourseSerializer(ItemSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
+
     class Meta:
         model = Course
-        fields=['id','subject','description','fee','image','intro_video','average_rating','total_duration_video','total_students','total_revenue','category']
+        fields = ['id', 'subject', 'description', 'fee', 'image', 'intro_video', 'average_rating',
+                  'total_duration_video', 'total_students', 'total_revenue', 'category']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue']
+
 
 class CourseDetailSerializer(ItemSerializer):
     class Meta:
         model = CourseSerializer.Meta.model
         fields = CourseSerializer.Meta.fields
 
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields=['id','name']
+        fields = ['id', 'name']
+
 
 class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name','last_name','email','avatar']
+        fields = ['first_name', 'last_name', 'email', 'avatar']
+
 
 class UserSerializer(SimpleUserSerializer):
     class Meta:
         model = SimpleUserSerializer.Meta.model
-        fields=SimpleUserSerializer.Meta.fields+['id','username','password']
+        fields = SimpleUserSerializer.Meta.fields + ['id', 'username', 'password']
         extra_kwargs = {
             'password': {
                 'write_only': True,
             }
         }
+
     def create(self, validated_data):
         user = User(**validated_data)
         user.set_password(user.password)
@@ -69,7 +78,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         # Lấy user hiện tại từ request của View
         user = self.context['request'].user
         # Kiểm tra old_password so sánh với mk của user hiện tại
-        #value = old_password
+        # value = old_password
         if not user.check_password(value):
             raise serializers.ValidationError("Mật khẩu cũ không chính xác.")
         return value
@@ -82,3 +91,10 @@ class ChangePasswordSerializer(serializers.Serializer):
             })
 
         return data
+
+
+class ApplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstructorApplication
+        fields = ['id', 'cv_file', 'status', 'created_date']
+        read_only_fields = ['id', 'status', 'created_date']
