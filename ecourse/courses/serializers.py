@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from courses.models import Course, Category, Tag, User, InstructorApplication
+from courses.models import Course, Category, Tag, User, InstructorApplication, Lesson
 from django.contrib.auth.password_validation import validate_password
 
 
@@ -94,7 +94,33 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class ApplySerializer(serializers.ModelSerializer):
+    cv_file = serializers.FileField(required=False, allow_null=True)
+
     class Meta:
         model = InstructorApplication
         fields = ['id', 'cv_file', 'status', 'created_date']
         read_only_fields = ['id', 'status', 'created_date']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.cv_file and hasattr(instance.cv_file, 'url'):
+            data['cv_file'] = instance.cv_file.url
+        return data
+
+
+class LessonSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False, allow_null=True)
+    video = serializers.FileField(required=False, allow_null=True)
+
+    class Meta:
+        model = Lesson
+        fields = ['id', 'subject', 'content', 'image', 'video', 'video_seconds', 'order', 'tags', 'created_date']
+        read_only_fields = ['id', 'order', 'video_seconds', 'created_date']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.image:
+            data['image'] = instance.image.url
+        if instance.video:
+            data['video'] = instance.video.url
+        return data
