@@ -14,10 +14,11 @@ class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = serializers.CategorySerializer
 
 
-class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,mixins.UpdateModelMixin):
+class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
+                    mixins.UpdateModelMixin, mixins.DestroyModelMixin):
     queryset = Course.objects.filter(active=True)
     pagination_class = paginators.ItemPaginator
-    http_method_names = ['get', 'post', 'patch', 'head', 'options']
+    http_method_names = ['get', 'post', 'patch', 'head', 'options', 'delete']
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_class = CourseFilter
     search_fields = ['subject']
@@ -29,40 +30,52 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
 
         elif self.action == 'lessons' and self.request.method == 'GET':
             return [perms.IsEnrolled()]
-          
-        if self.action=='partial_update':
+
+        if self.action == 'partial_update':
             return [perms.IsCourseOwner()]
-          
-        elif self.action == 'create':
+
+        elif self.action in ['create', 'destroy']:
             return [perms.IsInstructor()]
 
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):
-        if self.action in ['retrieve','partial_update']:
+        if self.action in ['retrieve', 'partial_update']:
             return serializers.CourseDetailSerializer
         return serializers.CourseSerializer
 
     def perform_create(self, serializer):
         serializer.save(instructor=self.request.user)
-        
-    @action(methods=['get'],detail=False,url_path='compare')
-    def compare(self,request):
-        ids_str = request.query_params.get('ids')
-        if not ids_str:
-            return Response({"error": "Vui lòng cung cấp danh sách ids cần so sánh"},status=status.HTTP_400_BAD_REQUEST)
+
+    def perform_destroy(self, instance):
+        instance.active = False
+        instance.save()
+
+    def destroy(self, request, *args, **kwargs):
         try:
-            ids_list = [int(i.strip()) for i in ids_str.split(',')] #Cắt chuỗi vd: 1,2,3 thành mảng số
-        except ValueError:
-            return Response({"error": "Định dạng tham số ids không hợp lệ"},status=status.HTTP_400_BAD_REQUEST)
-        #Lấy các khóa học cần so sánh
-        courses=self.queryset.filter(id__in=ids_list)
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            print(f"Xóa khóa học bị lỗi: {str(e)}")
+            return Response({"detail": "Lỗi hệ thống khi vô hiệu hóa khóa học."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(methods=['get'], detail=False, url_path='compare')
+    def compare(self, request):
+        if 'ids' not in request.query_params:
+            return Response({"error": "Vui lòng cung cấp danh sách ids cần so sánh"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        courses = self.filter_queryset(self.get_queryset())
+
         if not courses.exists():
-            return Response({"message": "Không tìm thấy khóa học nào khớp với các ids đã cho."},status=status.HTTP_404_NOT_FOUND)
-        #dùng many=true khi lấy nhiều courses
-        serializer=serializers.CourseSerializer(courses,many=True,context={'request': request})
-        return Response(serializer.data,status=status.HTTP_200_OK)
-      
+            return Response({"message": "Không tìm thấy khóa học nào khớp với các ids đã cho."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(courses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     @action(methods=['get', 'post'], detail=True, url_path='lessons')
     def lessons(self, request, pk=None):
         course = self.get_object()
@@ -88,7 +101,6 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
                 serializer.save(course=course)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
- 
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):

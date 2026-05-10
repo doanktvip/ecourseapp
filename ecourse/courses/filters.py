@@ -13,9 +13,11 @@ class CourseFilter(filters.FilterSet):
 
     fee = filters.NumberFilter(field_name="fee", lookup_expr='lte')
 
+    ids = NumberInFilter(field_name='id', lookup_expr='in')
+
     class Meta:
         model = Course
-        fields = ['category_id', 'instructor_id', 'fee']
+        fields = ['category_id', 'instructor_id', 'fee', 'ids']
 
 
 class ApplicationFilter(filters.FilterSet):
