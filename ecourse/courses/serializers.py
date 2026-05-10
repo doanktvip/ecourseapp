@@ -23,7 +23,7 @@ class CourseSerializer(ItemSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
     class Meta:
         model = Course
-        fields=['id','subject','description','fee','image','intro_video','average_rating','total_duration_video','total_students','total_revenue','category']
+        fields=['id','subject','description','fee','image','intro_video','average_rating','total_duration_video','total_students','total_revenue','category','active']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue']
 
 class CourseDetailSerializer(ItemSerializer):
