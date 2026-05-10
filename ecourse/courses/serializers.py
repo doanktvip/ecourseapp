@@ -26,7 +26,8 @@ class CourseSerializer(ItemSerializer):
 
     class Meta:
         model = Course
-        fields=['id','subject','description','fee','image','intro_video','average_rating','total_duration_video','total_students','total_revenue','category','active']
+        fields = ['id', 'subject', 'description', 'fee', 'image', 'intro_video', 'average_rating',
+                  'total_duration_video', 'total_students', 'total_revenue', 'category']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue']
 
 

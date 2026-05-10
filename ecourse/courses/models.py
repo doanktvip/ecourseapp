@@ -64,7 +64,7 @@ class Category(BaseModel):
 class Course(BaseModel):
     subject = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    image = CloudinaryField('image')
+    image = CloudinaryField('image', null=True, blank=True)
     intro_video = CloudinaryField(resource_type='video', null=True, blank=True)
     fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0,
                               validators=[MinValueValidator(Decimal('0.00'))])
