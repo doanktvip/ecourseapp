@@ -1,10 +1,10 @@
-from decimal import Decimal
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework import mixins
 from rest_framework import viewsets, generics, filters, parsers, status, permissions
-from courses.filters import ApplicationFilter, CourseFilter
-from courses.models import Course, Category, User, InstructorApplication
+from courses.filters import ApplicationFilter, CourseFilter, LessonFilter
+from courses.models import Course, Category, User, InstructorApplication, Lesson, Tag
 from courses import serializers, paginators, perms
 from rest_framework.response import Response
 
@@ -24,8 +24,15 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
     ordering_fields = ['id']
 
     def get_permissions(self):
-        if self.action in ['create']:
+        if self.action == 'lessons' and self.request.method == 'POST':
+            return [perms.IsInstructor(), perms.IsCourseOwner()]
+
+        elif self.action == 'lessons' and self.request.method == 'GET':
+            return [perms.IsEnrolled()]
+
+        if self.action == 'create':
             return [perms.IsInstructor()]
+
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):
@@ -35,6 +42,33 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
 
     def perform_create(self, serializer):
         serializer.save(instructor=self.request.user)
+
+    @action(methods=['get', 'post'], detail=True, url_path='lessons')
+    def lessons(self, request, pk=None):
+        course = self.get_object()
+        if request.method == 'GET':
+            lessons = course.lessons.filter(active=True)
+            filtered_lessons = LessonFilter(request.GET, queryset=lessons).qs
+            page = self.paginate_queryset(filtered_lessons)
+            if page is not None:
+                serializer = serializers.LessonSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = serializers.LessonSerializer(filtered_lessons, many=True)
+            return Response({
+                "count": filtered_lessons.count(),
+                "next": None,
+                "previous": None,
+                "results": serializer.data
+            }, status=status.HTTP_200_OK)
+        if request.method == 'POST':
+            serializer = serializers.LessonSerializer(data=request.data)
+
+            if serializer.is_valid():
+                serializer.save(course=course)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
@@ -94,7 +128,8 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ApplicationViewSet(viewsets.ViewSet, generics.ListAPIView):
+class ApplicationViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.UpdateModelMixin):
+    http_method_names = ['get', 'patch', 'head', 'options']
     queryset = InstructorApplication.objects.all()
     serializer_class = serializers.ApplySerializer
     permission_classes = [perms.IsAdmin]
@@ -102,28 +137,86 @@ class ApplicationViewSet(viewsets.ViewSet, generics.ListAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_class = ApplicationFilter
 
-    @action(methods=['post'], detail=True, url_path='approve')
-    def approve_application(self, request, pk=None):
-        application = self.get_object()
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', True)
+        instance = self.get_object()
 
-        if application.status == InstructorApplication.Status.APPROVED:
-            return Response({"detail": "Đơn xin việc này đã được duyệt trước đó."}, status=status.HTTP_400_BAD_REQUEST)
+        new_status = request.data.get('status')
+        old_status = instance.status
 
-        application.status = InstructorApplication.Status.APPROVED
-        application.save()
+        valid_statuses = [InstructorApplication.Status.APPROVED, InstructorApplication.Status.REJECTED]
+        if new_status not in valid_statuses:
+            return Response(
+                {"detail": f"Trạng thái '{new_status}' không hợp lệ. Chỉ chấp nhận APPROVED hoặc REJECTED."},
+                status=status.HTTP_400_BAD_REQUEST)
 
-        user = application.user
-        user.role = User.Role.INSTRUCTOR
-        user.save()
+        if old_status != InstructorApplication.Status.PENDING:
+            return Response({"detail": f"Đơn này đã được xử lý (Trạng thái hiện tại: {old_status})."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"message": f"Đã duyệt đơn xin việc và nâng cấp {user.username} lên Giảng viên."},
-                        status=status.HTTP_200_OK)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
 
-    @action(methods=['post'], detail=True, url_path='reject')
-    def reject_application(self, request, pk=None):
-        application = self.get_object()
+        try:
+            with transaction.atomic():
+                updated_instance = serializer.save(status=new_status)
+                if new_status == InstructorApplication.Status.APPROVED:
+                    user = updated_instance.user
+                    user.role = User.Role.INSTRUCTOR
+                    user.save(update_fields=['role'])
 
-        application.status = InstructorApplication.Status.REJECTED
-        application.save()
+                return Response(serializer.data)
+        except Exception:
+            return Response({"detail": "Lỗi hệ thống khi cập nhật trạng thái đơn."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({"message": "Đã từ chối đơn ứng tuyển này."}, status=status.HTTP_200_OK)
+
+class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.ListAPIView, mixins.UpdateModelMixin,
+                    mixins.DestroyModelMixin):
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+    queryset = Lesson.objects.all()
+    serializer_class = serializers.LessonSerializer
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return [perms.IsEnrolled()]
+
+        if self.action in ['partial_update', 'destroy', 'add_tags']:
+            return [perms.IsInstructor(), perms.IsCourseOwner()]
+
+        if self.action == 'list':
+            return [perms.IsAdmin()]
+
+        return [permissions.AllowAny()]
+
+    @action(methods=['post'], detail=True, url_path='tags')
+    def add_tags(self, request, pk=None):
+        lesson = self.get_object()
+        tags_data = request.data.get('tags')
+
+        if not tags_data:
+            return Response({"detail": "Dữ liệu tags không được để trống."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        tags = Tag.objects.filter(id__in=tags_data)
+        lesson.tags.add(*tags)
+
+        serializer = self.get_serializer(lesson)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TagViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin,
+                 mixins.DestroyModelMixin):
+    queryset = Tag.objects.all()
+    serializer_class = serializers.TagSerializer
+
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [permissions.IsAuthenticated()]
+
+        if self.action in ['create', 'partial_update', 'destroy']:
+            return [perms.IsAdmin()]
+
+        return [permissions.AllowAny()]
