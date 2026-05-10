@@ -1,3 +1,4 @@
+import cloudinary.api
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -20,7 +21,7 @@ class User(AbstractUser):
         STUDENT = 'STUDENT', 'Sinh viên'
 
     avatar = CloudinaryField('avatar', null=True, blank=True,
-                             default="https://res.cloudinary.com/db4bjqp4f/image/upload/v1765436438/shtnr60mecp057e2uctk.jpg")
+                             default="image/upload/v1765436438/shtnr60mecp057e2uctk.jpg")
     role = models.CharField(max_length=15, choices=Role.choices, default=Role.STUDENT)
 
     def __str__(self):
@@ -44,8 +45,8 @@ class InstructorApplication(BaseModel):
         REJECTED = 'REJECTED', 'Bị từ chối'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='instructor')
-    cv_file = models.FileField(upload_to='cvs/', null=True, blank=True,
-                               validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
+    cv_file = CloudinaryField('cv_file', resource_type='raw', null=True, blank=True,
+                              validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
 
 
@@ -68,7 +69,7 @@ class Course(BaseModel):
     fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0,
                               validators=[MinValueValidator(Decimal('0.00'))])
     average_rating = models.FloatField(default=0.0)
-    total_duration_video = models.PositiveIntegerField(default=0, help_text="Tổng số phút video")
+    total_duration_video = models.PositiveIntegerField(default=0, help_text="Tổng số giây video")
 
     total_students = models.PositiveIntegerField(default=0, help_text="Tổng số học viên")
     total_revenue = models.DecimalField(max_digits=15, decimal_places=2, default=0.0,
@@ -82,7 +83,7 @@ class Course(BaseModel):
         return self.subject
 
     def update_duration(self):
-        duration = self.lessons.aggregate(total=Sum('video_minutes'))
+        duration = self.lessons.aggregate(total=Sum('video_seconds'))
         self.total_duration_video = duration['total'] or 0
         self.save(update_fields=['total_duration_video'])
 
@@ -111,7 +112,7 @@ class Lesson(BaseModel):
     content = RichTextField()
     image = CloudinaryField('image', null=True, blank=True)
     video = CloudinaryField(resource_type='video', null=True, blank=True)
-    video_minutes = models.PositiveIntegerField(default=0, blank=True, help_text="Thời lượng video (tính bằng phút)")
+    video_seconds = models.PositiveIntegerField(default=0, blank=True, help_text="Thời lượng video (tính bằng giây)")
     order = models.PositiveIntegerField(default=1, help_text="Thứ tự bài học trong khóa")
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
@@ -122,12 +123,33 @@ class Lesson(BaseModel):
         ordering = ['order']
 
     def save(self, *args, **kwargs):
+        if self.video and isinstance(self.video, str) and not self.video.startswith('http'):
+            self.video = None
+
+        if self.image and isinstance(self.image, str) and not self.image.startswith('http'):
+            self.image = None
+
         if not self.pk:
             result = Lesson.objects.filter(course=self.course).aggregate(order_max=Max('order'))
-            # result = {'order_max': ??}
             max_order = result['order_max'] or 0
             self.order = max_order + 1
+
         super().save(*args, **kwargs)
+
+        if self.video and self.video_seconds == 0:
+            try:
+                duration = self.video.metadata.get('duration') if hasattr(self.video, 'metadata') else None
+
+                if not duration:
+                    res = cloudinary.api.resource(self.video.public_id, resource_type="video")
+                    duration = res.get('duration')
+
+                if duration:
+                    self.video_seconds = int(duration)
+                    Lesson.objects.filter(pk=self.pk).update(video_seconds=self.video_seconds)
+            except Exception as e:
+                print(f"Lỗi lấy duration: {e}")
+
         self.course.update_duration()
 
     def delete(self, *args, **kwargs):
