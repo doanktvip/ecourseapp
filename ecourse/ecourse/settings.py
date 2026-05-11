@@ -93,7 +93,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ecoursedb',
         'USER': 'root',
-        'PASSWORD': 'root',
+        'PASSWORD': 'hod2t123',
         'HOST': ''  # mặc định localhost
     }
 }
@@ -138,5 +138,5 @@ cloudinary.config(
     api_key="644913513335787",
     api_secret="3GyWpk9k_hVPbrHy1blNOyjIwyA"
 )
-CLIENT_ID = '6jdbH6w5OPQ8qsbXhnTb20wmUTVKe1oRajGxaasC'
-CLIENT_SECRET = 'OqM03kxqmgUIwxkrwEMZCPB4LVHaxraubQw9MtpX7xBWgoBjNdSCA3t5edfJkMFSoA8UmEeorYvkrmJpAVO4tSNph0IP4kzkbDMHX5JLj99WWDBY7JR6FErybKKzN4s6'
+CLIENT_ID = 'Nw1YgWmCtPo3RyYiasTFDE3pkvKcdUhlh91o4Yrq'
+CLIENT_SECRET = '1Xu6RmmnSdhsFS5EtvK2zp72LOXSDIe5tV7C6RslCoEwP4D7qHP4cI3P5yAI2bZ3bdJAyHeuaLrpsNpFByK949ptlGJGORNI61IogtE85EBvqWdEpF0MLD9qdCkTdTnJ'
