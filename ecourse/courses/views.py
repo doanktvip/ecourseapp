@@ -1,12 +1,15 @@
 from django.db import transaction
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncMonth, TruncYear, TruncQuarter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
-from rest_framework import mixins
+from rest_framework import mixins, request
 from rest_framework import viewsets, generics, filters, parsers, status, permissions
 from courses.filters import ApplicationFilter, CourseFilter, LessonFilter
-from courses.models import Course, Category, User, InstructorApplication, Lesson, Tag
+from courses.models import Course, Category, User, InstructorApplication, Lesson, Tag, Comment, Like, Payment
 from courses import serializers, paginators, perms
 from rest_framework.response import Response
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -37,11 +40,17 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
         elif self.action in ['create', 'destroy']:
             return [perms.IsInstructor()]
 
+        if self.action == 'reviews' and self.request.method == 'POST':
+            return [perms.IsStudent()]
+
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):
         if self.action in ['retrieve', 'partial_update']:
             return serializers.CourseDetailSerializer
+        if self.action == 'reviews':
+            return serializers.CourseReviewSerializer
+
         return serializers.CourseSerializer
 
     def perform_create(self, serializer):
@@ -100,6 +109,42 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
             if serializer.is_valid():
                 serializer.save(course=course)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get', 'post'], detail=True, url_path='reviews')
+    def reviews(self, request, pk):
+        if request.method.__eq__('GET'):
+            # Lấy khóa học hiện tại
+            course = self.get_object()
+            reviews = course.reviews.filter(active=True).order_by('-created_date')
+            # Phân trang
+            p = paginators.CourseReviewPaginator()
+            page = p.paginate_queryset(reviews, request)
+
+            if page is not None:
+                serializer = serializers.CourseReviewSerializer(page, many=True)
+                return p.get_paginated_response(serializer.data)
+
+            return Response(serializers.CourseReviewSerializer(reviews, many=True).data, status=status.HTTP_200_OK)
+
+        if request.method.__eq__('POST'):
+            course = self.get_object()
+            # thuộc tính course chỉ cho phép đọc nên phải gán dl qua biến khác
+            data = request.data.copy()
+            data['course'] = course.id
+
+            serializer = serializers.CourseReviewSerializer(data=data)
+            if serializer.is_valid():
+                try:
+                    # Lưu review
+                    review = serializer.save(user=request.user)
+                    return Response(serializers.CourseReviewSerializer(review).data, status=status.HTTP_201_CREATED)
+
+                # Không đủ tiến độ để review
+                except DjangoValidationError as e:
+                    return Response({"detail": e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Lỗi sai định dạng dữ liệu (vd:rating > 5)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -219,6 +264,13 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
         if self.action == 'list':
             return [perms.IsAdmin()]
 
+        if self.action == 'comments' and self.request.method == 'GET':
+            return [permissions.IsAuthenticated()]
+        if self.action == 'comments' and self.request.method == 'POST':
+            return [perms.IsEnrolled()]
+        if self.action == 'like':
+            return [perms.IsEnrolled()]
+
         return [permissions.AllowAny()]
 
     @action(methods=['post'], detail=True, url_path='tags')
@@ -236,6 +288,42 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
         serializer = self.get_serializer(lesson)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(methods=['get', 'post'], detail=True, url_path='comments')
+    def comments(self, request, pk):
+        if request.method.__eq__('GET'):
+            comments = self.get_object().comments.select_related('user').filter(active=True)
+            p = paginators.CommentPaginator()
+            page = p.paginate_queryset(comments, request)
+
+            if page is not None:
+                serializer = serializers.CommentSerializer(page, many=True)
+                return p.get_paginated_response(serializer.data)
+
+            return Response(serializers.CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
+
+        if request.method.__eq__('POST'):
+            lesson = self.get_object()
+            s = serializers.CommentSerializer(data={
+                'content': request.data.get('content'),
+                'user': request.user.pk,
+                'lesson': lesson.pk,
+                'parent': request.data.get('parent')
+            })
+            s.is_valid(raise_exception=True)
+            c = s.save()
+            return Response(serializers.CommentSerializer(c).data, status=status.HTTP_201_CREATED)
+
+    @action(methods=['post'], url_path='like', detail=True)
+    def like(self, request, pk):
+        # Nếu chưa like thì tạo li có active=true
+        li, created = Like.objects.get_or_create(lesson=self.get_object(), user=request.user)
+        if not created:
+            li.active = not li.active
+
+        li.save()
+
+        return Response(serializers.LessonSerializer(self.get_object(), context={'request': request}).data)
+
 
 class TagViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                  mixins.DestroyModelMixin):
@@ -252,3 +340,57 @@ class TagViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
             return [perms.IsAdmin()]
 
         return [permissions.AllowAny()]
+
+class StatsViewSet(viewsets.ViewSet):
+    def get_permissions(self):
+        if self.action == 'list':
+            return [perms.IsInstructor()]
+
+        return [permissions.AllowAny()]
+
+    def list(self, request):
+        user = request.user
+        #Lấy hóa đơn liên quan đến giáo viên đó
+        payments = Payment.objects.filter(is_successful=True, enrollment__course__instructor=user)
+
+        # Thống kê theo khóa học
+        # payments.value gom nhóm
+        # annotate tính toán từng nhóm
+        stat_course = payments.values('enrollment__course__subject').annotate(
+            total_students=Count('enrollment__student', distinct=True),
+            total_revenue=Sum('amount')
+        ).order_by('-total_revenue')
+
+        def get_time_stats(trunc_class):
+            # Nhóm và tính toán
+            data = payments.annotate(period=trunc_class('created_date')).values('period').annotate(
+                total_students=Count('enrollment__student', distinct=True),
+                total_revenue=Sum('amount')
+            ).order_by('period')
+
+            # Format chuỗi thời gian cho đẹp tùy theo loại thống kê
+            def format_period(p):
+                if not p: return "N/A"
+                if trunc_class == TruncMonth: return p.strftime('%Y-%m')  # Vd: 2026-05
+                if trunc_class == TruncYear: return p.strftime('%Y')  # Vd: 2026
+                if trunc_class == TruncQuarter: return f"{p.year}-Q{(p.month - 1) // 3 + 1}"  # Vd: 2026-Q2
+                return str(p)
+
+            # Đóng gói ra mảng JSON
+            return [
+                {
+                    "period": format_period(item['period']),
+                    "total_students": item['total_students'],
+                    "total_revenue": item['total_revenue']
+                } for item in data
+            ]
+
+        # 4. GỌI HÀM VÀ TRẢ VỀ KẾT QUẢ
+        return Response({
+            "stat_course": stat_course,
+            "by_month": get_time_stats(TruncMonth),
+            "by_quarter": get_time_stats(TruncQuarter),
+            "by_year": get_time_stats(TruncYear),
+        }, status=status.HTTP_200_OK)
+
+

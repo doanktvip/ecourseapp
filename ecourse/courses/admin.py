@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.db.models.functions import TruncMonth
 from django.template.response import TemplateResponse
 from django.utils.html import mark_safe
 from django.urls import path
 from django import forms
-from django.db.models import Count
+from django.db.models import Count, Sum, Q
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 # Import toàn bộ models của bạn
@@ -172,11 +173,34 @@ class MyAdminSite(admin.AdminSite):
         ] + super().get_urls()
 
     def course_stats(self, request):
-        stats = Category.objects.annotate(c=Count('courses')).values('id', 'name', 'c')
-        return TemplateResponse(request, 'admin/stats.html', {
+        # 1. Thống kê khóa học theo danh mục (Biểu đồ tròn)
+        stats = Category.objects.annotate(c=Count('courses')).values('name', 'c')
+
+        # 2. Thống kê doanh thu theo Khóa học (Top 5 khóa học kiếm tiền nhiều nhất)
+        revenue_stats = Course.objects.annotate(
+            total_rev=Sum('enrollments__payment__amount', filter=Q(enrollments__payment__is_successful=True))
+        ).values('subject', 'total_rev').order_by('-total_rev')[:5]
+
+        # 3. Tần suất đăng ký theo tháng (6 tháng gần nhất)
+        enrollment_trend = Enrollment.objects.annotate(month=TruncMonth('created_date')).values('month').annotate(
+            count=Count('id')
+        ).order_by('month')
+
+        # 4. Lấy các con số tổng quát (Tổng quan)
+        total_students = User.objects.filter(role='STUDENT').count()
+        total_revenue = Payment.objects.filter(is_successful=True).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        context = self.each_context(request)
+        context.update({
             'stats': stats,
-            'title': 'Thống kê số lượng khóa học theo danh mục'
+            'revenue_stats': revenue_stats,
+            'enrollment_trend': enrollment_trend,
+            'total_students': total_students,
+            'total_revenue': total_revenue,
+            'title': 'Báo Cáo Tổng Quan Hệ Thống'
         })
+
+        return TemplateResponse(request, 'admin/course_stats.html', context)
 
 
 # Khởi tạo site admin mới
