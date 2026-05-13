@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from courses.models import Course, Category, Tag, User, InstructorApplication, Lesson, Enrollment, Payment
+from courses.models import Course, Category, Tag, User, InstructorApplication, Lesson, Enrollment, Payment, Comment, CourseReview
 from django.contrib.auth.password_validation import validate_password
 
 
@@ -123,6 +123,11 @@ class LessonSerializer(serializers.ModelSerializer):
             data['image'] = instance.image.url
         if instance.video:
             data['video'] = instance.video.url
+
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            data['liked'] = instance.likes.filter(user=request.user, active=True).exists()
+
         return data
 
 
@@ -145,3 +150,30 @@ class EnrollmentDetailSerializer(serializers.ModelSerializer):
 
 class EnrollmentSerializer(serializers.Serializer):
     payment_method = serializers.ChoiceField(choices=Payment.Method.choices)
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'user', 'lesson', 'parent']
+        extra_kwargs = {
+            'lesson': {
+                'write_only': True
+            }
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['user'] = UserSerializer(instance.user).data
+
+        return data
+
+class CourseReviewSerializer(serializers.ModelSerializer):
+    # Lấy toàn bộ thông tin của user đó (Dictionary lồng)
+    user = SimpleUserSerializer(read_only=True)
+    class Meta:
+        model = CourseReview
+        fields = ['id', 'course', 'user', 'rating','comment','created_date']
+        extra_kwargs = {
+            'course': {'write_only': True}
+        }
+
