@@ -1,12 +1,18 @@
 from rest_framework import serializers
-from courses.models import Course, Category, Tag, User, InstructorApplication, Lesson, Comment, CourseReview
+from courses.models import Course, Category, Tag, User, InstructorApplication, Lesson, Enrollment, Payment, Comment, CourseReview
 from django.contrib.auth.password_validation import validate_password
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['id', 'name']
+
+
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'avatar']
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -14,21 +20,20 @@ class ItemSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if instance.image:
             data['image'] = instance.image.url
-        if instance.category:
-            data['category_name'] = instance.category.name
         if instance.intro_video:
             data['intro_video'] = instance.intro_video.url
         return data
 
 
 class CourseSerializer(ItemSerializer):
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
+    category = CategorySerializer(read_only=True)
+    instructor = SimpleUserSerializer(read_only=True)
 
     class Meta:
         model = Course
         fields = ['id', 'subject', 'description', 'fee', 'image', 'intro_video', 'average_rating',
-                  'total_duration_video', 'total_students', 'total_revenue', 'category']
-        read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue']
+                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'instructor']
+        read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue', 'instructor']
 
 
 class CourseDetailSerializer(ItemSerializer):
@@ -41,12 +46,6 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ['id', 'name']
-
-
-class SimpleUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['first_name', 'last_name', 'email', 'avatar']
 
 
 class UserSerializer(SimpleUserSerializer):
@@ -111,6 +110,7 @@ class ApplySerializer(serializers.ModelSerializer):
 class LessonSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
     video = serializers.FileField(required=False, allow_null=True)
+    tags = TagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Lesson
@@ -131,6 +131,25 @@ class LessonSerializer(serializers.ModelSerializer):
         return data
 
 
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['id', 'amount', 'payment_method', 'is_successful', 'transaction_id', 'created_date']
+        read_only_fields = ['id', 'amount', 'is_successful', 'transaction_id', 'created_date']
+
+
+class EnrollmentDetailSerializer(serializers.ModelSerializer):
+    payment = PaymentSerializer(read_only=True)
+    student = SimpleUserSerializer(read_only=True)
+    course = CourseSerializer(read_only=True)
+
+    class Meta:
+        model = Enrollment
+        fields = ['id', 'student', 'course', 'progress', 'payment', 'created_date']
+
+
+class EnrollmentSerializer(serializers.Serializer):
+    payment_method = serializers.ChoiceField(choices=Payment.Method.choices)
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment

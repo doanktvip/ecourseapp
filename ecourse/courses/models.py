@@ -27,6 +27,9 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+    def get_full_name(self):
+        return f"{self.last_name} {self.first_name}".strip()
+
 
 class BaseModel(models.Model):
     active = models.BooleanField(default=True)
@@ -214,7 +217,7 @@ class Payment(BaseModel):
 
     enrollment = models.OneToOneField(Enrollment, on_delete=models.RESTRICT, related_name='payment')
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))])
-    payment_method = models.CharField(max_length=20, choices=Method.choices)
+    payment_method = models.CharField(max_length=20, choices=Method.choices, null=True, blank=True)
     is_successful = models.BooleanField(default=False)
     transaction_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
 
