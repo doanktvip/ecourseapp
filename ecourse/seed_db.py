@@ -26,7 +26,7 @@ gv_chua_duyet = User.objects.create_user(
 )
 gv_bi_tu_choi = User.objects.create_user(
     username='gv_duc', email='duc@gmail.com', password=PASSWORD,
-    first_name='Duc', last_name='Nguyễn Văn'
+    first_name='Đức', last_name='Nguyễn Văn'
 )
 
 # --- Sinh viên ---
@@ -57,7 +57,7 @@ course_python = Course.objects.create(
     subject='Lập trình python từ Zero đến Hero',
     description='Khóa học cung cấp kiến thức nền tảng vững chắc về Python.',
     image='image/upload/v1778204592/lap_trinh_python_r6koh9.png',
-    fee=1200000.00,
+    fee=1000.00,
     category=cat_cntt,
     instructor=gv_da_duyet
 )
@@ -101,7 +101,7 @@ print("\n[6/7] Đang xử lý Ghi danh, Thanh toán & Tiến độ học tập..
 # TH1: Sinh viên An mua khóa Python -> Thanh toán thành công -> Có tiến độ
 en_an_pro = Enrollment.objects.create(student=sv_an, course=course_python)
 Payment.objects.create(
-    enrollment=en_an_pro, amount=1200000.00, payment_method='MOMO',
+    enrollment=en_an_pro, amount=course_python.fee, payment_method='MOMO',
     is_successful=True, transaction_id='MOMO_TXN_001928'
 )
 LessonProgress.objects.create(enrollment=en_an_pro, lesson=l1, status='COMPLETED', watched_seconds=l1.video_seconds)
@@ -110,14 +110,14 @@ LessonProgress.objects.create(enrollment=en_an_pro, lesson=l2, status='IN_PROGRE
 # TH2: Sinh viên Bình mua khóa Python -> Thanh toán thất bại -> Không có tiến độ
 en_binh_pro = Enrollment.objects.create(student=sv_binh, course=course_python)
 Payment.objects.create(
-    enrollment=en_binh_pro, amount=1200000.00, payment_method='ZALOPAY',
+    enrollment=en_binh_pro, amount=course_python.fee, payment_method='ZALOPAY',
     is_successful=False, transaction_id='ZALO_FAILED_001'
 )
 
 # TH3: Sinh viên An đăng ký khóa Miễn phí -> Thanh toán Tiền mặt (0đ) thành công
 en_an_free = Enrollment.objects.create(student=sv_an, course=course_free)
 Payment.objects.create(
-    enrollment=en_an_free, amount=0.00, payment_method='CASH',
+    enrollment=en_an_free, amount=course_free.fee, payment_method='CASH',
     is_successful=True, transaction_id='FREE_TXN_001'
 )
 LessonProgress.objects.create(enrollment=en_an_free, lesson=l_free, status='COMPLETED',

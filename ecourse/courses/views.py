@@ -1,12 +1,18 @@
+import json
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import action
+from rest_framework.decorators import action, authentication_classes, permission_classes
 from rest_framework import mixins
 from rest_framework import viewsets, generics, filters, parsers, status, permissions
+from rest_framework.permissions import AllowAny
+
 from courses.filters import ApplicationFilter, CourseFilter, LessonFilter
-from courses.models import Course, Category, User, InstructorApplication, Lesson, Tag
+from courses.models import (Course, Category, User, InstructorApplication, Lesson, Tag, Enrollment, Payment,
+                            LessonProgress)
 from courses import serializers, paginators, perms
 from rest_framework.response import Response
+from courses.payments.factory import PaymentFactory
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -25,17 +31,19 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
     ordering_fields = ['id']
 
     def get_permissions(self):
-        if self.action == 'lessons' and self.request.method == 'POST':
-            return [perms.IsInstructor(), perms.IsCourseOwner()]
+        if self.action in ['create']:
+            return [perms.IsInstructor()]
 
-        elif self.action == 'lessons' and self.request.method == 'GET':
-            return [perms.IsEnrolled()]
-
-        if self.action == 'partial_update':
+        if self.action in ['partial_update', 'destroy', 'students']:
             return [perms.IsCourseOwner()]
 
-        elif self.action in ['create', 'destroy']:
-            return [perms.IsInstructor()]
+        if self.action == 'lessons':
+            if self.request.method == 'POST':
+                return [perms.IsCourseOwner()]
+            return [perms.IsEnrolled()]
+
+        if self.action == 'enrolls':
+            return [perms.IsStudent()]
 
         return [permissions.AllowAny()]
 
@@ -102,13 +110,54 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(methods=['post'], detail=True, url_path='enrolls')
+    def enrolls(self, request, pk=None):
+        course = self.get_object()
+        user = request.user
+
+        if Enrollment.objects.filter(student=user, course=course).exists():
+            return Response({"detail": "Bạn đã đăng ký khóa học này rồi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            enrollment = Enrollment.objects.create(student=user, course=course)
+
+            if course.fee == 0:
+                Payment.objects.create(enrollment=enrollment, amount=0, payment_method=Payment.Method.CASH,
+                                       is_successful=True, transaction_id=f"FREE_{user.id}_{course.id}")
+            else:
+                Payment.objects.create(enrollment=enrollment, amount=course.fee, is_successful=False,
+                                       payment_method=None)
+
+        return Response(serializers.EnrollmentDetailSerializer(enrollment).data, status=status.HTTP_201_CREATED)
+
+    @action(methods=['get'], detail=True, url_path=r'enrolls/(?P<enroll_id>\d+)')
+    def enroll_detail(self, request, pk=None, enroll_id=None):
+        enrollment = get_object_or_404(Enrollment, pk=enroll_id, course_id=pk)
+        serializer = serializers.EnrollmentDetailSerializer(enrollment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=True, url_path='students')
+    def students(self, request, pk=None):
+        course = self.get_object()
+        enrollments = Enrollment.objects.filter(course=course, payment__is_successful=True)
+
+        serializer = serializers.EnrollmentDetailSerializer(enrollments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
 
-    @action(methods=['get', 'patch'], url_path='me', detail=False, permission_classes=[permissions.IsAuthenticated])
+    def get_permissions(self):
+        if self.action in ['me', 'change_password']:
+            return [permissions.IsAuthenticated()]
+        if self.action in ['apply_instructor', 'my_enrollments']:
+            return [perms.IsStudent()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['get', 'patch'], url_path='me', detail=False)
     def me(self, request):
         u = request.user
         if request.method.__eq__('PATCH'):
@@ -117,8 +166,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             u = s.save()
         return Response(serializers.UserSerializer(u).data, status=status.HTTP_200_OK)
 
-    @action(methods=['post'], detail=False, url_path='me/change-password',
-            permission_classes=[permissions.IsAuthenticated])
+    @action(methods=['post'], detail=False, url_path='me/change-password')
     def change_password(self, request):
 
         s = serializers.ChangePasswordSerializer(data=request.data, context={'request': request})
@@ -130,34 +178,33 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
 
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['get', 'post'], detail=False, url_path='me/apply',
-            permission_classes=[perms.IsStudent], parser_classes=[parsers.MultiPartParser])
+    @action(methods=['get', 'post'], detail=False, url_path='me/apply', parser_classes=[parsers.MultiPartParser])
     def apply_instructor(self, request):
-        # Lấy đơn ứng tuyển của user hiện tại
         application = InstructorApplication.objects.filter(user=request.user).first()
 
-        # TRƯỜNG HỢP XEM ĐƠN (GET)
         if request.method == 'GET':
             if not application:
                 return Response({"detail": "Bạn chưa nộp đơn nào."}, status=status.HTTP_404_NOT_FOUND)
             serializer = serializers.ApplySerializer(application)
             return Response(serializer.data)
 
-        # TRƯỜNG HỢP NỘP ĐƠN (POST)
         if request.method == 'POST':
             if application:
-                return Response(
-                    {"detail": "Bạn đã nộp đơn rồi. Trạng thái hiện tại: " + application.status},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"detail": "Bạn đã nộp đơn rồi. Trạng thái hiện tại: " + application.status},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             serializer = serializers.ApplySerializer(data=request.data)
             if serializer.is_valid():
-                # Quan trọng: Gán user từ request vào đây
                 serializer.save(user=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'], detail=False, url_path='me/enrollments')
+    def my_enrollments(self, request):
+        enrollments = Enrollment.objects.filter(student=request.user)
+        serializer = serializers.EnrollmentDetailSerializer(enrollments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ApplicationViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.UpdateModelMixin):
@@ -210,16 +257,11 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
     serializer_class = serializers.LessonSerializer
 
     def get_permissions(self):
-        if self.action == 'retrieve':
+        if self.action in ['retrieve', 'complete']:
             return [perms.IsEnrolled()]
-
         if self.action in ['partial_update', 'destroy', 'add_tags']:
-            return [perms.IsInstructor(), perms.IsCourseOwner()]
-
-        if self.action == 'list':
-            return [perms.IsAdmin()]
-
-        return [permissions.AllowAny()]
+            return [perms.IsCourseOwner()]
+        return [perms.IsAdmin()]
 
     @action(methods=['post'], detail=True, url_path='tags')
     def add_tags(self, request, pk=None):
@@ -236,6 +278,26 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
         serializer = self.get_serializer(lesson)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(methods=['post'], detail=True, url_path='complete')
+    def complete(self, request, pk=None):
+        lesson = self.get_object()
+        enrollment = Enrollment.objects.filter(student=request.user, course=lesson.course).first()
+
+        if not enrollment:
+            return Response({"detail": "Không tìm thấy thông tin đăng ký."}, status=status.HTTP_404_NOT_FOUND)
+
+        progress, created = LessonProgress.objects.get_or_create(enrollment=enrollment, lesson=lesson,
+                                                                 defaults={'status': LessonProgress.Status.COMPLETED})
+
+        if not created and progress.status != LessonProgress.Status.COMPLETED:
+            progress.status = LessonProgress.Status.COMPLETED
+            progress.save()
+
+        enrollment.refresh_from_db()
+
+        return Response({"detail": "Đã đánh dấu hoàn thành bài học.",
+                         "current_progress": enrollment.progress}, status=status.HTTP_200_OK)
+
 
 class TagViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                  mixins.DestroyModelMixin):
@@ -247,8 +309,254 @@ class TagViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
     def get_permissions(self):
         if self.action == 'list':
             return [permissions.IsAuthenticated()]
+        return [perms.IsAdmin()]
 
-        if self.action in ['create', 'partial_update', 'destroy']:
-            return [perms.IsAdmin()]
 
-        return [permissions.AllowAny()]
+class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
+    http_method_names = ['get', 'post', 'head', 'options']
+    queryset = Payment.objects.all()
+    serializer_class = serializers.PaymentSerializer
+
+    def get_permissions(self):
+        if self.action == 'confirm_cash':
+            return [perms.IsPaymentCourseInstructor()]
+        if self.action == 'process':
+            return [perms.IsPaymentStudentOwner()]
+        if self.action in ['list', 'retrieve']:
+            return [
+                permissions.IsAuthenticated(),
+                (perms.IsAdmin | perms.IsPaymentStudentOwner | perms.IsPaymentCourseInstructor)()
+            ]
+        if self.action in ['momo_ipn', 'momo_return', 'zalopay_callback', 'stripe_webhook', 'paypal_return']:
+            return [permissions.AllowAny()]
+
+        return [permissions.IsAuthenticated()]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not user or user.is_anonymous:
+            return Payment.objects.none()
+
+        user_role = getattr(user, 'role', None)
+
+        if user_role == User.Role.ADMIN:
+            return Payment.objects.all()
+
+        if user_role == User.Role.INSTRUCTOR:
+            return Payment.objects.filter(enrollment__course__instructor=user)
+
+        return Payment.objects.filter(enrollment__student=user)
+
+    @action(methods=['post'], detail=True, url_path='process')
+    def process(self, request, pk=None):
+        payment = self.get_object()
+
+        if payment.is_successful:
+            return Response({"detail": "Giao dịch này đã được xác nhận thanh toán trước đó."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        method_name = request.data.get('payment_method')
+        if method_name not in dict(Payment.Method.choices):
+            return Response({"detail": "Phương thức thanh toán không hợp lệ."}, status=status.HTTP_400_BAD_REQUEST)
+
+        payment.payment_method = method_name
+        payment.save(update_fields=['payment_method'])
+
+        try:
+            gateway = PaymentFactory.get_payment_gateway(payment.payment_method)
+            payment_info = gateway.create_payment(
+                enrollment=payment.enrollment,
+                amount=float(payment.amount)
+            )
+
+            if payment_info.get('transaction_id'):
+                payment.transaction_id = payment_info['transaction_id']
+                payment.save(update_fields=['transaction_id'])
+
+            return Response(payment_info, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(methods=['post'], detail=True, url_path='confirm_cash')
+    def confirm_cash(self, request, pk=None):
+        payment = self.get_object()
+
+        if payment.is_successful:
+            return Response({"detail": "Giao dịch này đã được xác nhận thanh toán trước đó."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        payment.payment_method = Payment.Method.CASH
+        payment.is_successful = True
+        payment.save(update_fields=['is_successful'])
+
+        return Response({
+            "message": "Đã xác nhận thu tiền mặt thành công. Khóa học đã được kích hoạt cho sinh viên.",
+            "payment": serializers.PaymentSerializer(payment).data
+        }, status=status.HTTP_200_OK)
+
+    # ==========================================
+    # 1. MOMO IPN (Webhook)
+    # ==========================================
+    @action(methods=['post'], detail=False, url_path='momo-ipn')
+    def momo_ipn(self, request):
+        data = request.data
+        order_id = data.get('orderId')  # Lấy transaction_id
+        
+        if not order_id:
+            return Response({"message": "Thiếu orderId"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                # Sử dụng select_for_update() để khóa bản ghi, chống Double-spending (Race Condition)
+                payment = Payment.objects.select_for_update().get(transaction_id=order_id)
+
+                # Tránh xử lý lại nếu đã thành công trước đó
+                if payment.is_successful:
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                gateway = PaymentFactory.get_payment_gateway(Payment.Method.MOMO)
+
+                # Hàm verify_payment đã bao gồm check resultCode == 0 và check chữ ký HMAC
+                if gateway.verify_payment(data):
+                    # Kiểm tra đối chiếu số tiền để tránh việc hacker giả mạo số tiền (dù khó vì có signature)
+                    if float(data.get('amount', 0)) != float(payment.amount):
+                        return Response({"message": "Số tiền thanh toán không khớp"}, status=status.HTTP_400_BAD_REQUEST)
+
+                    payment.is_successful = True
+                    payment.save(update_fields=['is_successful'])
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+                else:
+                    return Response({"message": "Xác thực chữ ký MoMo thất bại"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Payment.DoesNotExist:
+            return Response({"message": "Không tìm thấy giao dịch"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'], url_path='momo-return')
+    def momo_return(self, request):
+        result_code = request.query_params.get('resultCode')
+        order_id = request.query_params.get('orderId')
+        message = request.query_params.get('message')
+
+        if str(result_code) == '0':
+            return Response({
+                "status": "success",
+                "message": "Thanh toán thành công!",
+                "order_id": order_id
+            })
+        else:
+            return Response({
+                "status": "failed",
+                "message": f"Thanh toán thất bại: {message}",
+                "order_id": order_id
+            }, status=400)
+
+    # ==========================================
+    # 2. ZALOPAY CALLBACK (Webhook)
+    # ==========================================
+    @action(methods=['post'], detail=False, url_path='zalopay-callback')
+    def zalopay_callback(self, request):
+        gateway = PaymentFactory.get_payment_gateway(Payment.Method.ZALOPAY)
+
+        # ZaloPay yêu cầu trả về chuẩn {"return_code": x, "return_message": y}
+        if gateway.verify_payment(request.data):
+            try:
+                # ZaloPay gói toàn bộ dữ liệu thật vào một chuỗi JSON trong field 'data'
+                data_str = request.data.get('data')
+                cb_data = json.loads(data_str)
+                app_trans_id = cb_data.get('app_trans_id')
+                amount = cb_data.get('amount')
+
+                if not app_trans_id:
+                    return Response({"return_code": 0, "return_message": "Missing app_trans_id"}, status=status.HTTP_200_OK)
+
+                with transaction.atomic():
+                    # Sử dụng select_for_update() để khóa bản ghi, chống Double-spending
+                    payment = Payment.objects.select_for_update().get(transaction_id=app_trans_id)
+                    if not payment.is_successful:
+                        # Kiểm tra đối chiếu số tiền
+                        if float(amount) != float(payment.amount):
+                            return Response({"return_code": 0, "return_message": "Amount mismatch"}, status=status.HTTP_200_OK)
+                            
+                        payment.is_successful = True
+                        payment.save(update_fields=['is_successful'])
+
+                # Báo với ZaloPay là ta đã nhận và xử lý thành công
+                return Response({"return_code": 1, "return_message": "success"}, status=status.HTTP_200_OK)
+
+            except Payment.DoesNotExist:
+                return Response({"return_code": 0, "return_message": "Order not found"}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"return_code": 0, "return_message": str(e)}, status=status.HTTP_200_OK)
+        else:
+            return Response({"return_code": -1, "return_message": "mac not equal"}, status=status.HTTP_200_OK)
+
+    # ==========================================
+    # 3. STRIPE WEBHOOK
+    # ==========================================
+    @action(methods=['post'], detail=False, url_path='stripe-webhook')
+    def stripe_webhook(self, request):
+        # Bắt buộc phải lấy body thô (raw bytes) để Stripe tính toán đúng chữ ký
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+
+        request_data = {
+            'raw_body': payload,
+            'stripe_signature': sig_header
+        }
+
+        gateway = PaymentFactory.get_payment_gateway(Payment.Method.STRIPE)
+
+        # Hàm verify_payment sẽ tự check sự kiện 'checkout.session.completed' và chữ ký
+        if gateway.verify_payment(request_data):
+            # Parse payload thành JSON để trích xuất Session ID
+            event = json.loads(payload)
+            # Dù verify_payment đã check type, ta vẫn parse để lấy object
+            if event['type'] == 'checkout.session.completed':
+                session_id = event['data']['object']['id']
+
+                try:
+                    with transaction.atomic():
+                        payment = Payment.objects.select_for_update().get(transaction_id=session_id)
+                        if not payment.is_successful:
+                            payment.is_successful = True
+                            payment.save(update_fields=['is_successful'])
+                except Payment.DoesNotExist:
+                    pass  # Bỏ qua nếu là session không thuộc hệ thống (VD: test trên dashboard)
+
+        # Luôn trả về 200 để Stripe biết ta đã nhận được Webhook
+        return Response(status=status.HTTP_200_OK)
+
+    # ==========================================
+    # 4. PAYPAL RETURN / CAPTURE
+    # ==========================================
+    @action(methods=['get', 'post'], detail=False, url_path='paypal-return')
+    def paypal_return(self, request):
+        # Khi PayPal redirect về, ID đơn hàng nằm trong param 'token'
+        token = request.query_params.get('token') or request.data.get('token')
+
+        if not token:
+            return Response({"detail": "Thiếu mã xác thực (token) từ PayPal."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                payment = Payment.objects.select_for_update().get(transaction_id=token)
+
+                if payment.is_successful:
+                    return Response({"message": "Đơn hàng này đã được thanh toán thành công."}, status=status.HTTP_200_OK)
+
+                gateway = PaymentFactory.get_payment_gateway(Payment.Method.PAYPAL)
+
+                # Gọi API Capture PayPal bên trong transaction block để tránh Capture nhiều lần gây lỗi 400
+                if gateway.verify_payment({'token': token}):
+                    payment.is_successful = True
+                    payment.save(update_fields=['is_successful'])
+                    return Response({"message": "Thanh toán PayPal thành công! Khóa học đã được mở."},
+                                    status=status.HTTP_200_OK)
+                else:
+                    return Response({"message": "Giao dịch PayPal thất bại hoặc chưa được phê duyệt."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+        except Payment.DoesNotExist:
+            return Response({"detail": "Không tìm thấy giao dịch tương ứng."}, status=status.HTTP_404_NOT_FOUND)

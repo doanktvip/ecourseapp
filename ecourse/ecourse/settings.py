@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os
+from dotenv import load_dotenv
 import cloudinary.api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,7 +28,7 @@ SECRET_KEY = 'django-insecure-knk8f1uc392i*ty3y(hox-)&47tn-6lo-s58=#1he$-1lpgm$+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -138,5 +139,52 @@ cloudinary.config(
     api_key="644913513335787",
     api_secret="3GyWpk9k_hVPbrHy1blNOyjIwyA"
 )
-CLIENT_ID = '6jdbH6w5OPQ8qsbXhnTb20wmUTVKe1oRajGxaasC'
-CLIENT_SECRET = 'OqM03kxqmgUIwxkrwEMZCPB4LVHaxraubQw9MtpX7xBWgoBjNdSCA3t5edfJkMFSoA8UmEeorYvkrmJpAVO4tSNph0IP4kzkbDMHX5JLj99WWDBY7JR6FErybKKzN4s6'
+load_dotenv()
+
+BASE_DOMAIN = os.getenv('BASE_DOMAIN', 'http://localhost:8000')
+
+# ==========================================
+# 1. CẤU HÌNH MOMO
+# ==========================================
+MOMO_CONFIG = {
+    'PARTNER_CODE': os.getenv('MOMO_PARTNER_CODE', ''),
+    'ACCESS_KEY': os.getenv('MOMO_ACCESS_KEY', ''),
+    'SECRET_KEY': os.getenv('MOMO_SECRET_KEY', ''),
+    'ENDPOINT': os.getenv('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
+    'RETURN_URL': f"{BASE_DOMAIN}/payments/momo-return/",
+    'NOTIFY_URL': os.getenv('MOMO_NOTIFY_URL', f"{BASE_DOMAIN}/payments/momo-ipn/"),
+}
+
+# ==========================================
+# 2. CẤU HÌNH ZALOPAY
+# ==========================================
+ZALOPAY_CONFIG = {
+    'APP_ID': os.getenv('ZALOPAY_APP_ID', ''),
+    'KEY1': os.getenv('ZALOPAY_KEY1', ''),
+    'KEY2': os.getenv('ZALOPAY_KEY2', ''),
+    'ENDPOINT': os.getenv('ZALOPAY_ENDPOINT', 'https://sb-openapi.zalopay.vn/v2/create'),
+    'REDIRECT_URL': f"{BASE_DOMAIN}/payments/zalopay-return/",
+    'CALLBACK_URL': os.getenv('ZALOPAY_CALLBACK_URL', f"{BASE_DOMAIN}/payments/zalopay-callback/"),
+}
+
+# ==========================================
+# 3. CẤU HÌNH STRIPE
+# ==========================================
+STRIPE_CONFIG = {
+    'PUBLISHABLE_KEY': os.getenv('STRIPE_PUBLIC_KEY', ''),
+    'SECRET_KEY': os.getenv('STRIPE_SECRET_KEY', ''),
+    'WEBHOOK_SECRET': os.getenv('STRIPE_WEBHOOK_SECRET', ''),
+    'RETURN_URL': f"{BASE_DOMAIN}/payments/stripe-return/",
+    'CANCEL_URL': f"{BASE_DOMAIN}/payments/stripe-cancel/"
+}
+
+# ==========================================
+# 4. CẤU HÌNH PAYPAL
+# ==========================================
+PAYPAL_CONFIG = {
+    'MODE': 'sandbox' if os.getenv('PAYPAL_IS_SANDBOX', 'True') == 'True' else 'live',
+    'CLIENT_ID': os.getenv('PAYPAL_CLIENT_ID', ''),
+    'CLIENT_SECRET': os.getenv('PAYPAL_SECRET', ''),
+    'RETURN_URL': f"{BASE_DOMAIN}/payments/paypal-return/",
+    'CANCEL_URL': f"{BASE_DOMAIN}/payments/paypal-cancel/"
+}
