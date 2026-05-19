@@ -104,19 +104,27 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'courses.validators.PasswordLengthValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': 'courses.validators.PasswordWhitespaceValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': 'courses.validators.PasswordAsciiValidator',
     },
 ]
 
+CUSTOM_USERNAME_VALIDATORS = [
+    {
+        'NAME': 'courses.validators.UsernameLengthValidator',
+    },
+    {
+        'NAME': 'courses.validators.UsernameWhitespaceValidator',
+    },
+    {
+        'NAME': 'courses.validators.UsernameAsciiValidator',
+    },
+]
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
