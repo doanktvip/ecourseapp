@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from courses.models import (Course, Category, Tag, User, InstructorApplication, Lesson, Enrollment, Payment, Comment,
                             CourseReview)
+from courses.validators import validate_custom_username
 from django.contrib.auth.password_validation import validate_password
 
 
@@ -63,12 +64,15 @@ class AddTagsSerializer(serializers.Serializer):
 
 
 class UserSerializer(SimpleUserSerializer):
+    username = serializers.CharField(validators=[validate_custom_username])
+
     class Meta:
         model = SimpleUserSerializer.Meta.model
         fields = SimpleUserSerializer.Meta.fields + ['id', 'username', 'password']
         extra_kwargs = {
             'password': {
                 'write_only': True,
+                'validators': [validate_password]
             }
         }
 
@@ -176,22 +180,9 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'content', 'user', 'lesson', 'parent']
         read_only_fields = ['id', 'user', 'lesson']
-        # extra_kwargs = {
-        #     'lesson': {
-        #         'write_only': True
-        #     }
-        # }
-
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance)
-    #
-    #     data['user'] = UserSerializer(instance.user).data
-    #
-    #     return data
 
 
 class CourseReviewSerializer(serializers.ModelSerializer):
-    # Lấy toàn bộ thông tin của user đó (Dictionary lồng)
     user = SimpleUserSerializer(read_only=True)
 
     class Meta:

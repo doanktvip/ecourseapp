@@ -11,11 +11,11 @@ User = get_user_model()
 
 print("=== BẮT ĐẦU QUÁ TRÌNH KHỞI TẠO DỮ LIỆU MẪU ===")
 
-PASSWORD = '123'
+PASSWORD = '123456'
 
 print("\n[1/7] Đang tạo tài khoản Users (Admin, Giảng viên, Sinh viên)...")
 # --- Admin ---
-admin = User.objects.create_superuser(username='admin', email='admin@gmail.com', password=PASSWORD, role='ADMIN')
+admin = User.objects.create_superuser(username='admin123', email='admin@gmail.com', password=PASSWORD, role='ADMIN')
 
 # --- Giảng viên ---
 gv_da_duyet = User.objects.create_user(
@@ -33,8 +33,8 @@ gv_bi_tu_choi = User.objects.create_user(
 
 # --- Sinh viên ---
 sv_an = User.objects.create_user(
-    username='sv_an', email='an@gmail.com', password=PASSWORD, role='STUDENT',
-    first_name='An', last_name='Nguyễn Hữu',
+    username='sv_nam', email='an@gmail.com', password=PASSWORD, role='STUDENT',
+    first_name='Nam', last_name='Nguyễn Hữu',
 )
 sv_binh = User.objects.create_user(
     username='sv_binh', email='binh@gmail.com', password=PASSWORD, role='STUDENT',
