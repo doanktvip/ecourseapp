@@ -40,15 +40,8 @@ const AccountStack = createNativeStackNavigator();
 // 1. HOME STACK: Luồng màn hình Trang chủ (Tìm kiếm, Chi tiết, So sánh)
 // =========================================================================
 function HomeStackNavigator() {
-  const { theme } = useTheme();
   return (
-    <HomeStack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.navBarBg },
-        headerTintColor: theme.textPrimary,
-        headerTitleStyle: { fontWeight: 'bold' },
-      }}
-    >
+    <HomeStack.Navigator>
       <HomeStack.Screen 
         name="HomeMain" 
         component={Home} 
@@ -77,15 +70,8 @@ function HomeStackNavigator() {
 // 2. MY COURSES STACK: Tiến độ học tập & Giảng dạy
 // =========================================================================
 function MyCoursesStackNavigator() {
-  const { theme } = useTheme();
   return (
-    <MyCoursesStack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.navBarBg },
-        headerTintColor: theme.textPrimary,
-        headerTitleStyle: { fontWeight: 'bold' },
-      }}
-    >
+    <MyCoursesStack.Navigator>
       <MyCoursesStack.Screen 
         name="MyCoursesMain" 
         component={MyCourses} 
@@ -114,15 +100,8 @@ function MyCoursesStackNavigator() {
 // 3. CHAT STACK: Trao đổi trực tuyến qua Firebase Realtime Database
 // =========================================================================
 function ChatStackNavigator() {
-  const { theme } = useTheme();
   return (
-    <ChatStack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.navBarBg },
-        headerTintColor: theme.textPrimary,
-        headerTitleStyle: { fontWeight: 'bold' },
-      }}
-    >
+    <ChatStack.Navigator>
       <ChatStack.Screen 
         name="ChatListMain" 
         component={ChatList} 
@@ -141,15 +120,8 @@ function ChatStackNavigator() {
 // 4. STATS STACK: Thống kê và Báo cáo (Giảng viên & Admin)
 // =========================================================================
 function StatsStackNavigator() {
-  const { theme } = useTheme();
   return (
-    <StatsStack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.navBarBg },
-        headerTintColor: theme.textPrimary,
-        headerTitleStyle: { fontWeight: 'bold' },
-      }}
-    >
+    <StatsStack.Navigator>
       <StatsStack.Screen 
         name="StatsMain" 
         component={StatsDashboard} 
@@ -163,15 +135,8 @@ function StatsStackNavigator() {
 // 5. ACCOUNT STACK: Thông tin cá nhân, cài đặt & Duyệt của Admin
 // =========================================================================
 function AccountStackNavigator() {
-  const { theme } = useTheme();
   return (
-    <AccountStack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.navBarBg },
-        headerTintColor: theme.textPrimary,
-        headerTitleStyle: { fontWeight: 'bold' },
-      }}
-    >
+    <AccountStack.Navigator>
       <AccountStack.Screen 
         name="ProfileMain" 
         component={Profile} 
@@ -207,49 +172,10 @@ function AccountStackNavigator() {
 // 6. MAIN BOTTOM TAB: Thanh điều hướng chính ở đáy màn hình
 // =========================================================================
 function MainTabNavigator() {
-  const { theme } = useTheme();
   const { user } = useUser();
-  const insets = useSafeAreaInsets();
 
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false, // Ẩn header của Tab để sử dụng header của từng Stack con bên trong
-        tabBarStyle: {
-          backgroundColor: theme.navBarBg,
-          borderTopWidth: 1,
-          borderTopColor: theme.borderLight,
-          height: 60 + (insets.bottom > 0 ? insets.bottom - 8 : 0),
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-          paddingTop: 8,
-          shadowOpacity: 0.05,
-          elevation: 8,
-        },
-        tabBarActiveTintColor: theme.navIconActive,
-        tabBarInactiveTintColor: theme.navIconDefault,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-        },
-        tabBarIcon: ({ color, size, focused }) => {
-          let iconName;
-
-          if (route.name === 'HomeTab') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'MyCoursesTab') {
-            iconName = focused ? 'book' : 'book-outline';
-          } else if (route.name === 'ChatTab') {
-            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
-          } else if (route.name === 'StatsTab') {
-            iconName = focused ? 'bar-chart' : 'bar-chart-outline';
-          } else if (route.name === 'AccountTab') {
-            iconName = focused ? 'person' : 'person-outline';
-          }
-
-          return <Ionicons name={iconName} size={focused ? 24 : 22} color={color} />;
-        },
-      })}
-    >
+    <Tab.Navigator>
       {/* 1. Tab Trang chủ (Mọi người dùng) */}
       <Tab.Screen 
         name="HomeTab" 
@@ -294,16 +220,9 @@ function MainTabNavigator() {
 // 7. ROOT NATIVE STACK: Navigator gốc bao quát toàn bộ ứng dụng
 // =========================================================================
 export default function AppNavigator() {
-  const { theme } = useTheme();
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.navBarBg },
-        headerTintColor: theme.textPrimary,
-        headerTitleStyle: { fontWeight: 'bold' },
-      }}
-    >
+    <Stack.Navigator>
       {/* Luồng chính chứa thanh Bottom Tabs */}
       <Stack.Screen 
         name="Main" 

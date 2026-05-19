@@ -1,19 +1,15 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider, MyUserProvider } from './configs/Contexts';
-import AppNavigator from './navigation/AppNavigator';
+import { View } from "react-native"
+import Styles from "./styles/Styles";
+import Header from "./components/Header";
+import Home from "./screens/Home/Home";
 
-export default function App() {
+const App = () => {
   return (
-    <SafeAreaProvider>
-      <MyUserProvider>
-        <ThemeProvider>
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
-        </ThemeProvider>
-      </MyUserProvider>
-    </SafeAreaProvider>
+    <View style={Styles.container}>
+        <Header />
+        <Home />
+
+    </View>
   );
 }
+export default App;
