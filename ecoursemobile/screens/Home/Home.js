@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { use, useEffect, useState } from "react";
 import Apis, { endpoints } from "../../configs/Apis";
-import {Card} from "react-native-paper";
+import {Card, Searchbar} from "react-native-paper";
 
 
 
@@ -12,6 +12,7 @@ const Home = () => {
     const [categories, setCategories] = useState([]);
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [q,setQ] = useState("");
 
 
     const loadCategories = async () => {
@@ -23,6 +24,10 @@ const Home = () => {
         try {
             setLoading(true);
             let url=`${endpoints['courses']}`;
+            if (q) {
+                url=`${url}?&search=${q}`;
+            }
+            console.info(url)
             let res= await Apis.get(url);
             setCourses(res.data.results || res.data);
 
@@ -39,8 +44,12 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
-        loadCourses();
-    }, []);
+        let timer = setTimeout(() => {
+            loadCourses();
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [q]);
 
     return (
         <ScrollView style={Styles.container}>
@@ -59,8 +68,7 @@ const Home = () => {
 
             </View>
             <View style={Styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#888" style={Styles.searchIcon} />
-                <TextInput 
+                <Searchbar value={q} onChangeText={setQ}
                     style={Styles.searchInput} 
                     placeholder="Tìm kiếm khóa học, giảng viên,..." 
                 />
@@ -90,11 +98,34 @@ const Home = () => {
                 {courses?.map(course => (<Card 
                     key={course.id} 
                     style={Styles.cardContainer}>
-                    <Card.Cover source={{ uri: course.image }} />
+                    <View style={{ position: 'relative' }}>
+                        <Card.Cover source={{ uri: course.image }} />
+                        <View style={Styles.priceBadge}>
+                            <Text style={Styles.priceBadgeText}>
+                                {course.fee && parseFloat(course.fee) > 0 ? `${parseFloat(course.fee).toLocaleString()} đ`: 'Miễn phí'}
+                            </Text>
+                        </View>
+                    </View>
                     <Card.Content style={Styles.cardContent}>
                         <Text style={Styles.courseTitle} numberOfLines={2}>
                             {course.subject}
                         </Text>
+                        <View style={Styles.courseInfoRow}>
+                            <Text style={Styles.courseInstructor}>
+                                Giảng viên: {course.instructor.last_name +' '+ course.instructor.first_name || "Giảng viên mẫu"}
+                            </Text>
+                        </View>
+                        <View style={Styles.courseInfoRow}>
+                            <Text style={Styles.courseRating}>
+                                 <Ionicons name="star" size={15} color="gold" paddingRight={5} />{course.average_rating || "0.0"}
+                            </Text>
+                            
+                            <Text style={Styles.courseLessons}>
+                                {course.lesson_count || "0"} bài học
+                            </Text>
+                        </View>
+
+
                     </Card.Content>
                 </Card>
                 ))}

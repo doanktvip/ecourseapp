@@ -2,7 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme, useUser } from '../configs/Contexts';
+import { useUser } from '../configs/Contexts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // === Import các màn hình chính (Screens) ===
@@ -36,31 +36,48 @@ const ChatStack = createNativeStackNavigator();
 const StatsStack = createNativeStackNavigator();
 const AccountStack = createNativeStackNavigator();
 
+// Helper hook to get unified header options with clean premium look
+const useHeaderOptions = () => {
+  return {
+    headerStyle: {
+      backgroundColor: '#ffffff',
+    },
+    headerTintColor: '#212529',
+    headerTitleStyle: {
+      fontWeight: 'bold',
+      fontSize: 18,
+    },
+    headerShadowVisible: false,
+  };
+}
+
 // =========================================================================
 // 1. HOME STACK: Luồng màn hình Trang chủ (Tìm kiếm, Chi tiết, So sánh)
 // =========================================================================
-function HomeStackNavigator() {
+const HomeStackNavigator = () => {
+  const headerOptions = useHeaderOptions();
+
   return (
-    <HomeStack.Navigator>
-      <HomeStack.Screen 
-        name="HomeMain" 
-        component={Home} 
-        options={{ title: 'eCourse' }} 
+    <HomeStack.Navigator screenOptions={headerOptions}>
+      <HomeStack.Screen
+        name="HomeMain"
+        component={Home}
+        options={{ title: 'eCourse' }}
       />
-      <HomeStack.Screen 
-        name="CourseDetail" 
-        component={CourseDetail} 
-        options={{ title: 'Chi tiết khóa học' }} 
+      <HomeStack.Screen
+        name="CourseDetail"
+        component={CourseDetail}
+        options={{ title: 'Chi tiết khóa học' }}
       />
-      <HomeStack.Screen 
-        name="LessonDetail" 
-        component={LessonDetail} 
-        options={{ title: 'Bài học trực tuyến' }} 
+      <HomeStack.Screen
+        name="LessonDetail"
+        component={LessonDetail}
+        options={{ title: 'Bài học trực tuyến' }}
       />
-      <HomeStack.Screen 
-        name="CourseCompare" 
-        component={CourseCompare} 
-        options={{ title: 'So sánh khóa học' }} 
+      <HomeStack.Screen
+        name="CourseCompare"
+        component={CourseCompare}
+        options={{ title: 'So sánh khóa học' }}
       />
     </HomeStack.Navigator>
   );
@@ -69,28 +86,30 @@ function HomeStackNavigator() {
 // =========================================================================
 // 2. MY COURSES STACK: Tiến độ học tập & Giảng dạy
 // =========================================================================
-function MyCoursesStackNavigator() {
+const MyCoursesStackNavigator = () => {
+  const headerOptions = useHeaderOptions();
+
   return (
-    <MyCoursesStack.Navigator>
-      <MyCoursesStack.Screen 
-        name="MyCoursesMain" 
-        component={MyCourses} 
-        options={{ title: 'Khóa học của tôi' }} 
+    <MyCoursesStack.Navigator screenOptions={headerOptions}>
+      <MyCoursesStack.Screen
+        name="MyCoursesMain"
+        component={MyCourses}
+        options={{ title: 'Khóa học của tôi' }}
       />
-      <MyCoursesStack.Screen 
-        name="CourseDetail" 
-        component={CourseDetail} 
-        options={{ title: 'Chi tiết khóa học' }} 
+      <MyCoursesStack.Screen
+        name="CourseDetail"
+        component={CourseDetail}
+        options={{ title: 'Chi tiết khóa học' }}
       />
-      <MyCoursesStack.Screen 
-        name="LessonDetail" 
-        component={LessonDetail} 
-        options={{ title: 'Bài học trực tuyến' }} 
+      <MyCoursesStack.Screen
+        name="LessonDetail"
+        component={LessonDetail}
+        options={{ title: 'Bài học trực tuyến' }}
       />
-      <MyCoursesStack.Screen 
-        name="StudentProgress" 
-        component={StudentProgress} 
-        options={{ title: 'Tiến độ học viên' }} 
+      <MyCoursesStack.Screen
+        name="StudentProgress"
+        component={StudentProgress}
+        options={{ title: 'Tiến độ học viên' }}
       />
     </MyCoursesStack.Navigator>
   );
@@ -99,17 +118,19 @@ function MyCoursesStackNavigator() {
 // =========================================================================
 // 3. CHAT STACK: Trao đổi trực tuyến qua Firebase Realtime Database
 // =========================================================================
-function ChatStackNavigator() {
+const ChatStackNavigator = () => {
+  const headerOptions = useHeaderOptions();
+
   return (
-    <ChatStack.Navigator>
-      <ChatStack.Screen 
-        name="ChatListMain" 
-        component={ChatList} 
-        options={{ title: 'Hộp thư hỗ trợ' }} 
+    <ChatStack.Navigator screenOptions={headerOptions}>
+      <ChatStack.Screen
+        name="ChatListMain"
+        component={ChatList}
+        options={{ title: 'Hộp thư hỗ trợ' }}
       />
-      <ChatStack.Screen 
-        name="ChatRoom" 
-        component={ChatRoom} 
+      <ChatStack.Screen
+        name="ChatRoom"
+        component={ChatRoom}
         options={{ headerShown: false }} // Ẩn header mặc định để dùng Custom Header trong ChatRoom
       />
     </ChatStack.Navigator>
@@ -119,13 +140,15 @@ function ChatStackNavigator() {
 // =========================================================================
 // 4. STATS STACK: Thống kê và Báo cáo (Giảng viên & Admin)
 // =========================================================================
-function StatsStackNavigator() {
+const StatsStackNavigator = () => {
+  const headerOptions = useHeaderOptions();
+
   return (
-    <StatsStack.Navigator>
-      <StatsStack.Screen 
-        name="StatsMain" 
-        component={StatsDashboard} 
-        options={{ title: 'Báo cáo thống kê' }} 
+    <StatsStack.Navigator screenOptions={headerOptions}>
+      <StatsStack.Screen
+        name="StatsMain"
+        component={StatsDashboard}
+        options={{ title: 'Báo cáo thống kê' }}
       />
     </StatsStack.Navigator>
   );
@@ -134,35 +157,37 @@ function StatsStackNavigator() {
 // =========================================================================
 // 5. ACCOUNT STACK: Thông tin cá nhân, cài đặt & Duyệt của Admin
 // =========================================================================
-function AccountStackNavigator() {
+const AccountStackNavigator = () => {
+  const headerOptions = useHeaderOptions();
+
   return (
-    <AccountStack.Navigator>
-      <AccountStack.Screen 
-        name="ProfileMain" 
-        component={Profile} 
-        options={{ title: 'Tài khoản' }} 
+    <AccountStack.Navigator screenOptions={headerOptions}>
+      <AccountStack.Screen
+        name="ProfileMain"
+        component={Profile}
+        options={{ title: 'Tài khoản' }}
       />
-      <AccountStack.Screen 
-        name="ApplyInstructor" 
-        component={ApplyInstructor} 
-        options={{ title: 'Đăng ký giảng viên' }} 
+      <AccountStack.Screen
+        name="ApplyInstructor"
+        component={ApplyInstructor}
+        options={{ title: 'Đăng ký giảng viên' }}
       />
-      <AccountStack.Screen 
-        name="CourseForm" 
-        component={CourseForm} 
-        options={({ route }) => ({ 
-          title: route.params?.course ? 'Chỉnh sửa khóa học' : 'Tạo khóa học mới' 
-        })} 
+      <AccountStack.Screen
+        name="CourseForm"
+        component={CourseForm}
+        options={({ route }) => ({
+          title: route.params?.course ? 'Chỉnh sửa khóa học' : 'Tạo khóa học mới'
+        })}
       />
-      <AccountStack.Screen 
-        name="StudentProgress" 
-        component={StudentProgress} 
-        options={{ title: 'Tiến độ học viên' }} 
+      <AccountStack.Screen
+        name="StudentProgress"
+        component={StudentProgress}
+        options={{ title: 'Tiến độ học viên' }}
       />
-      <AccountStack.Screen 
-        name="AdminVerifyDetails" 
-        component={VerifyInstructors} 
-        options={{ title: 'Duyệt đơn giảng viên' }} 
+      <AccountStack.Screen
+        name="AdminVerifyDetails"
+        component={VerifyInstructors}
+        options={{ title: 'Duyệt đơn giảng viên' }}
       />
     </AccountStack.Navigator>
   );
@@ -171,46 +196,82 @@ function AccountStackNavigator() {
 // =========================================================================
 // 6. MAIN BOTTOM TAB: Thanh điều hướng chính ở đáy màn hình
 // =========================================================================
-function MainTabNavigator() {
+const MainTabNavigator = () => {
   const { user } = useUser();
+  const insets = useSafeAreaInsets();
 
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'HomeTab') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'MyCoursesTab') {
+            iconName = focused ? 'book' : 'book-outline';
+          } else if (route.name === 'ChatTab') {
+            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          } else if (route.name === 'StatsTab') {
+            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'AccountTab') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#0d6efd',
+        tabBarInactiveTintColor: '#adb5bd',
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopColor: '#dee2e6',
+          borderTopWidth: 1,
+          paddingBottom: insets.bottom > 0 ? insets.bottom + 4 : 8,
+          paddingTop: 8,
+          height: 60 + (insets.bottom > 0 ? insets.bottom : 0),
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+        headerShown: false,
+      })}
+    >
       {/* 1. Tab Trang chủ (Mọi người dùng) */}
-      <Tab.Screen 
-        name="HomeTab" 
-        component={HomeStackNavigator} 
-        options={{ tabBarLabel: 'Trang chủ' }} 
+      <Tab.Screen
+        name="HomeTab"
+        component={HomeStackNavigator}
+        options={{ tabBarLabel: 'Trang chủ' }}
       />
 
-      {/* 2. Tab Khóa học của tôi (Chỉ hiển thị hoặc hữu ích nhất khi đã đăng nhập) */}
-      <Tab.Screen 
-        name="MyCoursesTab" 
-        component={MyCoursesStackNavigator} 
-        options={{ tabBarLabel: 'Khóa học' }} 
+      {/* 2. Tab Khóa học của tôi */}
+      <Tab.Screen
+        name="MyCoursesTab"
+        component={MyCoursesStackNavigator}
+        options={{ tabBarLabel: 'Khóa học' }}
       />
 
-      {/* 3. Tab Nhắn tin (Chỉ dành cho Học sinh & Giảng viên trao đổi) */}
-      <Tab.Screen 
-        name="ChatTab" 
-        component={ChatStackNavigator} 
-        options={{ tabBarLabel: 'Nhắn tin' }} 
+      {/* 3. Tab Nhắn tin */}
+      <Tab.Screen
+        name="ChatTab"
+        component={ChatStackNavigator}
+        options={{ tabBarLabel: 'Nhắn tin' }}
       />
 
-      {/* 4. Tab Thống kê (Chỉ hiển thị hoặc có nội dung khi vai trò là Giảng viên hoặc Admin) */}
+      {/* 4. Tab Thống kê (Chỉ giảng viên hoặc admin) */}
       {(user?.role === 'instructor' || user?.role === 'admin') && (
-        <Tab.Screen 
-          name="StatsTab" 
-          component={StatsStackNavigator} 
-          options={{ tabBarLabel: 'Thống kê' }} 
+        <Tab.Screen
+          name="StatsTab"
+          component={StatsStackNavigator}
+          options={{ tabBarLabel: 'Thống kê' }}
         />
       )}
 
-      {/* 5. Tab Tài khoản (Mọi người dùng để thiết lập Profile / Đăng nhập) */}
-      <Tab.Screen 
-        name="AccountTab" 
-        component={AccountStackNavigator} 
-        options={{ tabBarLabel: 'Tài khoản' }} 
+      {/* 5. Tab Tài khoản */}
+      <Tab.Screen
+        name="AccountTab"
+        component={AccountStackNavigator}
+        options={{ tabBarLabel: 'Tài khoản' }}
       />
     </Tab.Navigator>
   );
@@ -219,35 +280,38 @@ function MainTabNavigator() {
 // =========================================================================
 // 7. ROOT NATIVE STACK: Navigator gốc bao quát toàn bộ ứng dụng
 // =========================================================================
-export default function AppNavigator() {
+const AppNavigator = () => {
+  const headerOptions = useHeaderOptions();
 
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={headerOptions}>
       {/* Luồng chính chứa thanh Bottom Tabs */}
-      <Stack.Screen 
-        name="Main" 
-        component={MainTabNavigator} 
-        options={{ headerShown: false }} 
+      <Stack.Screen
+        name="Main"
+        component={MainTabNavigator}
+        options={{ headerShown: false }}
       />
 
       {/* Luồng xác thực đăng nhập (Khi đẩy lên dạng Modals hoặc đè lên Bottom Tabs) */}
-      <Stack.Screen 
-        name="Login" 
-        component={Login} 
-        options={{ title: 'Đăng nhập' }} 
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{ title: 'Đăng nhập' }}
       />
-      <Stack.Screen 
-        name="Register" 
-        component={Register} 
-        options={{ title: 'Đăng ký tài khoản' }} 
+      <Stack.Screen
+        name="Register"
+        component={Register}
+        options={{ title: 'Đăng ký tài khoản' }}
       />
 
       {/* Luồng thanh toán học phí (Đẩy đè toàn màn hình để học viên thao tác tập trung) */}
-      <Stack.Screen 
-        name="PaymentProcess" 
-        component={PaymentProcess} 
-        options={{ title: 'Thanh toán học phí' }} 
+      <Stack.Screen
+        name="PaymentProcess"
+        component={PaymentProcess}
+        options={{ title: 'Thanh toán học phí' }}
       />
     </Stack.Navigator>
   );
 }
+
+export default AppNavigator;

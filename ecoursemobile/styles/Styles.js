@@ -43,7 +43,6 @@ export default StyleSheet.create({
     searchInput: { 
         flex: 1,
         backgroundColor: '#f0f0f0', 
-        padding: 10, 
         borderRadius: 10
     },
     searchIcon: {
@@ -117,5 +116,49 @@ export default StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
         marginBottom: 5,
-    }
+    },
+    
+    courseInfoRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    // Chữ tên giảng viên
+    courseInstructor: {
+        fontSize: 14,
+        color: '#666',
+    },
+    // Chữ giá tiền (Màu đỏ nổi bật)
+    coursePrice: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#fff', 
+    },
+    // Điểm rating 
+    courseRating: {
+        fontSize: 14,
+        fontWeight: 'bold',
+    
+    },
+    // Số bài học
+    courseLessons: {
+        fontSize: 14,
+        color: '#555',
+    },
+    priceBadge: {
+        position: 'absolute',
+        top: 10,              
+        right: 10,             
+        backgroundColor: '#3064df', 
+        paddingHorizontal: 12, // Rộng hai bên trái phải
+        paddingVertical: 6,    // Cao trên dưới
+        borderRadius: 8,       
+    
+    },
+    priceBadgeText: {
+        color: '#ffffff',     
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
 });

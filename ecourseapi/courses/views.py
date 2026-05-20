@@ -38,7 +38,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
     http_method_names = ['get', 'post', 'patch', 'head', 'options', 'delete']
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_class = CourseFilter
-    search_fields = ['subject']
+    search_fields = ['subject','instructor__first_name', 'instructor__last_name']
     ordering_fields = ['id']
 
     def get_permissions(self):
