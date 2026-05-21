@@ -28,7 +28,7 @@ const Login = ({ route }) => {
     const nav = useNavigation();
     const [loading, setLoading] = useState(false);
     const [, dispatch] = useContext(MyUserContext);
-    const next = route.params?.next || "Main";
+    const next = route.params?.next;
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -66,7 +66,13 @@ const Login = ({ route }) => {
                     "payload": u.data
                 });
 
-                nav.navigate(next, route.params?.params);
+                if (next) {
+                    nav.navigate(next, route.params?.params);
+                } else if (nav.canGoBack()) {
+                    nav.goBack();
+                } else {
+                    nav.navigate("Main");
+                }
 
             } catch (ex) {
                 console.error(ex);
