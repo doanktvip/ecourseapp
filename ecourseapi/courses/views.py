@@ -48,7 +48,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
         if self.action == 'lessons':
             if self.request.method == 'POST':
                 return [perms.IsCourseOwner()]
-            return [perms.IsEnrolled()]
+            return [permissions.AllowAny()]
 
         if self.action == 'enrolls':
             return [perms.IsStudent()]

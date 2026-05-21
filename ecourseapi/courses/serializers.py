@@ -44,16 +44,19 @@ class CourseSerializer(ItemSerializer):
     category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category',
                                                      write_only=True)
     lesson_count = serializers.SerializerMethodField()
+    review_count=serializers.SerializerMethodField()
     enrollment = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = ['id', 'subject', 'description', 'fee', 'image', 'intro_video', 'average_rating',
-                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count', 'enrollment']
+                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count','review_count', 'enrollment']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue', 'instructor']
 
     def get_lesson_count(self,obj):
         return obj.lessons.count()
+    def get_review_count(self,obj):
+        return obj.reviews.count()
 
     def get_enrollment(self, obj):
         request = self.context.get('request')

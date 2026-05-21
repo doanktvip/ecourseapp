@@ -103,6 +103,15 @@ export default StyleSheet.create({
         fontWeight: '600',
         color: '#555',
     },
+    categoryItemSelected: {
+        backgroundColor: '#1877F2',
+        borderColor: '#1877F2', 
+    },
+    // ĐỔI MÀU CHỮ KHI ĐƯỢC CHỌN
+    categoryTextSelected: {
+        color: '#ffffff',
+        fontWeight: 'bold',
+    },
     //Khóa học
     cardContainer: {
         marginBottom: 20,
@@ -254,5 +263,65 @@ export default StyleSheet.create({
         height: '100%',
         backgroundColor: '#0d6efd',
         borderRadius: 3,
+    },
+    // ==========================================
+    // STYLES DÀNH CHO TRANG COURSE DETAIL
+    // ==========================================
+    
+    detailBannerImage: {
+        width: '100%',
+        height: 220,
+        resizeMode: 'cover',
+    },
+    card: {
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 16,
+        // Hiệu ứng đổ bóng cho iOS
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        // Hiệu ứng đổ bóng cho Android
+        elevation: 3, 
+    },
+    
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    
+    h1: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#333333',
+    },
+    h2: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333333',
+    },
+    title: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333333',
+    },
+    body: {
+        fontSize: 15,
+        color: '#555555',
+        lineHeight: 22,
+    },
+    small: {
+        fontSize: 13,
+        color: '#888888',
+    },
+    
+    // 5. Ảnh đại diện (Avatar) của giảng viên
+    avatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#eeeeee',
     },
 });
