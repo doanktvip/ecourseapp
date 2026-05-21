@@ -209,6 +209,8 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             return [permissions.IsAuthenticated()]
         if self.action in ['apply_instructor', 'my_enrollments']:
             return [perms.IsStudent()]
+        if self.action == 'my_courses':
+            return [(perms.IsInstructor | perms.IsAdmin)()]
         return [permissions.AllowAny()]
 
     @action(methods=['get', 'patch'], url_path='me', detail=False)
@@ -256,6 +258,17 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     def my_enrollments(self, request):
         enrollments = Enrollment.objects.filter(student=request.user)
         serializer = serializers.EnrollmentDetailSerializer(enrollments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='me/courses')
+    def my_courses(self, request):
+        user = request.user
+        if user.role == User.Role.INSTRUCTOR:
+            courses = Course.objects.filter(instructor=user, active=True)
+        else:
+            courses = Course.objects.filter(active=True)
+
+        serializer = serializers.CourseSerializer(courses, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

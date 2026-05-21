@@ -215,7 +215,7 @@ const ProfileMain = ({ navigation }) => {
             {/* ========================================================================= */}
             {/* CÁC COMPONENT MODAL TÁCH BIỆT (XỬ LÝ Ở THƯ MỤC MODEL) */}
             {/* ========================================================================= */}
-            
+
             {/* 1. Modal Thay đổi Avatar */}
             <AvatarModal
                 visible={changeAvatarVisible}
