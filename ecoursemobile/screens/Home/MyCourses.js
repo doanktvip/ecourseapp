@@ -31,23 +31,8 @@ const MyCoursesMain = ({ navigation }) => {
             setLoading(true);
             const token = await AsyncStorage.getItem('token');
             if (token) {
-                if (user.role === 'STUDENT') {
-                    const res = await authApis(token).get(endpoints['my-enrollments']);
-                    const mapped = (res.data || []).map(enrollment => ({
-                        id: enrollment.id,
-                        course: enrollment.course,
-                        progress: enrollment.progress || 0
-                    }));
-                    setCoursesList(mapped);
-                } else {
-                    const res = await authApis(token).get(endpoints['my-courses']);
-                    const mapped = (res.data || []).map(course => ({
-                        id: course.id,
-                        course: course,
-                        progress: null
-                    }));
-                    setCoursesList(mapped);
-                }
+                const res = await authApis(token).get(endpoints['my-courses']);
+                setCoursesList(res.data || []);
             }
         } catch (ex) {
             console.error("Lỗi tải khóa học của tôi:", ex);
@@ -144,18 +129,18 @@ const MyCoursesMain = ({ navigation }) => {
                 </View>
             ) : (
                 <View style={Styles.myCourseList}>
-                    {coursesList.map((item) => {
-                        const course = item.course;
+                    {coursesList.map((course) => {
                         if (!course) return null;
 
-                        const progress = item.progress;
+                        const enrollment = course.enrollment;
+                        const progress = enrollment ? enrollment.progress : null;
                         const instructorName = course.instructor
                             ? `GV: ${course.instructor.last_name || ''} ${course.instructor.first_name || ''}`
                             : 'GV: Giảng viên';
 
                         return (
                             <TouchableOpacity
-                                key={item.id}
+                                key={course.id}
                                 style={Styles.myCourseCard}
                                 onPress={() => navigation.navigate('CourseDetail', { courseId: course.id })}
                                 activeOpacity={0.8}
