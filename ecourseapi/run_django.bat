@@ -21,5 +21,8 @@ python "%~dp0manage.py" flush --no-input
 echo === Chen du lieu mau tu file seed_db.py ===
 python "%~dp0manage.py" shell < "%~dp0seed_db.py"
 
+echo === Tu dong tao ung dung OAuth2 Client ===
+python "%~dp0create_client.py"
+
 echo === Chay server Django ===
-python "%~dp0manage.py" runserver
+python "%~dp0manage.py" runserver 0.0.0.0:8000

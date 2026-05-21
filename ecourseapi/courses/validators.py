@@ -6,13 +6,13 @@ from django.utils.module_loading import import_string
 
 class PasswordLengthValidator:
     def validate(self, password, user=None):
-        if len(password) < 6 or len(password) > 20:
+        if len(password) < 6 or len(password) > 30:
             raise ValidationError(
-                "Mật khẩu phải có độ dài từ 6 đến 20 ký tự.",
+                "Mật khẩu phải có độ dài từ 6 đến 30 ký tự.",
             )
 
     def get_help_text(self):
-        return "Mật khẩu phải có độ dài từ 6 đến 20 ký tự."
+        return "Mật khẩu phải có độ dài từ 6 đến 30 ký tự."
 
 
 class PasswordWhitespaceValidator:
@@ -39,11 +39,11 @@ class PasswordAsciiValidator:
 
 class UsernameLengthValidator:
     def validate(self, username, user=None):
-        if len(username) < 6 or len(username) > 20:
-            raise ValidationError("Tên đăng nhập phải có độ dài từ 6 đến 20 ký tự.")
+        if len(username) < 6 or len(username) > 30:
+            raise ValidationError("Tên đăng nhập phải có độ dài từ 6 đến 30 ký tự.")
 
     def get_help_text(self):
-        return "Tên đăng nhập phải có độ dài từ 6 đến 20 ký tự."
+        return "Tên đăng nhập phải có độ dài từ 6 đến 30 ký tự."
 
 
 class UsernameWhitespaceValidator:

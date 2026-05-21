@@ -1,14 +1,14 @@
 import { Text, ScrollView } from 'react-native';
 
-const StudentProgress = () => {
+const ChatListMain = () => {
 
   return (
     <ScrollView>
       <Text>
-        Login
+        ChatListMain
       </Text>
     </ScrollView>
   );
 };
 
-export default StudentProgress;
+export default ChatListMain;

@@ -5,7 +5,7 @@ const PaymentProcess = () => {
   return (
     <ScrollView>
       <Text>
-        Login
+        PaymentProcess
       </Text>
     </ScrollView>
   );

@@ -58,6 +58,7 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'ecourse.middlewares.OAuth2InjectCredentialsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -94,7 +95,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ecoursedb',
         'USER': 'root',
-        'PASSWORD': 'hod2t123',
+        'PASSWORD': 'root',
         'HOST': ''  # mặc định localhost
     }
 }
@@ -140,7 +141,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-load_dotenv()
+load_dotenv(BASE_DIR / '.env')
 # Cloudinary
 cloudinary.config(
     cloud_name=os.getenv('CLOUD_NAME'),
@@ -202,3 +203,9 @@ PAYPAL_CONFIG = {
     'RETURN_URL': f"{BASE_DOMAIN}/webhooks/paypal/",
     'CANCEL_URL': f"{BASE_DOMAIN}/webhooks/paypal/"
 }
+
+# ==========================================
+# 5. CẤU HÌNH OAUTH2 SECURE CREDENTIALS
+# ==========================================
+OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID', '')
+OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET', '')

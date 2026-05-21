@@ -14,7 +14,17 @@ class CategorySerializer(serializers.ModelSerializer):
 class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'avatar']
+        fields = ['first_name', 'last_name', 'email', 'avatar', 'role']
+        read_only_fields = ['role']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.avatar:
+            try:
+                data['avatar'] = instance.avatar.url
+            except AttributeError:
+                data['avatar'] = f"https://res.cloudinary.com/db4bjqp4f/{instance.avatar}"
+        return data
 
 
 class ItemSerializer(serializers.ModelSerializer):

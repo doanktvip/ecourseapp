@@ -1,14 +1,14 @@
 import { Text, ScrollView } from 'react-native';
 
-const MyCourseMain = () => {
+const MyCoursesMain = () => {
 
   return (
     <ScrollView>
       <Text>
-        Login
+        MyCourseMain
       </Text>
     </ScrollView>
   );
 };
 
-export default MyCourseMain;
+export default MyCoursesMain;

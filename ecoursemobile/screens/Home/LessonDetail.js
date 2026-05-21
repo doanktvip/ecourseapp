@@ -5,7 +5,7 @@ const LessonDetail = () => {
   return (
     <ScrollView>
       <Text>
-        Login
+        LessonDetail
       </Text>
     </ScrollView>
   );
