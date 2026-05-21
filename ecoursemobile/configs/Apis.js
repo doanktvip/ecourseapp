@@ -2,7 +2,6 @@ import axios from 'axios';
 
 // Lấy thông tin cấu hình từ file môi trường (.env) hoặc dùng giá trị mặc định
 export const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
-export const CLIENT_ID = process.env.EXPO_PUBLIC_CLIENT_ID;
 
 // Định nghĩa toàn bộ danh sách các endpoints từ hệ thống ecourseapi
 export const endpoints = {
@@ -59,6 +58,8 @@ export const authApi = (token) => {
         }
     });
 };
+
+export const authApis = authApi;
 
 export default axios.create({
     baseURL: BASE_URL

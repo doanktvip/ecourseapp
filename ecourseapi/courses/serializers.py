@@ -14,7 +14,17 @@ class CategorySerializer(serializers.ModelSerializer):
 class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'avatar']
+        fields = ['first_name', 'last_name', 'email', 'avatar', 'role']
+        read_only_fields = ['role']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.avatar:
+            try:
+                data['avatar'] = instance.avatar.url
+            except AttributeError:
+                data['avatar'] = f"https://res.cloudinary.com/db4bjqp4f/{instance.avatar}"
+        return data
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -33,12 +43,16 @@ class CourseSerializer(ItemSerializer):
 
     category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category',
                                                      write_only=True)
+    lesson_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = ['id', 'subject', 'description', 'fee', 'image', 'intro_video', 'average_rating',
-                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor']
+                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue', 'instructor']
+
+    def get_lesson_count(self,obj):
+        return obj.lessons.count()
 
 
 class CourseDetailSerializer(CourseSerializer):

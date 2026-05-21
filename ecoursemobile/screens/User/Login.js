@@ -1,166 +1,183 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Text, 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  ActivityIndicator,
-  Alert
-} from 'react-native';
-import { useTheme, useUser } from '../../configs/Contexts';
-import { getGlobalStyles } from '../../styles/Styles';
-import { endpoints, authApi } from '../../configs/Apis';
-import axios from 'axios';
+import { Image, Text, TouchableOpacity, View, ScrollView, Alert } from "react-native";
+import Styles from "./Styles";
+import { Button, HelperText, TextInput } from "react-native-paper";
+import { useContext, useState } from "react";
+import Apis, { authApis, endpoints } from "../../configs/Apis";
+import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MyUserContext } from "../../configs/Contexts";
 import { Ionicons } from '@expo/vector-icons';
 
-export default function Login({ navigation }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => getGlobalStyles(theme), [theme]);
-  const { dispatch } = useUser();
+const Login = ({ route }) => {
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+    const userInfo = [{
+        field: 'username',
+        title: 'Tên tài khoản',
+        icon: 'account',
+        placeholder: 'Nhập tên tài khoản'
+    }, {
+        field: 'password',
+        title: 'Mật khẩu',
+        icon: 'lock',
+        placeholder: 'Nhập mật khẩu',
+        secureTextEntry: true
+    }];
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert('Thông báo', 'Vui lòng điền đầy đủ tài khoản và mật khẩu.');
-      return;
-    }
+    const [user, setUser] = useState({});
+    const [err, setErr] = useState(null);
+    const nav = useNavigation();
+    const [loading, setLoading] = useState(false);
+    const [, dispatch] = useContext(MyUserContext);
+    const next = route.params?.next || "Main";
 
-    setLoading(true);
-    try {
-      // Demo authentication simulation or API fetch
-      // In a real flow, you would make an OAuth2 call to endpoints['login']
-      // For this structural demonstration, we support both dummy testing and structured token calls.
-      
-      // Let's create a simulated login that logs in the user with different roles for testing:
-      // - admin / 123 -> Admin
-      // - instructor / 123 -> Instructor (Giảng viên)
-      // - student / 123 -> Student (Sinh viên)
-      
-      setTimeout(() => {
-        let role = 'student';
-        let name = 'Nguyễn Văn Học Sinh';
-        
-        if (username.toLowerCase() === 'admin') {
-          role = 'admin';
-          name = 'Quản trị viên Hệ thống';
-        } else if (username.toLowerCase() === 'instructor' || username.toLowerCase() === 'teacher') {
-          role = 'instructor';
-          name = 'ThS. Nguyễn Văn Giảng Viên';
+    const [showPassword, setShowPassword] = useState(false);
+
+    const validate = () => {
+        if (!user.username) {
+            setErr('Vui lòng nhập tên đăng nhập');
+            return false;
+        } else if (!user.password) {
+            setErr('Vui lòng nhập mật khẩu!');
+            return false;
+        } else {
+            setErr(null);
+            return true;
         }
-
-        const mockUser = {
-          id: 1,
-          username: username,
-          first_name: name.split(' ').slice(0, -1).join(' '),
-          last_name: name.split(' ').pop(),
-          email: `${username}@ecourse.edu.vn`,
-          role: role, // 'admin' | 'instructor' | 'student'
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250',
-          is_active: true
-        };
-
-        dispatch({
-          type: 'login',
-          payload: mockUser
-        });
-
-        setLoading(false);
-        navigation.navigate('Main');
-      }, 1000);
-
-    } catch (error) {
-      setLoading(false);
-      Alert.alert('Lỗi đăng nhập', 'Tài khoản hoặc mật khẩu không chính xác.');
-      console.error(error);
     }
-  };
 
-  return (
-    <ScrollView 
-      style={{ flex: 1, backgroundColor: theme.bgPrimary }}
-      contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.logoWrapper}>
-        <View style={styles.largeLogoContainer}>
-          <Ionicons name="school" size={theme.iconSizes.huge} color={theme.btnPrimaryText} />
-        </View>
-        <Text style={[styles.h1, { marginBottom: theme.spacing.xs }]}>eCourse App</Text>
-        <Text style={styles.small}>Cổng tri thức trực tuyến hàng đầu</Text>
-      </View>
+    const login = async () => {
+        if (validate()) {
+            try {
+                setLoading(true);
+                setErr(null);
 
-      <View style={styles.card}>
-        <Text style={[styles.title, { marginBottom: 16 + 4 }]}>Đăng nhập</Text>
+                let res = await Apis.post(endpoints['login'], {
+                    username: user.username,
+                    password: user.password,
+                    grant_type: 'password'
+                });
 
-        <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginBottom: theme.spacing.xs }]}>Tên đăng nhập</Text>
-        <View style={[styles.row, styles.input, { paddingVertical: 0 }]}>
-          <Ionicons name="person-outline" size={20} color={theme.textTertiary} style={{ marginRight: 8 }} />
-          <TextInput
-            placeholder="Nhập username (admin / instructor / student)"
-            placeholderTextColor={theme.textTertiary}
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-            style={{ flex: 1, color: theme.textPrimary, height: 48 }}
-          />
-        </View>
+                await AsyncStorage.setItem('token', res.data.access_token);
 
-        <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginTop: 8 + 4, marginBottom: theme.spacing.xs }]}>Mật khẩu</Text>
-        <View style={[styles.row, styles.input, { paddingVertical: 0 }]}>
-          <Ionicons name="lock-closed-outline" size={20} color={theme.textTertiary} style={{ marginRight: 8 }} />
-          <TextInput
-            placeholder="Nhập mật khẩu (123)"
-            placeholderTextColor={theme.textTertiary}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            autoCapitalize="none"
-            style={{ flex: 1, color: theme.textPrimary, height: 48 }}
-          />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Ionicons 
-              name={showPassword ? "eye-off-outline" : "eye-outline"} 
-              size={20} 
-              color={theme.textTertiary} 
-            />
-          </TouchableOpacity>
-        </View>
+                let u = await authApis(res.data.access_token).get(endpoints['current-user']);
 
-        <TouchableOpacity 
-          style={[styles.btnPrimary, { marginTop: 24, height: 48 }]} 
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color={theme.btnPrimaryText} />
-          ) : (
-            <Text style={styles.btnPrimaryText}>ĐĂNG NHẬP</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+                dispatch({
+                    "type": "login",
+                    "payload": u.data
+                });
 
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
-        <Text style={styles.body}>Chưa có tài khoản? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={[styles.body, { color: theme.btnPrimaryBg, fontWeight: 'bold' }]}>Đăng ký ngay</Text>
-        </TouchableOpacity>
-      </View>
+                nav.navigate(next, route.params?.params);
 
-      <View style={[styles.cardVariant, { marginTop: theme.spacing.xl, alignItems: 'center' }]}>
-        <Text style={[styles.small, { fontWeight: '700', marginBottom: theme.spacing.xs }]}>💡 HƯỚNG DẪN DEMO PHÂN QUYỀN:</Text>
-        <Text style={[styles.small, { textAlign: 'center' }]}>
-          Nhập username là:{"\n"}
-          - <Text style={{fontWeight: '700'}}>"student"</Text> để trải nghiệm vai trò Sinh Viên.{"\n"}
-          - <Text style={{fontWeight: '700'}}>"instructor"</Text> để trải nghiệm vai trò Giảng Viên.{"\n"}
-          - <Text style={{fontWeight: '700'}}>"admin"</Text> để trải nghiệm vai trò Quản Trị Viên.{"\n"}
-          Mật khẩu bất kỳ (ví dụ: 123)
-        </Text>
-      </View>
-    </ScrollView>
-  );
+            } catch (ex) {
+                console.error(ex);
+                let errorMsg = 'Đăng nhập thất bại! Vui lòng kiểm tra lại kết nối mạng.';
+                if (ex.response && ex.response.data) {
+                    const data = ex.response.data;
+                    if (data.error_description) {
+                        if (data.error_description === "Invalid credentials given.") {
+                            errorMsg = "Tên đăng nhập hoặc mật khẩu không chính xác!";
+                        } else {
+                            errorMsg = data.error_description;
+                        }
+                    } else if (data.error) {
+                        errorMsg = `Lỗi hệ thống: ${data.error}`;
+                    }
+                }
+                setErr(errorMsg);
+            } finally {
+                setLoading(false);
+            }
+        }
+    }
+
+    const loginWithGoogle = () => {
+        Alert.alert(
+            "Đăng nhập bằng Google",
+            "Chức năng đăng nhập thông qua tài khoản Google hiện đang được tích hợp phát triển.",
+            [{ text: "Đã hiểu", style: "default" }]
+        );
+    };
+
+    const loginWithFacebook = () => {
+        Alert.alert(
+            "Đăng nhập bằng Facebook",
+            "Chức năng đăng nhập thông qua tài khoản Facebook hiện đang được tích hợp phát triển.",
+            [{ text: "Đã hiểu", style: "default" }]
+        );
+    };
+
+    return (
+        <ScrollView style={Styles.loginContainer} contentContainerStyle={Styles.loginScrollContent}>
+            <View style={Styles.logoWrapper}>
+                <View style={Styles.logoCircle}>
+                    <Ionicons name="school" size={44} color="#ffffff" />
+                </View>
+                <Text style={Styles.appName}>eCourse App</Text>
+                <Text style={Styles.appSubtitle}>Cổng tri thức trực tuyến hàng đầu</Text>
+            </View>
+
+            <View style={Styles.loginCard}>
+                <Text style={Styles.cardTitle}>Đăng nhập</Text>
+
+                {userInfo.map(u => (
+                    <View key={u.field} style={Styles.inputGroup}>
+                        <Text style={Styles.inputLabel}>{u.title}</Text>
+                        <TextInput
+                            value={user[u.field] || ''}
+                            onChangeText={(t) => setUser({ ...user, [u.field]: t })}
+                            mode="outlined"
+                            style={Styles.paperInput}
+                            placeholder={u.placeholder}
+                            placeholderTextColor="#adb5bd"
+                            secureTextEntry={u.secureTextEntry && !showPassword}
+                            outlineColor="#dee2e6"
+                            activeOutlineColor="#1976d2"
+                            left={<TextInput.Icon icon={u.field === 'username' ? 'account-outline' : 'lock-outline'} />}
+                            right={u.secureTextEntry ? (
+                                <TextInput.Icon
+                                    icon={showPassword ? 'eye-off' : 'eye'}
+                                    onPress={() => setShowPassword(!showPassword)}
+                                />
+                            ) : null}
+                        />
+                    </View>
+                ))}
+                {err && (
+                    <HelperText style={Styles.errText} type="error" visible={!!err}>
+                        {err}
+                    </HelperText>
+                )}
+                <Button loading={loading} disabled={loading} mode="contained" onPress={login} style={Styles.btnLogin} labelStyle={Styles.btnLoginLabel}>
+                    ĐĂNG NHẬP
+                </Button>
+
+                <View style={Styles.dividerContainer}>
+                    <View style={Styles.dividerLine} />
+                    <Text style={Styles.dividerText}>Hoặc</Text>
+                    <View style={Styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity style={Styles.btnGoogle} onPress={loginWithGoogle}>
+                    <Image
+                        source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
+                        style={{ width: 18, height: 18, resizeMode: 'contain' }}
+                    />
+                    <Text style={Styles.btnGoogleText}>Đăng nhập bằng Google</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[Styles.btnGoogle, { marginTop: 12 }]} onPress={loginWithFacebook}>
+                    <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                    <Text style={Styles.btnGoogleText}>Đăng nhập bằng Facebook</Text>
+                </TouchableOpacity>
+            </View>
+
+            <View style={Styles.registerLinkWrapper}>
+                <Text style={Styles.registerText}>Chưa có tài khoản? </Text>
+                <TouchableOpacity onPress={() => nav.navigate("Register")}>
+                    <Text style={Styles.registerLink}>Đăng ký ngay</Text>
+                </TouchableOpacity>
+            </View>
+        </ScrollView>
+    );
 }
+
+export default Login;

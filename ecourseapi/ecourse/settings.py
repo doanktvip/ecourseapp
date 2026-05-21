@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-import cloudinary.api
+import cloudinary
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -58,6 +58,7 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'ecourse.middlewares.OAuth2InjectCredentialsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -140,14 +141,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-
+load_dotenv(BASE_DIR / '.env')
 # Cloudinary
 cloudinary.config(
     cloud_name=os.getenv('CLOUD_NAME'),
     api_key=os.getenv('API_KEY'),
     api_secret=os.getenv('API_SECRET')
 )
-load_dotenv()
+
 
 BASE_DOMAIN = os.getenv('BASE_DOMAIN', 'http://localhost:8000')
 
@@ -202,3 +203,9 @@ PAYPAL_CONFIG = {
     'RETURN_URL': f"{BASE_DOMAIN}/webhooks/paypal/",
     'CANCEL_URL': f"{BASE_DOMAIN}/webhooks/paypal/"
 }
+
+# ==========================================
+# 5. CẤU HÌNH OAUTH2 SECURE CREDENTIALS
+# ==========================================
+OAUTH2_CLIENT_ID = os.getenv('OAUTH2_CLIENT_ID', '')
+OAUTH2_CLIENT_SECRET = os.getenv('OAUTH2_CLIENT_SECRET', '')

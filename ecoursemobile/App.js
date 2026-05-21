@@ -1,19 +1,22 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider, MyUserProvider } from './configs/Contexts';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { UserProvider } from './configs/Contexts';
 import AppNavigator from './navigation/AppNavigator';
 
-export default function App() {
+const App = () => {
   return (
     <SafeAreaProvider>
-      <MyUserProvider>
-        <ThemeProvider>
+      <UserProvider>
+        <PaperProvider>
           <NavigationContainer>
             <AppNavigator />
           </NavigationContainer>
-        </ThemeProvider>
-      </MyUserProvider>
+        </PaperProvider>
+      </UserProvider>
     </SafeAreaProvider>
   );
 }
+
+export default App;

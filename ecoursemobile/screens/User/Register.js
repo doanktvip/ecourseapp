@@ -1,55 +1,83 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Text, 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  Image,
-  Alert,
-  Switch
-} from 'react-native';
-import { useTheme } from '../../configs/Contexts';
-import { getGlobalStyles } from '../../styles/Styles';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform, Switch, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Button, TextInput, HelperText } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
+import Apis, { endpoints } from '../../configs/Apis';
+import Styles from './Styles';
 
-export default function Register({ navigation }) {
-  const { theme } = useTheme();
-  const styles = useMemo(() => getGlobalStyles(theme), [theme]);
+const Register = () => {
+  // 1. Mảng cấu hình các trường nhập liệu tương tự như Login
+  const registerFields = [
+    {
+      field: 'lastName',
+      title: 'Họ *',
+      placeholder: 'Ví dụ: Nguyễn Văn',
+      icon: 'account-outline'
+    },
+    {
+      field: 'firstName',
+      title: 'Tên *',
+      placeholder: 'Ví dụ: Anh',
+      icon: 'account-outline'
+    },
+    {
+      field: 'email',
+      title: 'Email *',
+      placeholder: 'Ví dụ: email@domain.com',
+      icon: 'email-outline',
+      keyboardType: 'email-address'
+    },
+    {
+      field: 'username',
+      title: 'Tên đăng nhập *',
+      placeholder: 'Tên tài khoản',
+      icon: 'account'
+    },
+    {
+      field: 'password',
+      title: 'Mật khẩu *',
+      placeholder: 'Mật khẩu bảo mật',
+      icon: 'lock-outline',
+      secureTextEntry: true
+    },
+    {
+      field: 'confirmPassword',
+      title: 'Xác nhận mật khẩu *',
+      placeholder: 'Nhập lại mật khẩu trên',
+      icon: 'lock-check-outline',
+      secureTextEntry: true
+    }
+  ];
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [isInstructor, setIsInstructor] = useState(false);
+  // 2. Khai báo các State cần thiết
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+    isInstructor: false
+  });
   const [avatar, setAvatar] = useState(null);
-  const [cvFile, setCvFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [err, setErr] = useState(null);
 
-  const pickCVFile = () => {
-    // Giả lập chọn file PDF/Docx từ điện thoại
-    Alert.alert(
-      'Chọn hồ sơ CV',
-      'Chọn một tài liệu giới thiệu năng lực của bạn (PDF, DOCX)',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        { 
-          text: 'Chọn CV_GiangVien_NguyenVanA.pdf', 
-          onPress: () => setCvFile({ name: 'CV_GiangVien_NguyenVanA.pdf', size: '2.4 MB' }) 
-        },
-        { 
-          text: 'Chọn Profile_ChuyenMon.docx', 
-          onPress: () => setCvFile({ name: 'Profile_ChuyenMon.docx', size: '1.8 MB' }) 
-        }
-      ]
-    );
-  };
+  const nav = useNavigation();
 
-  const pickImage = async () => {
+  // 3. Hàm chọn ảnh đại diện (Tùy chọn)
+  const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Quyền truy cập', 'Chúng tôi cần quyền truy cập thư viện ảnh để thêm ảnh đại diện.');
+      return;
+    }
+
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
@@ -60,192 +88,157 @@ export default function Register({ navigation }) {
     }
   };
 
-  const handleRegister = () => {
-    if (!username || !password || !confirmPassword || !firstName || !lastName || !email) {
-      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ các trường thông tin bắt buộc.');
-      return;
+  // 4. Kiểm tra dữ liệu trước khi đăng ký
+  const validate = () => {
+    const { firstName, lastName, email, username, password, confirmPassword } = formData;
+    if (!firstName || !lastName || !email || !username || !password || !confirmPassword) {
+      setErr('Vui lòng nhập đầy đủ các trường bắt buộc (*)');
+      return false;
     }
-
     if (password !== confirmPassword) {
-      Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp.');
-      return;
+      setErr('Mật khẩu và xác nhận mật khẩu không khớp!');
+      return false;
     }
+    setErr(null);
+    return true;
+  };
 
-    Alert.alert(
-      'Đăng ký thành công',
-      isInstructor 
-        ? 'Tài khoản giảng viên đã được khởi tạo. Vui lòng chờ quản trị viên phê duyệt đơn giảng dạy.' 
-        : 'Tài khoản sinh viên đã được khởi tạo thành công! Bạn có thể đăng nhập ngay.',
-      [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
-      ]
-    );
+  // 5. Hàm đăng ký tài khoản
+  const handleRegister = async () => {
+    if (!validate()) return;
+
+    try {
+      setLoading(true);
+      setErr(null);
+
+      // Sử dụng FormData để hỗ trợ upload ảnh đại diện lên server
+      const body = new FormData();
+      body.append('first_name', formData.firstName);
+      body.append('last_name', formData.lastName);
+      body.append('email', formData.email);
+      body.append('username', formData.username);
+      body.append('password', formData.password);
+      body.append('role', formData.isInstructor ? 'INSTRUCTOR' : 'STUDENT');
+
+      if (avatar) {
+        const filename = avatar.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+        body.append('avatar', {
+          uri: avatar,
+          name: filename,
+          type: type
+        });
+      }
+
+      await Apis.post(endpoints['register'], body, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      Alert.alert(
+        "Đăng ký thành công",
+        "Chúc mừng! Bạn đã đăng ký tài khoản thành công.",
+        [{ text: "Đăng nhập ngay", onPress: () => nav.navigate('Login') }]
+      );
+    } catch (ex) {
+      console.error(ex);
+      let errorMsg = "Đăng ký thất bại! Vui lòng thử lại.";
+      if (ex.response && ex.response.data) {
+        const data = ex.response.data;
+        if (typeof data === 'object') {
+          const errors = [];
+          for (const key in data) {
+            if (Array.isArray(data[key])) {
+              errors.push(data[key].join("\n"));
+            } else if (typeof data[key] === 'string') {
+              errors.push(data[key]);
+            } else if (typeof data[key] === 'object') {
+              errors.push(Object.values(data[key]).join("\n"));
+            }
+          }
+          errorMsg = errors.join("\n") || errorMsg;
+        } else {
+          errorMsg = data.detail || errorMsg;
+        }
+      }
+      setErr(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <ScrollView 
-      style={{ flex: 1, backgroundColor: theme.bgPrimary }}
-      contentContainerStyle={{ padding: 24 }}
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
     >
-      <Text style={[styles.h1, { textAlign: 'center', marginTop: 10 }]}>Tạo tài khoản</Text>
-      <Text style={[styles.small, { textAlign: 'center', marginBottom: 24 }]}>
-        Tham gia học tập và chia sẻ kiến thức cùng hàng triệu người học
-      </Text>
+      <ScrollView style={Styles.loginContainer} contentContainerStyle={Styles.loginScrollContent}>
+        <View style={Styles.loginCard}>
+          <Text style={Styles.cardTitle}>Đăng ký tài khoản mới</Text>
 
-      {/* Avatar Picker */}
-      <View style={styles.avatarPickerContainer}>
-        <TouchableOpacity onPress={pickImage} style={{ position: 'relative' }}>
-          {avatar ? (
-            <Image 
-              source={{ uri: avatar }} 
-              style={styles.largeAvatar} 
-            />
-          ) : (
-            <View style={styles.largeAvatarFallback}>
-              <Ionicons name="camera-outline" size={theme.iconSizes.huge} color={theme.textTertiary} />
-            </View>
-          )}
-          <View style={[styles.avatarBadge, styles.avatarBadgeLarge, { borderColor: theme.bgPrimary }]}>
-            <Ionicons name="pencil" size={16} color={theme.btnPrimaryText} />
-          </View>
-        </TouchableOpacity>
-        <Text style={[styles.small, { marginTop: 8 }]}>Ảnh đại diện (Avatar)</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginBottom: 4 }]}>Họ và Tên đệm *</Text>
-        <TextInput
-          placeholder="Ví dụ: Nguyễn Văn"
-          placeholderTextColor={theme.textTertiary}
-          value={firstName}
-          onChangeText={setFirstName}
-          style={styles.input}
-        />
-
-        <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginBottom: 4 }]}>Tên *</Text>
-        <TextInput
-          placeholder="Ví dụ: Anh"
-          placeholderTextColor={theme.textTertiary}
-          value={lastName}
-          onChangeText={setLastName}
-          style={styles.input}
-        />
-
-        <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginBottom: 4 }]}>Email *</Text>
-        <TextInput
-          placeholder="Ví dụ: email@domain.com"
-          placeholderTextColor={theme.textTertiary}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
-
-        <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginBottom: 4 }]}>Tên đăng nhập *</Text>
-        <TextInput
-          placeholder="Tên tài khoản viết liền không dấu"
-          placeholderTextColor={theme.textTertiary}
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          style={styles.input}
-        />
-
-        <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginBottom: 4 }]}>Mật khẩu *</Text>
-        <TextInput
-          placeholder="Mật khẩu bảo mật"
-          placeholderTextColor={theme.textTertiary}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={true}
-          autoCapitalize="none"
-          style={styles.input}
-        />
-
-        <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginBottom: 4 }]}>Xác nhận mật khẩu *</Text>
-        <TextInput
-          placeholder="Nhập lại mật khẩu trên"
-          placeholderTextColor={theme.textTertiary}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry={true}
-          autoCapitalize="none"
-          style={styles.input}
-        />
-
-        {/* Role Picker (Student / Instructor Toggle) */}
-        <View style={[styles.spaceBetween, { marginVertical: 15, paddingVertical: 10, borderTopWidth: 1, borderTopColor: theme.borderLight }]}>
-          <View style={{ flex: 1, paddingRight: 10 }}>
-            <Text style={[styles.title, { fontSize: 16 }]}>Đăng ký giảng dạy</Text>
-            <Text style={styles.small}>Bật nếu bạn muốn đăng ký làm Giảng viên giảng dạy các khóa học trực tuyến</Text>
-          </View>
-          <Switch
-            value={isInstructor}
-            onValueChange={setIsInstructor}
-            trackColor={{ false: theme.controlTrack, true: theme.btnPrimaryBg }}
-            thumbColor={isInstructor ? theme.btnPrimaryText : theme.controlThumb}
-          />
-        </View>
-
-        {isInstructor && (
-          <View style={{ marginBottom: 15 }}>
-            <Text style={[styles.body, { fontSize: 14, fontWeight: '600', marginBottom: 6 }]}>Hồ sơ năng lực (CV) *</Text>
-            
-            <TouchableOpacity 
-              style={[styles.dashedUploadContainer, { gap: theme.spacing.sm }]}
-              onPress={pickCVFile}
-            >
-              {cvFile ? (
-                <>
-                  <Ionicons name="document-text" size={32} color={theme.btnPrimaryBg} />
-                  <Text style={[styles.title, { fontSize: 14, color: theme.textPrimary, textAlign: 'center' }]} numberOfLines={1}>
-                    {cvFile.name}
-                  </Text>
-                  <Text style={styles.small}>{cvFile.size}</Text>
-                  <TouchableOpacity 
-                    style={{ marginTop: theme.spacing.xs, paddingHorizontal: 8 + 4, paddingVertical: 4, backgroundColor: theme.errorBg, borderRadius: 4 }}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setCvFile(null);
-                    }}
-                  >
-                    <Text style={{ color: theme.errorText, fontSize: 11, fontWeight: 'bold' }}>Xóa file</Text>
-                  </TouchableOpacity>
-                </>
+          <TouchableOpacity
+            style={Styles.avatarSelectContainer}
+            onPress={handlePickAvatar}
+            disabled={loading}
+          >
+            <View style={Styles.avatarSelectCircle}>
+              {avatar ? (
+                <Image source={{ uri: avatar }} style={Styles.avatarSelectImage} />
               ) : (
-                <>
-                  <Ionicons name="cloud-upload-outline" size={32} color={theme.textTertiary} />
-                  <Text style={[styles.title, { fontSize: 14, color: theme.textSecondary }]}>Nhấp để tải lên CV của bạn</Text>
-                  <Text style={[styles.small, { textAlign: 'center' }]}>Định dạng PDF, DOCX (Tối đa 5MB)</Text>
-                </>
+                <View style={Styles.avatarSelectPlaceholder}>
+                  <Ionicons name="camera-outline" size={32} color="#1976d2" />
+                  <Text style={Styles.avatarSelectPlaceholderText}>Chọn ảnh</Text>
+                </View>
               )}
-            </TouchableOpacity>
-
-            <View style={[styles.warningBox, { marginTop: 8 + 4 }]}>
-              <Text style={styles.warningBoxText}>⚠️ Lưu ý duyệt giảng viên</Text>
-              <Text style={[styles.small, { color: theme.warningText, marginTop: 4 }]}>
-                Hồ sơ giảng viên cần được Quản trị viên hệ thống (Admin) xét duyệt thủ công dựa trên năng lực trước khi bạn được phép tạo khóa học.
-              </Text>
             </View>
-          </View>
-        )}
+          </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.btnPrimary, { marginTop: 10, height: 48 }]} 
-          onPress={handleRegister}
-        >
-          <Text style={styles.btnPrimaryText}>ĐĂNG KÝ HỒ SƠ</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24, marginBottom: 40 }}>
-        <Text style={styles.body}>Đã có tài khoản? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={[styles.body, { color: theme.btnPrimaryBg, fontWeight: 'bold' }]}>Đăng nhập</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          {/* Vòng lặp map qua mảng cấu hình để render các input */}
+          {registerFields.map((field) => (
+            <View key={field.field} style={Styles.inputGroup}>
+              <Text style={Styles.inputLabel}>{field.title}</Text>
+              <TextInput
+                value={formData[field.field] || ''}
+                onChangeText={(t) => setFormData({ ...formData, [field.field]: t })}
+                mode="outlined"
+                style={Styles.paperInput}
+                placeholder={field.placeholder}
+                placeholderTextColor="#adb5bd"
+                secureTextEntry={field.secureTextEntry && !showPassword}
+                outlineColor="#dee2e6"
+                activeOutlineColor="#1976d2"
+                disabled={loading}
+                left={<TextInput.Icon icon={field.icon} />}
+                right={field.secureTextEntry ? (
+                  <TextInput.Icon
+                    icon={showPassword ? 'eye-off' : 'eye'}
+                    onPress={() => setShowPassword(!showPassword)}
+                  />
+                ) : null}
+              />
+            </View>
+          ))}
+          {err && (
+            <HelperText style={Styles.errText} type="error" visible={!!err}>
+              {err}
+            </HelperText>
+          )}
+          <Button mode="contained" onPress={handleRegister} style={Styles.btnLogin}
+            labelStyle={Styles.btnLoginLabel} loading={loading} disabled={loading}>
+            ĐĂNG KÝ HỒ SƠ
+          </Button>
+        </View>
+        <View style={Styles.registerLinkWrapper}>
+          <Text style={Styles.registerText}>Đã có tài khoản? </Text>
+          <TouchableOpacity onPress={() => nav.navigate('Login')}>
+            <Text style={Styles.registerLink}>Đăng nhập</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
-}
+};
+
+export default Register;
