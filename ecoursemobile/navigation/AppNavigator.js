@@ -259,7 +259,7 @@ const MainTabNavigator = () => {
       />
 
       {/* 4. Tab Thống kê (Chỉ giảng viên hoặc admin) */}
-      {(user?.role === 'instructor' || user?.role === 'admin') && (
+      {(user?.role?.toUpperCase() === 'INSTRUCTOR' || user?.role?.toUpperCase() === 'ADMIN') && (
         <Tab.Screen
           name="StatsTab"
           component={StatsStackNavigator}

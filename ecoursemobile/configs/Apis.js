@@ -2,7 +2,6 @@ import axios from 'axios';
 
 // Lấy thông tin cấu hình từ file môi trường (.env) hoặc dùng giá trị mặc định
 export const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
-export const CLIENT_ID = process.env.EXPO_PUBLIC_CLIENT_ID;
 
 // Định nghĩa toàn bộ danh sách các endpoints từ hệ thống ecourseapi
 export const endpoints = {
@@ -23,7 +22,7 @@ export const endpoints = {
     'current-user': '/users/me/',                                       // Xem/Cập nhật thông tin tài khoản hiện tại (GET, PATCH)
     'change-password': '/users/me/change-password/',                    // Đổi mật khẩu (POST)
     'apply-instructor': '/users/me/apply/',                             // Nộp đơn/Xem đơn đăng ký làm giáo viên (GET, POST)
-    'my-enrollments': '/users/me/enrollments/',                         // Danh sách khóa học đã đăng ký của học viên (GET)
+    'my-courses': '/users/me/courses/',                                 // Danh sách khóa học của Giảng viên & Admin (GET)
 
     // === Quản lý Đơn đăng ký giảng dạy (Admin) ===
     'applications': '/applies/',                                        // Danh sách đơn xin giảng dạy (GET)
@@ -59,6 +58,8 @@ export const authApi = (token) => {
         }
     });
 };
+
+export const authApis = authApi;
 
 export default axios.create({
     baseURL: BASE_URL

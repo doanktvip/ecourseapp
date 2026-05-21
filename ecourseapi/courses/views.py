@@ -1,6 +1,4 @@
-import json
 import uuid
-
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.db.models import Count, Sum
@@ -9,7 +7,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework import mixins, request
 from rest_framework import viewsets, generics, filters, parsers, status, permissions
-from rest_framework.permissions import AllowAny
 from courses.filters import ApplicationFilter, CourseFilter, LessonFilter
 from courses.models import (Course, Category, User, InstructorApplication, Lesson, Tag, Enrollment, Payment,
                             LessonProgress, Comment, Like)
@@ -205,13 +202,15 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
 
     def get_permissions(self):
         if self.action in ['me', 'change_password']:
             return [permissions.IsAuthenticated()]
-        if self.action in ['apply_instructor', 'my_enrollments']:
+        if self.action == 'apply_instructor':
             return [perms.IsStudent()]
+        if self.action == 'my_courses':
+            return [(perms.IsStudent | perms.IsInstructor | perms.IsAdmin)()]
         return [permissions.AllowAny()]
 
     @action(methods=['get', 'patch'], url_path='me', detail=False)
@@ -255,10 +254,17 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['get'], detail=False, url_path='me/enrollments')
-    def my_enrollments(self, request):
-        enrollments = Enrollment.objects.filter(student=request.user)
-        serializer = serializers.EnrollmentDetailSerializer(enrollments, many=True)
+    @action(methods=['get'], detail=False, url_path='me/courses')
+    def my_courses(self, request):
+        user = request.user
+        if user.role == User.Role.STUDENT:
+            courses = Course.objects.filter(enrollments__student=user)
+        elif user.role == User.Role.INSTRUCTOR:
+            courses = Course.objects.filter(instructor=user, active=True)
+        else:
+            courses = Course.objects.filter(active=True)
+
+        serializer = serializers.CourseSerializer(courses, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

@@ -5,7 +5,7 @@ const StudentProgress = () => {
   return (
     <ScrollView>
       <Text>
-        Login
+        StudentProgress
       </Text>
     </ScrollView>
   );

@@ -14,7 +14,17 @@ class CategorySerializer(serializers.ModelSerializer):
 class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'avatar']
+        fields = ['first_name', 'last_name', 'email', 'avatar', 'role']
+        read_only_fields = ['role']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.avatar:
+            try:
+                data['avatar'] = instance.avatar.url
+            except AttributeError:
+                data['avatar'] = f"https://res.cloudinary.com/db4bjqp4f/{instance.avatar}"
+        return data
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -35,17 +45,29 @@ class CourseSerializer(ItemSerializer):
                                                      write_only=True)
     lesson_count = serializers.SerializerMethodField()
     review_count=serializers.SerializerMethodField()
+    enrollment = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = ['id', 'subject', 'description', 'fee', 'image', 'intro_video', 'average_rating',
-                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count','review_count']
+                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count','review_count', 'enrollment']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue', 'instructor']
 
     def get_lesson_count(self,obj):
         return obj.lessons.count()
     def get_review_count(self,obj):
         return obj.reviews.count()
+
+    def get_enrollment(self, obj):
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            enrollment = obj.enrollments.filter(student=request.user).first()
+            if enrollment:
+                return {
+                    "id": enrollment.id,
+                    "progress": enrollment.progress
+                }
+        return None
 
 
 class CourseDetailSerializer(CourseSerializer):

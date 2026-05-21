@@ -1,14 +1,14 @@
 import { Text, ScrollView } from 'react-native';
 
-const StudentProgress = () => {
+const AdminVerifyDetails = () => {
 
   return (
     <ScrollView>
       <Text>
-        Login
+        AdminVerifyDetails
       </Text>
     </ScrollView>
   );
 };
 
-export default StudentProgress;
+export default AdminVerifyDetails;
