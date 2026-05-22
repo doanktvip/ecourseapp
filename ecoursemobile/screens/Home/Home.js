@@ -34,7 +34,6 @@ const Home = ({ navigation }) => {
                 url = `${url}&category_id=${cateId}`;
             }
 
-            console.info(url)
             let res = await Apis.get(url);
             if (page === 1)
                 setCourses(res.data.results);
