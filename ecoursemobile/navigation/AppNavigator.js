@@ -117,6 +117,16 @@ const MyCoursesStackNavigator = () => {
         component={StudentProgress}
         options={{ title: 'Tiến độ học viên' }}
       />
+      <MyCoursesStack.Screen
+        name="CourseCompare"
+        component={CourseCompare}
+        options={{ title: 'So sánh khóa học' }}
+      />
+      <MyCoursesStack.Screen
+        name="CourseReviews"
+        component={CourseReviews}
+        options={{ title: 'Đánh giá khóa học' }}
+      />
     </MyCoursesStack.Navigator>
   );
 }

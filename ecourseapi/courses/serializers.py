@@ -32,8 +32,6 @@ class ItemSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if instance.image:
             data['image'] = instance.image.url
-        if instance.intro_video:
-            data['intro_video'] = instance.intro_video.url
         return data
 
 
@@ -48,7 +46,7 @@ class CourseSerializer(ItemSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'subject', 'description', 'fee', 'image', 'intro_video', 'average_rating',
+        fields = ['id', 'subject', 'description', 'fee', 'image', 'average_rating',
                   'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count','review_count']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue', 'instructor']
 

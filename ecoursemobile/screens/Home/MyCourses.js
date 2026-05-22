@@ -111,13 +111,6 @@ const MyCoursesMain = ({ navigation }) => {
 
     return (
         <ScrollView style={Styles.container}>
-            <View style={Styles.sectionContainer}>
-                <Text style={[Styles.categoryText, { color: '#6c757d', marginBottom: 15 }]}>
-                    {screenDesc}
-                </Text>
-            </View>
-
-            {/* Premium Segmented Controls (Sub-tabs) dành cho Giảng viên & Admin */}
             {user && (user.role === 'INSTRUCTOR' || user.role === 'ADMIN') && (
                 <View style={Styles.segmentedContainer}>
                     <TouchableOpacity
@@ -138,6 +131,11 @@ const MyCoursesMain = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             )}
+            <View style={Styles.sectionContainer}>
+                <Text style={[Styles.categoryText, { color: '#6c757d', marginBottom: 15 }]}>
+                    {screenDesc}
+                </Text>
+            </View>
 
             {loading && coursesList.length === 0 ? (
                 <View style={{ padding: 40, alignItems: 'center' }}>
@@ -181,7 +179,16 @@ const MyCoursesMain = ({ navigation }) => {
                             <TouchableOpacity
                                 key={isEnrollment ? `enroll-${item.id}` : `course-${course.id}`}
                                 style={Styles.myCourseCard}
-                                onPress={() => navigation.navigate('CourseDetail', { courseId: course.id })}
+                                onPress={() => navigation.navigate('CourseDetail', {
+                                    course: {
+                                        ...course,
+                                        rating: course.average_rating,
+                                        lessons_count: course.lesson_count,
+                                        reviews_count: course.review_count,
+                                        instructor_name: course.instructor ? `${course.instructor.last_name} ${course.instructor.first_name}` : 'Đang cập nhật',
+                                        instructor_avatar: course.instructor?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250'
+                                    }
+                                })}
                                 activeOpacity={0.8}
                             >
                                 <View style={Styles.myCourseHeaderRow}>
@@ -221,8 +228,9 @@ const MyCoursesMain = ({ navigation }) => {
                         );
                     })}
                 </View>
-            )}
-        </ScrollView>
+            )
+            }
+        </ScrollView >
     );
 };
 
