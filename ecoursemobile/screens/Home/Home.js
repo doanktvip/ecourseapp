@@ -1,24 +1,24 @@
-import { ScrollView, View,TextInput,Text, Image, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import { ScrollView, View, TextInput, Text, Image, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
 import Styles from "../../styles/Styles";
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { use, useEffect, useState } from "react";
 import Apis, { endpoints } from "../../configs/Apis";
-import {Card, Searchbar} from "react-native-paper";
+import { Card, Searchbar } from "react-native-paper";
 
 
 
-const Home = ({navigation}) => {
+const Home = ({ navigation }) => {
     const [categories, setCategories] = useState([]);
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [cateId,setCateId]=useState();
-    const [q,setQ] = useState("");
+    const [cateId, setCateId] = useState();
+    const [q, setQ] = useState("");
     const [page, setPage] = useState(1);
 
 
     const loadCategories = async () => {
-        let res= await Apis.get(endpoints['categories']);
+        let res = await Apis.get(endpoints['categories']);
         setCategories(res.data);
     }
 
@@ -26,16 +26,16 @@ const Home = ({navigation}) => {
         if (page === 0) return;
         try {
             setLoading(true);
-            let url=`${endpoints['courses']}?page=${page}`;
+            let url = `${endpoints['courses']}?page=${page}`;
             if (q) {
-                url=`${url}&search=${q}`;
+                url = `${url}&search=${q}`;
             }
-            if(cateId) {
-                 url=`${url}&category_id=${cateId}`;
+            if (cateId) {
+                url = `${url}&category_id=${cateId}`;
             }
 
             console.info(url)
-            let res= await Apis.get(url);
+            let res = await Apis.get(url);
             if (page === 1)
                 setCourses(res.data.results);
             else if (page > 1)
@@ -44,9 +44,11 @@ const Home = ({navigation}) => {
                 setPage(0);
         } catch (ex) {
             console.error(ex);
-        } finally
-        {
-            setTimeout(() => {setLoading(false);}, 1000)
+            if (ex.response && ex.response.status === 404) {
+                setPage(0);
+            }
+        } finally {
+            setTimeout(() => { setLoading(false); }, 1000)
         }
     }
 
@@ -56,14 +58,14 @@ const Home = ({navigation}) => {
 
     useEffect(() => {
         let timer = setTimeout(() => {
-            if(page>0) 
+            if (page > 0)
                 loadCourses();
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [q,cateId,page]);
+    }, [q, cateId, page]);
 
-     useEffect(() => {
+    useEffect(() => {
         setPage(1);
     }, [q, cateId]);
 
@@ -90,8 +92,8 @@ const Home = ({navigation}) => {
 
             {/* Khối 2: Thanh tìm kiếm */}
             <View style={Styles.searchContainer}>
-                <Searchbar 
-                    value={q} 
+                <Searchbar
+                    value={q}
                     onChangeText={setQ}
                     style={Styles.searchInput}
                     placeholder="Tìm kiếm khóa học, giảng viên,..."
@@ -119,7 +121,7 @@ const Home = ({navigation}) => {
                     renderItem={({ item }) => {
                         const isSelected = cateId === item.id || (item.id === "" && !cateId);
                         return (
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={[Styles.categoryItem, isSelected && Styles.categoryItemSelected]}
                                 onPress={() => setCateId(item.id)}
                             >
@@ -128,7 +130,7 @@ const Home = ({navigation}) => {
                                 </Text>
                             </TouchableOpacity>
                         );
-                    }} 
+                    }}
                 />
             </View>
 
@@ -140,23 +142,24 @@ const Home = ({navigation}) => {
     );
 
     const renderCourseCard = ({ item: course }) => (
-        <Card style={Styles.cardContainer} onPress={()=>{navigation.navigate('CourseDetail', {
+        <Card style={Styles.cardContainer} onPress={() => {
+            navigation.navigate('CourseDetail', {
                 course: {
-                        ...course,
-                        rating: course.average_rating,
-                        lessons_count: course.lesson_count,
-                        reviews_count:course.review_count,
-                        instructor_name: course.instructor ? `${course.instructor.last_name} ${course.instructor.first_name}` : 'Đang cập nhật',
-                        instructor_avatar: course.instructor?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250'
-                    }
+                    ...course,
+                    rating: course.average_rating,
+                    lessons_count: course.lesson_count,
+                    reviews_count: course.review_count,
+                    instructor_name: course.instructor ? `${course.instructor.last_name} ${course.instructor.first_name}` : 'Đang cập nhật',
+                    instructor_avatar: course.instructor?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250'
+                }
             });
         }}>
             <View style={{ position: 'relative' }}>
                 <Card.Cover source={{ uri: course.image }} />
                 <View style={Styles.priceBadge}>
                     <Text style={Styles.priceBadgeText}>
-                        {course.fee && parseFloat(course.fee) > 0 
-                            ? `${parseFloat(course.fee).toLocaleString()} đ` 
+                        {course.fee && parseFloat(course.fee) > 0
+                            ? `${parseFloat(course.fee).toLocaleString()} đ`
                             : 'Miễn phí'}
                     </Text>
                 </View>
@@ -176,7 +179,7 @@ const Home = ({navigation}) => {
                 <View style={Styles.courseInfoRow}>
                     <Text style={Styles.courseRating}>
                         <Ionicons name="star" size={15} color="gold" style={{ paddingRight: 5 }} />
-                        {course.average_rating || "0.0"} ({course.review_count|| "0"})
+                        {course.average_rating || "0.0"} ({course.review_count || "0"})
                     </Text>
 
                     <Text style={Styles.courseLessons}>
@@ -193,14 +196,14 @@ const Home = ({navigation}) => {
                 renderItem={renderCourseCard}
                 keyExtractor={(course) => course.id.toString()}
                 showsVerticalScrollIndicator={false}
-                
+
                 // Nạp toàn bộ các View thành phần phía trên vào đây
-                ListHeaderComponent={renderHeaderComponents} 
-                
+                ListHeaderComponent={renderHeaderComponents}
+
                 // Cấu hình sự kiện cuộn xuống cuối để load trang tiếp theo
                 onEndReached={loadMore}
                 onEndReachedThreshold={0.2}
-                
+
                 // Khối hiển thị hiệu ứng xoay tròn Loading dưới đáy khi đang tải thêm dữ liệu
                 ListFooterComponent={loading && <ActivityIndicator />}
             />

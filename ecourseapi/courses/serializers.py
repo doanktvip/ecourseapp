@@ -45,29 +45,17 @@ class CourseSerializer(ItemSerializer):
                                                      write_only=True)
     lesson_count = serializers.SerializerMethodField()
     review_count=serializers.SerializerMethodField()
-    enrollment = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = ['id', 'subject', 'description', 'fee', 'image', 'intro_video', 'average_rating',
-                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count','review_count', 'enrollment']
+                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count','review_count']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue', 'instructor']
 
     def get_lesson_count(self,obj):
         return obj.lessons.count()
     def get_review_count(self,obj):
         return obj.reviews.count()
-
-    def get_enrollment(self, obj):
-        request = self.context.get('request')
-        if request and request.user and request.user.is_authenticated:
-            enrollment = obj.enrollments.filter(student=request.user).first()
-            if enrollment:
-                return {
-                    "id": enrollment.id,
-                    "progress": enrollment.progress
-                }
-        return None
 
 
 class CourseDetailSerializer(CourseSerializer):
@@ -142,11 +130,12 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class ApplySerializer(serializers.ModelSerializer):
     cv_file = serializers.FileField(required=False, allow_null=True)
+    user = SimpleUserSerializer(read_only=True)
 
     class Meta:
         model = InstructorApplication
-        fields = ['id', 'cv_file', 'status', 'created_date']
-        read_only_fields = ['id', 'status', 'created_date']
+        fields = ['id', 'cv_file', 'status', 'created_date', 'user']
+        read_only_fields = ['id', 'status', 'created_date', 'user']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -217,6 +206,7 @@ class CourseReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseReview
         fields = ['id', 'course', 'user', 'rating', 'comment', 'created_date']
+        read_only_fields = ['id', 'user', 'created_date']
         extra_kwargs = {
             'course': {'write_only': True}
         }

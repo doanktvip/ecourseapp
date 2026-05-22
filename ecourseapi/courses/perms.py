@@ -47,8 +47,8 @@ class IsEnrolled(IsAuthenticatedUser):
         if not course:
             return False
 
-        if user.role == User.Role.INSTRUCTOR:
-            return course.instructor == user
+        if user.role == User.Role.INSTRUCTOR and course.instructor == user:
+            return True
 
         return Enrollment.objects.filter(student=user, course=course, payment__is_successful=True).exists()
 
@@ -67,8 +67,8 @@ class HasEnrollmentRecord(IsAuthenticatedUser):
         if not course:
             return False
 
-        if user.role == User.Role.INSTRUCTOR:
-            return course.instructor == user
+        if user.role == User.Role.INSTRUCTOR and course.instructor == user:
+            return True
 
         return Enrollment.objects.filter(student=user, course=course).exists()
 

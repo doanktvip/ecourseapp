@@ -156,6 +156,13 @@ const ProfileMain = ({ navigation }) => {
                             </View>
                             <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
                         </TouchableOpacity>
+                        <TouchableOpacity style={[Styles.listItem, { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('ApplyInstructor')}>
+                            <View style={Styles.listItemLeft}>
+                                <Ionicons name="school-outline" size={22} color="#1976d2" />
+                                <Text style={Styles.listItemText}>Xem đơn xin giảng dạy đã nộp</Text>
+                            </View>
+                            <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
+                        </TouchableOpacity>
                     </View>
                 )}
 

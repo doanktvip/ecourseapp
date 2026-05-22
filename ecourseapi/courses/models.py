@@ -68,7 +68,7 @@ class Course(BaseModel):
     subject = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     image = CloudinaryField('image', null=True, blank=True)
-    intro_video = CloudinaryField(resource_type='video', null=True, blank=True)
+    intro_video = CloudinaryField(resource_type='video', null=True, blank=True)#sẽ xóa
     fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0,
                               validators=[MinValueValidator(Decimal('0.00'))])
     average_rating = models.FloatField(default=0.0)
@@ -166,8 +166,7 @@ class Lesson(BaseModel):
 # ==========================================
 
 class Enrollment(BaseModel):
-    student = models.ForeignKey(User, on_delete=models.RESTRICT, limit_choices_to={'role': 'STUDENT'},
-                                related_name='enrollments')
+    student = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='enrollments')
     course = models.ForeignKey(Course, on_delete=models.RESTRICT, related_name='enrollments')
     progress = models.FloatField(default=0.0, help_text="Tiến độ học tập (%)")
 

@@ -35,7 +35,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
     http_method_names = ['get', 'post', 'patch', 'head', 'options', 'delete']
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_class = CourseFilter
-    search_fields = ['subject','instructor__first_name', 'instructor__last_name']
+    search_fields = ['subject', 'instructor__first_name', 'instructor__last_name']
     ordering_fields = ['id']
 
     def get_permissions(self):
@@ -51,7 +51,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
             return [permissions.AllowAny()]
 
         if self.action == 'enrolls':
-            return [perms.IsStudent()]
+            return [perms.IsAuthenticatedUser()]
 
         if self.action == 'enroll_detail':
             return [perms.HasEnrollmentRecord()]
@@ -132,6 +132,10 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
         course = self.get_object()
         user = request.user
 
+        if course.instructor == user:
+            return Response({"detail": "Bạn không thể đăng ký khóa học do chính mình giảng dạy."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         if Enrollment.objects.filter(student=user, course=course).exists():
             return Response({"detail": "Bạn đã đăng ký khóa học này rồi."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -209,8 +213,10 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             return [permissions.IsAuthenticated()]
         if self.action == 'apply_instructor':
             return [perms.IsStudent()]
-        if self.action == 'my_courses':
+        if self.action == 'my_enrolls':
             return [(perms.IsStudent | perms.IsInstructor | perms.IsAdmin)()]
+        if self.action == 'my_courses':
+            return [(perms.IsInstructor | perms.IsAdmin)()]
         return [permissions.AllowAny()]
 
     @action(methods=['get', 'patch'], url_path='me', detail=False)
@@ -257,14 +263,21 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     @action(methods=['get'], detail=False, url_path='me/courses')
     def my_courses(self, request):
         user = request.user
-        if user.role == User.Role.STUDENT:
-            courses = Course.objects.filter(enrollments__student=user)
-        elif user.role == User.Role.INSTRUCTOR:
+        if user.role == User.Role.INSTRUCTOR:
             courses = Course.objects.filter(instructor=user, active=True)
-        else:
+        elif user.role == User.Role.ADMIN:
             courses = Course.objects.filter(active=True)
+        else:
+            courses = Course.objects.none()
 
         serializer = serializers.CourseSerializer(courses, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='me/enrolls')
+    def my_enrolls(self, request):
+        user = request.user
+        enrollments = Enrollment.objects.filter(student=user, course__active=True)
+        serializer = serializers.EnrollmentDetailSerializer(enrollments, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
