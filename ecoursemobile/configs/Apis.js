@@ -23,6 +23,7 @@ export const endpoints = {
     'change-password': '/users/me/change-password/',                    // Đổi mật khẩu (POST)
     'apply-instructor': '/users/me/apply/',                             // Nộp đơn/Xem đơn đăng ký làm giáo viên (GET, POST)
     'my-courses': '/users/me/courses/',                                 // Danh sách khóa học của Giảng viên & Admin (GET)
+    'my-enrolls': '/users/me/enrolls/',                                 // Danh sách các khóa học đã đăng ký học (GET)
 
     // === Quản lý Đơn đăng ký giảng dạy (Admin) ===
     'applications': '/applies/',                                        // Danh sách đơn xin giảng dạy (GET)

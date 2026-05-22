@@ -1,4 +1,5 @@
 import uuid
+from ctypes import c_voidp
 
 from django.contrib.auth import get_user_model
 from courses.models import (
@@ -42,9 +43,12 @@ sv_binh = User.objects.create_user(
 )
 
 print("\n[2/7] Đang xử lý Đơn xin giảng dạy (trạng thái)...")
-InstructorApplication.objects.create(user=gv_da_duyet, status='APPROVED')
-InstructorApplication.objects.create(user=gv_chua_duyet, status='PENDING')
-InstructorApplication.objects.create(user=gv_bi_tu_choi, status='REJECTED')
+InstructorApplication.objects.create(user=gv_da_duyet, cv_file='raw/upload/v1779352929/zzlghpocc3gpsvnuonp1.pdf',
+                                     status='APPROVED')
+InstructorApplication.objects.create(user=gv_chua_duyet, cv_file='raw/upload/v1779352929/zzlghpocc3gpsvnuonp1.pdf',
+                                     status='PENDING')
+InstructorApplication.objects.create(user=gv_bi_tu_choi, cv_file='raw/upload/v1779352929/zzlghpocc3gpsvnuonp1.pdf',
+                                     status='REJECTED')
 
 print("\n[3/7] Đang tạo Danh mục & Từ khóa (Tags)...")
 cat_cntt = Category.objects.create(name='Công nghệ thông tin')

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,34 +8,30 @@ import UserStyles from '../User/Styles';
 import Styles from '../../styles/Styles';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 
-const getScreenTitle = (role) => {
-    switch (role) {
-        case 'INSTRUCTOR':
-            return "Khóa học giảng dạy";
-        case 'ADMIN':
-            return "Quản lý khóa học";
-        default:
-            return "Khóa học của tôi";
-    }
-};
-
 const MyCoursesMain = ({ navigation }) => {
     const [user] = useContext(MyUserContext);
     const [coursesList, setCoursesList] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('enrolled'); // 'enrolled' or 'teaching'
     const isFocused = useIsFocused();
 
-    const loadCourses = async () => {
+    const loadCourses = async (tab = activeTab) => {
         if (!user) return;
         try {
             setLoading(true);
             const token = await AsyncStorage.getItem('token');
             if (token) {
-                const res = await authApis(token).get(endpoints['my-courses']);
+                let url;
+                if ((user.role === 'INSTRUCTOR' || user.role === 'ADMIN') && tab === 'teaching') {
+                    url = endpoints['my-courses'];
+                } else {
+                    url = endpoints['my-enrolls'];
+                }
+                const res = await authApis(token).get(url);
                 setCoursesList(res.data || []);
             }
         } catch (ex) {
-            console.error("Lỗi tải khóa học của tôi:", ex);
+            console.error("Lỗi tải khóa học:", ex);
         } finally {
             setLoading(false);
         }
@@ -43,14 +39,23 @@ const MyCoursesMain = ({ navigation }) => {
 
     useEffect(() => {
         if (isFocused && user) {
-            loadCourses();
+            loadCourses(activeTab);
         }
-    }, [isFocused, user]);
+    }, [isFocused, user, activeTab]);
 
     useEffect(() => {
-        const title = user ? getScreenTitle(user.role) : "Khóa học của tôi";
+        let title = "Khóa học của tôi";
+        if (user) {
+            if (user.role === 'INSTRUCTOR') {
+                title = activeTab === 'enrolled' ? "Khóa học của tôi" : "Khóa học giảng dạy";
+            } else if (user.role === 'ADMIN') {
+                title = activeTab === 'enrolled' ? "Khóa học của tôi" : "Quản lý khóa học";
+            } else {
+                title = "Khóa học của tôi";
+            }
+        }
         navigation.setOptions({ title: title });
-    }, [user, navigation]);
+    }, [user, activeTab, navigation]);
 
     // Trường hợp CHƯA ĐĂNG NHẬP
     if (!user) {
@@ -77,33 +82,62 @@ const MyCoursesMain = ({ navigation }) => {
         );
     }
 
-    // Thiết lập tiêu đề và mô tả động theo vai trò người dùng
+    // Thiết lập tiêu đề và mô tả động theo vai trò người dùng và tab đang chọn
     let screenDesc = "Tiếp tục học tập để tích lũy kiến thức và hoàn thành mục tiêu nghề nghiệp.";
     let emptyTitle = "Bạn chưa đăng ký khóa học nào";
     let emptyDesc = "Hãy khám phá và đăng ký các khóa học chất lượng trên hệ thống để nâng cao kỹ năng của mình nhé!";
 
     if (user.role === 'INSTRUCTOR') {
-        screenDesc = "Quản lý và cập nhật bài giảng cho các khóa học do bạn trực tiếp phụ trách.";
-        emptyTitle = "Bạn chưa giảng dạy khóa học nào";
-        emptyDesc = "Hãy liên hệ quản trị viên hoặc tạo khóa học mới để bắt đầu giảng dạy trên hệ thống.";
+        if (activeTab === 'enrolled') {
+            screenDesc = "Các khóa học bạn đã đăng ký tham gia học tập từ các giảng viên khác.";
+            emptyTitle = "Bạn chưa đăng ký khóa học nào";
+            emptyDesc = "Hãy khám phá và đăng ký học các khóa học của đồng nghiệp để cùng trao đổi kiến thức nhé!";
+        } else {
+            screenDesc = "Quản lý và cập nhật bài giảng cho các khóa học do bạn trực tiếp giảng dạy.";
+            emptyTitle = "Bạn chưa giảng dạy khóa học nào";
+            emptyDesc = "Hãy liên hệ quản trị viên hoặc tạo khóa học mới để bắt đầu giảng dạy trên hệ thống.";
+        }
     } else if (user.role === 'ADMIN') {
-        screenDesc = "Giám sát và kiểm tra toàn bộ danh sách các khóa học đang hoạt động trên hệ thống.";
-        emptyTitle = "Hệ thống chưa có khóa học nào";
-        emptyDesc = "Hiện tại chưa có khóa học nào được đăng tải trên hệ thống eCourse.";
+        if (activeTab === 'enrolled') {
+            screenDesc = "Các khóa học bạn đã đăng ký tham gia học tập.";
+            emptyTitle = "Bạn chưa đăng ký khóa học nào";
+            emptyDesc = "Hãy khám phá và đăng ký các khóa học chất lượng trên hệ thống để nâng cao kỹ năng của mình nhé!";
+        } else {
+            screenDesc = "Giám sát và kiểm tra toàn bộ danh sách các khóa học đang hoạt động trên hệ thống.";
+            emptyTitle = "Hệ thống chưa có khóa học nào";
+            emptyDesc = "Hiện tại chưa có khóa học nào được đăng tải trên hệ thống eCourse.";
+        }
     }
 
     return (
-        <ScrollView
-            style={Styles.container}
-            refreshControl={
-                <RefreshControl refreshing={loading} onRefresh={loadCourses} colors={['#0d6efd']} />
-            }
-        >
+        <ScrollView style={Styles.container}>
             <View style={Styles.sectionContainer}>
                 <Text style={[Styles.categoryText, { color: '#6c757d', marginBottom: 15 }]}>
                     {screenDesc}
                 </Text>
             </View>
+
+            {/* Premium Segmented Controls (Sub-tabs) dành cho Giảng viên & Admin */}
+            {user && (user.role === 'INSTRUCTOR' || user.role === 'ADMIN') && (
+                <View style={Styles.segmentedContainer}>
+                    <TouchableOpacity
+                        style={[Styles.segmentButton, activeTab === 'enrolled' && Styles.segmentButtonActive]}
+                        onPress={() => setActiveTab('enrolled')}
+                    >
+                        <Text style={[Styles.segmentText, activeTab === 'enrolled' && Styles.segmentTextActive]}>
+                            Khóa học của tôi
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[Styles.segmentButton, activeTab === 'teaching' && Styles.segmentButtonActive]}
+                        onPress={() => setActiveTab('teaching')}
+                    >
+                        <Text style={[Styles.segmentText, activeTab === 'teaching' && Styles.segmentTextActive]}>
+                            {user.role === 'INSTRUCTOR' ? 'Khóa học giảng dạy' : 'Tất cả khóa học'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {loading && coursesList.length === 0 ? (
                 <View style={{ padding: 40, alignItems: 'center' }}>
@@ -118,7 +152,7 @@ const MyCoursesMain = ({ navigation }) => {
                     <Text style={[Styles.courseInstructor, { textAlign: 'center', marginBottom: 20 }]}>
                         {emptyDesc}
                     </Text>
-                    {user.role === 'STUDENT' && (
+                    {activeTab === 'enrolled' && (
                         <TouchableOpacity
                             style={UserStyles.btnPrimary}
                             onPress={() => navigation.navigate('HomeTab')}
@@ -129,18 +163,23 @@ const MyCoursesMain = ({ navigation }) => {
                 </View>
             ) : (
                 <View style={Styles.myCourseList}>
-                    {coursesList.map((course) => {
+                    {coursesList.map((item) => {
+                        if (!item) return null;
+
+                        // Nhận diện xem item là Enrollment hay Course
+                        const isEnrollment = item.progress !== undefined && item.course !== undefined;
+                        const course = isEnrollment ? item.course : item;
+                        const progress = isEnrollment ? item.progress : null;
+
                         if (!course) return null;
 
-                        const enrollment = course.enrollment;
-                        const progress = enrollment ? enrollment.progress : null;
                         const instructorName = course.instructor
                             ? `GV: ${course.instructor.last_name || ''} ${course.instructor.first_name || ''}`
                             : 'GV: Giảng viên';
 
                         return (
                             <TouchableOpacity
-                                key={course.id}
+                                key={isEnrollment ? `enroll-${item.id}` : `course-${course.id}`}
                                 style={Styles.myCourseCard}
                                 onPress={() => navigation.navigate('CourseDetail', { courseId: course.id })}
                                 activeOpacity={0.8}
@@ -166,7 +205,7 @@ const MyCoursesMain = ({ navigation }) => {
                                     />
                                 </View>
 
-                                {/* Chỉ hiển thị thanh tiến độ khi người dùng là Học viên (progress khác null) */}
+                                {/* Chỉ hiển thị thanh tiến độ khi progress khác null */}
                                 {progress !== null && (
                                     <View style={Styles.progressSection}>
                                         <View style={Styles.progressLabelRow}>
