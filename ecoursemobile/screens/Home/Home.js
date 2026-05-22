@@ -44,6 +44,7 @@ const Home = ({navigation}) => {
                 setPage(0);
         } catch (ex) {
             console.error(ex);
+            setPage(0);
         } finally
         {
             setTimeout(() => {setLoading(false);}, 1000)
