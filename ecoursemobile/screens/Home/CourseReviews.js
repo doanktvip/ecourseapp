@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Text, View, TouchableOpacity, Alert, ActivityIndicator, TextInput, FlatList,Image,KeyboardAvoidingView, Platform   } from 'react-native';
+import { Text, View, TouchableOpacity, Alert, ActivityIndicator, TextInput, FlatList, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
@@ -58,7 +58,7 @@ const CourseReviews = ({ route, navigation }) => {
             // BƯỚC 4: Kiểm tra Tiến độ trực tiếp bằng API danh sách khóa học của tôi
             let enrollRes = await authApis(token).get(endpoints['my-courses']);
             const myCoursesList = enrollRes.data || [];
-            
+
             // Tìm bản ghi chứa thông tin khóa học hiện tại
             const currentCourseData = myCoursesList.find(c => c.id === courseId);
 
@@ -90,7 +90,7 @@ const CourseReviews = ({ route, navigation }) => {
                 Alert.alert("Thành công", "Cảm ơn bạn đã gửi đánh giá đóng góp cho khóa học!");
                 setComment("");
                 setRating(5);
-                
+
                 // Cập nhật giao diện real-time bằng cách đưa review mới lên trên cùng đầu mảng
                 const newReviewItem = {
                     ...reviewRes.data,
@@ -125,7 +125,7 @@ const CourseReviews = ({ route, navigation }) => {
             setLoadingReviews(true);
             let url = `${endpoints['course-reviews'](courseId)}?page=${page}`;
             let res = await Apis.get(url);
-            
+
             const newReviews = res.data.results || res.data;
 
             if (page === 1) {
@@ -133,7 +133,7 @@ const CourseReviews = ({ route, navigation }) => {
             } else if (page > 1) {
                 setReviews(prev => [...prev, ...newReviews]);
             }
-            
+
             if (res.data.next === null) {
                 setPage(0);
             }
@@ -183,10 +183,10 @@ const CourseReviews = ({ route, navigation }) => {
 
     return (
         // Điều chỉnh offset để tránh bị bàn phím che khuất 
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
             style={{ flex: 1, backgroundColor: '#ffffff' }}
             behavior='padding'
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80} > 
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80} >
             {/* 1. FLATLIST: DANH SÁCH BÌNH LUẬN (Sẽ tự động chiếm không gian trống phía trên) */}
             <FlatList
                 style={{ flex: 1 }} // <--- flex: 1 ở đây sẽ đẩy khối View phía dưới xuống tận cùng
@@ -195,14 +195,14 @@ const CourseReviews = ({ route, navigation }) => {
                 renderItem={renderReviewItem}
                 keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
                 showsVerticalScrollIndicator={false}
-                
+
                 // Tiêu đề danh sách
                 ListHeaderComponent={() => (
                     <Text style={[Styles.reviewSectionTitle, { marginTop: 16, paddingHorizontal: 16 }]}>
                         Tất cả đánh giá về khóa học ({reviews.length})
                     </Text>
                 )}
-                
+
                 ListEmptyComponent={!loadingReviews && <Text style={[Styles.noReviewsText, { textAlign: 'center', marginTop: 20 }]}>Khóa học này chưa có lượt đánh giá nào.</Text>}
                 onEndReached={loadMoreReviews}
                 onEndReachedThreshold={0.2}
@@ -210,8 +210,8 @@ const CourseReviews = ({ route, navigation }) => {
             />
 
             {/* 2. VIEW: FORM ĐÁNH GIÁ (Nằm ngoài FlatList để cố định dưới đáy) */}
-            <View style={{ 
-                padding: 16, 
+            <View style={{
+                padding: 16,
                 backgroundColor: '#fff',
                 borderTopWidth: 1,
                 borderColor: '#eee',
@@ -220,10 +220,10 @@ const CourseReviews = ({ route, navigation }) => {
                 shadowOffset: { width: 0, height: -3 },
                 shadowOpacity: 0.1,
                 shadowRadius: 4,
-                elevation: 10 
+                elevation: 10
             }}>
                 <Text style={[Styles.writeReviewTitle, { marginBottom: 8 }]}>Viết đánh giá của bạn</Text>
-                
+
                 {/* Chọn số sao */}
                 <View style={[Styles.ratingSelectorContainer, { marginVertical: 4 }]}>
                     {[1, 2, 3, 4, 5].map(s => (
@@ -232,7 +232,7 @@ const CourseReviews = ({ route, navigation }) => {
                         </TouchableOpacity>
                     ))}
                 </View>
-                
+
                 {/* Ô nhập chữ */}
                 <TextInput
                     style={[Styles.reviewTextInput, { minHeight: 60, marginBottom: 10 }]}
@@ -242,12 +242,12 @@ const CourseReviews = ({ route, navigation }) => {
                     value={comment}
                     onChangeText={setComment}
                 />
-                
+
                 {/* Nút gửi */}
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={[
-                        Styles.btnSubmitReview, submittingReview && Styles.btnSubmitReviewDisabled ]} 
-                    onPress={handleSubmitReview} 
+                        Styles.btnSubmitReview, submittingReview && Styles.btnSubmitReviewDisabled]}
+                    onPress={handleSubmitReview}
                     disabled={submittingReview} >
                     {submittingReview ? (
                         <>
