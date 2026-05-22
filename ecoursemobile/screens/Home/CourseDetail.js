@@ -10,14 +10,24 @@ const CourseDetail = ({ route, navigation }) => {
   const [lessons, setLessons] = useState([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
 
-  const loadLessons = async () => {
-    if (!currentCourse.id) return;
-    try {
-      setLoadingLessons(true);
-      // Gọi API lấy danh sách bài học theo Id khóa học
-      let url = `${endpoints['courses']}${currentCourse.id}/lessons/`;
-      let res = await Apis.get(url);
-      setLessons(res.data.results || res.data);
+    const loadLessons= async() => {
+      if (!currentCourse.id) return;
+        try {
+          setLoadingLessons(true);
+          // Gọi API lấy danh sách bài học theo Id khóa học
+            let url = endpoints['course-lessons'](currentCourse.id);
+            let res = await Apis.get(url);
+            setLessons(res.data.results || res.data);
+            
+          } catch (ex) {
+            console.error("Lỗi khi tải danh sách bài học:", ex);
+          } finally {
+            setLoadingLessons(false);
+          }
+    };
+    useEffect(() => {
+      loadLessons();
+    }, [currentCourse.id]);
 
     } catch (ex) {
       console.error("Lỗi khi tải danh sách bài học:", ex);
@@ -115,6 +125,101 @@ const CourseDetail = ({ route, navigation }) => {
           );
         })}
       </View>
+          {/* 5. Đánh giá từ học viên */}
+          <View>
+              <View style={[Styles.row, { justifyContent: 'space-between', alignItems: 'center' }]}>
+                  {/* 1 */}
+                  <Text style={Styles.reviewSectionTitle}>Đánh giá từ học viên</Text>
+                  
+                  <TouchableOpacity 
+                    onPress={() => navigation.navigate('CourseReviews', { 
+                        courseId: currentCourse.id, 
+                        courseSubject: currentCourse.subject 
+                    })}>
+                      {/* Bổ sung marginRight: 20 để đối xứng với marginLeft 20 của Tiêu đề bên trái */}
+                      <Text style={{ color: '#1877F2', fontWeight: 'bold', marginRight: 20 }}>
+                          Xem tất cả
+                      </Text>
+                  </TouchableOpacity>
+              </View>
+
+              {/* 2 */}
+              <TouchableOpacity 
+                style={[Styles.card, Styles.row, Styles.reviewContainer, { padding: 15 }]}
+                onPress={() => navigation.navigate('CourseReviews', { 
+                    courseId: currentCourse.id, 
+                    courseSubject: currentCourse.subject 
+                })}>
+                  <View style={{ flex: 1 }}>
+                      <View style={Styles.row}>
+                          <Ionicons name="star" size={20} color="gold" />
+                          <Text style={{ fontSize: 18, fontWeight: 'bold', marginLeft: 5 }}>
+                              {currentCourse.rating || "0.0"} / 5.0
+                          </Text>
+                      </View>
+                      <Text style={Styles.small}>{currentCourse.reviews_count || 0} lượt đánh giá thực tế</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={24} color="#999" />
+              </TouchableOpacity>
+          </View>
+          {/* Danh sách các bài học của khóa học */}
+          <Text style={[Styles.h2,  { marginTop: 16, marginBottom: 10 ,marginLeft: 20,marginRight:20}]}>
+          Nội dung bài học ({lessons.length})
+          </Text>
+          <View style={[Styles.card, {marginLeft: 20,marginRight:20}]} >
+              {lessons.map((lesson, idx) => {
+              // Quy ước bài học đầu tiên (order === 1) cho phép học thử
+              const isFreeLesson = lesson.order === 1;
+
+              return (
+                <TouchableOpacity 
+                  key={lesson.id} 
+                  style={[Styles.row, { paddingVertical: 12, borderBottomWidth: idx === lessons.length - 1 ? 0 : 1, borderBottomColor: '#eee' }]}
+                  onPress={() => {
+                    if (isFreeLesson) {
+                      navigation.navigate('LessonDetail', { lesson: lesson, courseTitle: currentCourse.subject });
+                    } else {
+                      Alert.alert('Nội dung bị khóa', 'Vui lòng đăng nhập và đăng ký khóa học để mở khóa bài học này.');
+                    }
+                  }}
+                >
+                  <Ionicons 
+                    name={isFreeLesson ? "play-circle" : "lock-closed"} 
+                    size={24} 
+                    color={isFreeLesson ? "#28a745" : "#999"} 
+                    style={{ marginRight: 12 }} 
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[Styles.body, { fontSize: 15 }]}>
+                      {lesson.subject}
+                    </Text>
+                    <Text style={Styles.small}>
+                      Bài {lesson.order} {lesson.video_seconds ? `• ${Math.floor(lesson.video_seconds / 60)} phút` : ''} {isFreeLesson && '• Học thử miễn phí'}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#999" />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {/*So sánh khóa học */}
+          <View style={[Styles.card, {marginLeft: 20,marginRight:20}]}>
+            <TouchableOpacity 
+              style={[Styles.infoBox, Styles.row, ]}
+              onPress={() => {
+                // Điều hướng sang trang So sánh (nếu bạn đã tạo)
+                if (navigation) navigation.navigate('CourseCompare', { courseA: currentCourse });
+              }}
+            >
+              <View style={{ flex: 1, paddingRight: 8 }}>
+              <Text style={[Styles.h2, { marginTop: 16, marginBottom: 10}]}>So sánh với khóa học khác</Text>
+                <Text style={[Styles.small]}>
+                  Nhấp để so sánh chi tiết, thời lượng, học phí với các khóa học cùng chủ đề.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#999" />
+            </TouchableOpacity>
+          </View>
 
     </ScrollView>
   );

@@ -184,6 +184,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
 
         if request.method.__eq__('POST'):
             course = self.get_object()
+
             # thuộc tính course chỉ cho phép đọc nên phải gán dl qua biến khác
             data = request.data.copy()
             data['course'] = course.id
@@ -192,7 +193,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
             if serializer.is_valid():
                 try:
                     # Lưu review
-                    review = serializer.save(user=request.user)
+                    review = serializer.save(user=request.user,course=course)
                     return Response(serializers.CourseReviewSerializer(review).data, status=status.HTTP_201_CREATED)
 
                 # Không đủ tiến độ để review

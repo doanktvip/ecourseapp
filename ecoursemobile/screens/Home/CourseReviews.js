@@ -1,0 +1,269 @@
+import React, { useEffect, useState, useContext } from 'react';
+import { Text, View, TouchableOpacity, Alert, ActivityIndicator, TextInput, FlatList,Image,KeyboardAvoidingView, Platform   } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Apis, { authApis, endpoints } from '../../configs/Apis';
+import { MyUserContext } from '../../configs/Contexts';
+import Styles from "../../styles/Styles";
+
+const CourseReviews = ({ route, navigation }) => {
+    const { courseId, courseSubject } = route.params;
+    const [reviews, setReviews] = useState([]);
+    const [loadingReviews, setLoadingReviews] = useState(false);
+    const [user] = useContext(MyUserContext); // Lấy thông tin user từ Context toàn cục
+    const [page, setPage] = useState(1);
+
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState("");
+    const [submittingReview, setSubmittingReview] = useState(false);
+
+    // =========================================================================
+    // HÀM KIỂM TRA ĐIỀU KIỆN & GỬI ĐÁNH GIÁ (CHỈ CHẠY KHI BẤM NÚT)
+    // =========================================================================
+    const handleSubmitReview = async () => {
+        // BƯỚC 1: Kiểm tra nội dung nhập trống công thức cơ bản
+        if (!comment.trim()) {
+            Alert.alert("Thông báo", "Vui lòng nhập nội dung đánh giá của bạn.");
+            return;
+        }
+
+        // BƯỚC 2: Kiểm tra trạng thái Đăng nhập
+        if (!user) {
+            Alert.alert(
+                "Yêu cầu đăng nhập",
+                "Bạn cần đăng nhập hệ thống để thực hiện đánh giá khóa học này.",
+                [
+                    { text: "Hủy", style: "cancel" },
+                    { text: "Đăng nhập ngay", onPress: () => navigation.navigate('Login') }
+                ]
+            );
+            return;
+        }
+
+        // BƯỚC 3: Kiểm tra phân quyền tài khoản (Phải là STUDENT)
+        if (user.role !== 'STUDENT') {
+            Alert.alert("Quyền truy cập bị từ chối", "Hệ thống chỉ cho phép tài khoản thuộc vai trò Sinh viên viết đánh giá khóa học.");
+            return;
+        }
+
+        setSubmittingReview(true);
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Lỗi xác thực", "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
+                setSubmittingReview(false);
+                return;
+            }
+
+            // BƯỚC 4: Kiểm tra Tiến độ trực tiếp bằng API danh sách khóa học của tôi
+            let enrollRes = await authApis(token).get(endpoints['my-courses']);
+            const myCoursesList = enrollRes.data || [];
+            
+            // Tìm bản ghi chứa thông tin khóa học hiện tại
+            const currentCourseData = myCoursesList.find(c => c.id === courseId);
+
+            if (!currentCourseData || !currentCourseData.enrollment) {
+                Alert.alert("Chặn quyền đánh giá", "Bạn chưa đăng ký khóa học này hoặc trạng thái giao dịch thanh toán chưa thành công.");
+                setSubmittingReview(false);
+                return;
+            }
+
+            // Kiểm tra chỉ số phần trăm tiến độ học tập (Lấy từ dữ liệu Backend đồng bộ)
+            const currentProgress = currentCourseData.enrollment.progress || 0;
+            if (currentProgress < 20) {
+                Alert.alert(
+                    "Tiến độ không đủ điều kiện",
+                    `Tiến độ học hiện tại của bạn mới đạt ${currentProgress}%. Bạn cần hoàn thành tối thiểu 20% thời lượng khóa học để gửi đánh giá.`
+                );
+                setSubmittingReview(false);
+                return;
+            }
+
+            // BƯỚC 5: Gửi dữ liệu Review lên Backend sau khi vượt qua tất cả các chốt chặn
+            let reviewRes = await authApis(token).post(endpoints['course-reviews'](courseId), {
+                'rating': rating,
+                'comment': comment
+            });
+
+            // Nếu Backend trả về thành công, thêm ngay vào danh sách hiển thị
+            if (reviewRes.status === 201 || reviewRes.status === 200) {
+                Alert.alert("Thành công", "Cảm ơn bạn đã gửi đánh giá đóng góp cho khóa học!");
+                setComment("");
+                setRating(5);
+                
+                // Cập nhật giao diện real-time bằng cách đưa review mới lên trên cùng đầu mảng
+                const newReviewItem = {
+                    ...reviewRes.data,
+                    user: {
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        avatar: user.avatar,
+                        role: user.role
+                    }
+                };
+                setReviews(prev => [newReviewItem, ...prev]);
+            }
+        } catch (ex) {
+            console.error("Lỗi xử lý gửi đánh giá:", ex);
+            // Bắt thông điệp lỗi chi tiết từ tầng Model Clean của Django nếu có
+            if (ex.response && ex.response.data && ex.response.data.non_field_errors) {
+                Alert.alert("Thất bại", ex.response.data.non_field_errors[0]);
+            } else {
+                Alert.alert("Lỗi", "Không thể gửi đánh giá lúc này. Mỗi học viên chỉ được đánh giá một khóa học một lần.");
+            }
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
+    // =========================================================================
+    // LẤY DANH SÁCH BÌNH LUẬN CŨ CỦA KHÓA HỌC (PHÂN TRANG MƯỢT MÀ)
+    // =========================================================================
+    const loadReviews = async () => {
+        if (page === 0) return;
+        try {
+            setLoadingReviews(true);
+            let url = `${endpoints['course-reviews'](courseId)}?page=${page}`;
+            let res = await Apis.get(url);
+            
+            const newReviews = res.data.results || res.data;
+
+            if (page === 1) {
+                setReviews(newReviews);
+            } else if (page > 1) {
+                setReviews(prev => [...prev, ...newReviews]);
+            }
+            
+            if (res.data.next === null) {
+                setPage(0);
+            }
+        } catch (ex) {
+            console.error(ex);
+            setPage(0);
+        } finally {
+            setLoadingReviews(false);
+        }
+    };
+
+    useEffect(() => {
+        if (page > 0) {
+            loadReviews();
+        }
+    }, [page]);
+
+    const loadMoreReviews = () => {
+        if (page > 0 && !loadingReviews) {
+            setPage(page + 1);
+        }
+    };
+
+    const renderReviewItem = ({ item: rev }) => (
+        <View style={[Styles.card, Styles.reviewItemContainer, { marginHorizontal: 16, marginBottom: 10, padding: 12 }]}>
+            <View style={[Styles.row, { justifyContent: 'space-between', alignItems: 'center' }]}>
+                <View style={Styles.row}>
+                    <Image source={{ uri: rev.user?.avatar }} style={Styles.reviewAvatar} />
+                    <View style={{ marginLeft: 10 }}>
+                        <Text style={Styles.reviewUserText}>
+                            {rev.user?.last_name} {rev.user?.first_name}
+                        </Text>
+                        <View style={Styles.reviewRatingStars}>
+                            {[1, 2, 3, 4, 5].map(s => (
+                                <Ionicons key={s} name={s <= rev.rating ? "star" : "star-outline"} size={13} color="gold" style={{ marginRight: 2 }} />
+                            ))}
+                        </View>
+                    </View>
+                </View>
+                <Text style={Styles.reviewDateText}>
+                    {rev.created_date ? new Date(rev.created_date).toLocaleDateString('vi-VN') : ''}
+                </Text>
+            </View>
+            <Text style={Styles.reviewCommentText}>{rev.comment}</Text>
+        </View>
+    );
+
+    return (
+        // Điều chỉnh offset để tránh bị bàn phím che khuất 
+        <KeyboardAvoidingView 
+            style={{ flex: 1, backgroundColor: '#ffffff' }}
+            behavior='padding'
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80} > 
+            {/* 1. FLATLIST: DANH SÁCH BÌNH LUẬN (Sẽ tự động chiếm không gian trống phía trên) */}
+            <FlatList
+                style={{ flex: 1 }} // <--- flex: 1 ở đây sẽ đẩy khối View phía dưới xuống tận cùng
+                contentContainerStyle={{ paddingBottom: 20 }}
+                data={reviews}
+                renderItem={renderReviewItem}
+                keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+                showsVerticalScrollIndicator={false}
+                
+                // Tiêu đề danh sách
+                ListHeaderComponent={() => (
+                    <Text style={[Styles.reviewSectionTitle, { marginTop: 16, paddingHorizontal: 16 }]}>
+                        Tất cả đánh giá về khóa học ({reviews.length})
+                    </Text>
+                )}
+                
+                ListEmptyComponent={!loadingReviews && <Text style={[Styles.noReviewsText, { textAlign: 'center', marginTop: 20 }]}>Khóa học này chưa có lượt đánh giá nào.</Text>}
+                onEndReached={loadMoreReviews}
+                onEndReachedThreshold={0.2}
+                ListFooterComponent={loadingReviews ? <ActivityIndicator size="small" color="#1877F2" style={{ marginVertical: 15 }} /> : null}
+            />
+
+            {/* 2. VIEW: FORM ĐÁNH GIÁ (Nằm ngoài FlatList để cố định dưới đáy) */}
+            <View style={{ 
+                padding: 16, 
+                backgroundColor: '#fff',
+                borderTopWidth: 1,
+                borderColor: '#eee',
+                // Đổ bóng mờ ngăn cách với danh sách phía trên
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: -3 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 10 
+            }}>
+                <Text style={[Styles.writeReviewTitle, { marginBottom: 8 }]}>Viết đánh giá của bạn</Text>
+                
+                {/* Chọn số sao */}
+                <View style={[Styles.ratingSelectorContainer, { marginVertical: 4 }]}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                        <TouchableOpacity key={s} onPress={() => setRating(s)} style={{ paddingHorizontal: 4 }}>
+                            <Ionicons name={s <= rating ? "star" : "star-outline"} size={28} color="gold" />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+                
+                {/* Ô nhập chữ */}
+                <TextInput
+                    style={[Styles.reviewTextInput, { minHeight: 60, marginBottom: 10 }]}
+                    placeholder="Khóa học này có bổ ích với bạn không?"
+                    multiline
+                    numberOfLines={2}
+                    value={comment}
+                    onChangeText={setComment}
+                />
+                
+                {/* Nút gửi */}
+                <TouchableOpacity 
+                    style={[
+                        Styles.btnSubmitReview, submittingReview && Styles.btnSubmitReviewDisabled ]} 
+                    onPress={handleSubmitReview} 
+                    disabled={submittingReview} >
+                    {submittingReview ? (
+                        <>
+                            <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
+                            <Text style={Styles.btnSubmitReviewText}>Đang gửi...</Text>
+                        </>
+                    ) : (
+                        <>
+                            <Ionicons name="send" size={18} color="#fff" style={{ marginRight: 8 }} />
+                            <Text style={Styles.btnSubmitReviewText}>Gửi</Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            </View>
+        </KeyboardAvoidingView>
+    );
+};
+
+export default CourseReviews;

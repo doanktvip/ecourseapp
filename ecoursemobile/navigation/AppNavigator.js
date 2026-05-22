@@ -12,6 +12,7 @@ import LessonDetail from '../screens/Home/LessonDetail';
 import CourseCompare from '../screens/Home/CourseCompare';
 import MyCourses from '../screens/Home/MyCourses';
 import CourseForm from '../screens/Home/CourseForm';
+import CourseReviews from '../screens/Home/CourseReviews';
 import StudentProgress from '../screens/Home/StudentProgress';
 
 import Login from '../screens/User/Login';
@@ -78,6 +79,11 @@ const HomeStackNavigator = () => {
         name="CourseCompare"
         component={CourseCompare}
         options={{ title: 'So sánh khóa học' }}
+      />
+      <HomeStack.Screen
+        name="CourseReviews"
+        component={CourseReviews}
+        options={{ title: 'Đánh giá khóa học' }}
       />
     </HomeStack.Navigator>
   );

@@ -206,7 +206,6 @@ class CourseReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseReview
         fields = ['id', 'course', 'user', 'rating', 'comment', 'created_date']
-        read_only_fields = ['id', 'user', 'created_date']
-        extra_kwargs = {
-            'course': {'write_only': True}
-        }
+        read_only_fields = ['id', 'course', 'user', 'created_date']
+
+
