@@ -210,6 +210,26 @@ const MyCoursesMain = ({ navigation }) => {
                                         color="#adb5bd"
                                         style={Styles.myCourseChevron}
                                     />
+                                    {activeTab === 'teaching' ? (
+                                        <TouchableOpacity
+                                            style={{
+                                                padding: 8,
+                                                backgroundColor: '#e8f0fe',
+                                                borderRadius: 8,
+                                                marginLeft: 8
+                                            }}
+                                            onPress={() => navigation.navigate('CourseForm', { course: course })}
+                                        >
+                                            <Ionicons name="pencil" size={20} color="#1877F2" />
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <Ionicons
+                                            name="chevron-forward-outline"
+                                            size={20}
+                                            color="#adb5bd"
+                                            style={Styles.myCourseChevron}
+                                        />
+                                    )}
                                 </View>
 
                                 {/* Chỉ hiển thị thanh tiến độ khi progress khác null */}

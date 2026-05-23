@@ -8,8 +8,11 @@ import { MyUserContext } from '../../configs/Contexts';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from '../../styles/Styles';
 
-const CourseForm = ({ navigation }) => {
+const CourseForm = ({ route, navigation }) => {
     const [user] = useContext(MyUserContext);
+
+    // Nhận dữ liệu khóa học truyền sang khi là chế độ CHỈNH SỬA
+    const { course } = route?.params || {};
 
     // Form state variables
     const [subject, setSubject] = useState('');
@@ -24,6 +27,7 @@ const CourseForm = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     // Tải danh mục từ API
     const loadCategories = async () => {
@@ -80,7 +84,7 @@ const CourseForm = ({ navigation }) => {
         setCategoryModalVisible(false);
     };
 
-    // Gửi biểu mẫu tạo khóa học lên API
+    // Gửi biểu mẫu tạo khóa học lên API hay cập nhật khóa học 
     const handleCreateCourse = async () => {
         if (!subject || !subject.trim()) {
             Alert.alert("Lỗi nhập liệu", "Vui lòng nhập tên khóa học.");
@@ -124,24 +128,24 @@ const CourseForm = ({ navigation }) => {
                     });
                 }
 
-                // Gửi POST request dạng multipart/form-data
-                const response = await authApis(token).post(endpoints['courses'], formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                });
-
-                Alert.alert(
-                    "Thành công",
-                    `Khóa học "${response.data.subject}" đã được tạo thành công!`,
-                    [{
-                        text: "Xác nhận",
-                        onPress: () => {
-                            // Quay lại màn hình quản lý khóa học
-                            navigation.goBack();
-                        }
-                    }]
-                );
+               if (course) {
+                    // Lệnh PATCH: CẬP NHẬT KHÓA HỌC HIỆN TẠI
+                    await authApis(token).patch(endpoints['course-details'](course.id), formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+                    Alert.alert("Thành công", "Cập nhật thông tin khóa học thành công!", [
+                        { text: "OK", onPress: () => navigation.goBack() }
+                    ]);
+                } else {
+                    // Lệnh POST: TẠO KHÓA HỌC MỚI (Gửi POST request dạng multipart/form-data)
+                    const response = await authApis(token).post(endpoints['courses'], formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+                    Alert.alert("Thành công", `Khóa học "${response.data.subject}" đã được tạo thành công!`, [
+                        { text: "OK", onPress: () => navigation.goBack() }
+                    ]);
+                
+                }
             } else {
                 Alert.alert("Lỗi xác thực", "Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
             }
@@ -170,6 +174,35 @@ const CourseForm = ({ navigation }) => {
         } finally {
             setSubmitting(false);
         }
+    };
+
+    // XỬ LÝ XÓA KHÓA HỌC
+    const handleDelete = () => {
+        Alert.alert('Xác nhận xóa','Bạn có chắc chắn muốn vô hiệu hóa khóa học này không? Các dữ liệu liên quan sẽ bị ảnh hưởng.',
+            [
+                { text: 'Hủy', style: 'cancel' },
+                { 
+                    text: 'Xóa khóa học', 
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setDeleteLoading(true);
+                            const token = await AsyncStorage.getItem('token');
+                            await authApis(token).delete(endpoints['course-details'](course.id));
+                            
+                            Alert.alert('Thành công', 'Khóa học đã được vô hiệu hóa!', [
+                                { text: 'OK', onPress: () => navigation.goBack() }
+                            ]);
+                        } catch (error) {
+                            console.error("Lỗi khi xóa khóa học:", error);
+                            Alert.alert('Thất bại', 'Không thể xóa khóa học lúc này.');
+                        } finally {
+                            setDeleteLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     // 1. Trường hợp: Đang tải xác thực ban đầu
@@ -206,17 +239,13 @@ const CourseForm = ({ navigation }) => {
 
     // 3. Trường hợp: Giảng viên hợp lệ -> Hiển thị biểu mẫu Tạo Khóa học
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={Styles.container}
-        >
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={Styles.container}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 50 }}>
                 <View style={Styles.formContainer}>
                     <Text style={[Styles.h2, { marginBottom: 20, color: '#212529' }]}>
-                        Thông tin khóa học mới
+                        {course ? 'Chỉnh sửa khóa học ' : 'Thông tin khóa học mới 🎓'}
                     </Text>
 
-                    {/* Trường 1: Tên khóa học (Bắt buộc) */}
                     <View style={Styles.formGroup}>
                         <Text style={Styles.formLabel}>Tên khóa học <Text style={{ color: '#dc3545' }}>*</Text></Text>
                         <TextInput
@@ -228,20 +257,19 @@ const CourseForm = ({ navigation }) => {
                             placeholderTextColor="#adb5bd"
                             outlineColor="#dee2e6"
                             activeOutlineColor="#1877F2"
-                            disabled={submitting}
+                            disabled={submitting || deleteLoading}
                             maxLength={255}
                             left={<TextInput.Icon icon="book-open-variant" />}
                         />
                     </View>
 
-                    {/* Trường 2: Danh mục (Bắt buộc) */}
                     <View style={Styles.formGroup}>
                         <Text style={Styles.formLabel}>Danh mục khóa học <Text style={{ color: '#dc3545' }}>*</Text></Text>
                         <TouchableOpacity
                             style={Styles.categorySelector}
-                            onPress={() => !submitting && setCategoryModalVisible(true)}
+                            onPress={() => !(submitting || deleteLoading) && setCategoryModalVisible(true)}
                             activeOpacity={0.8}
-                            disabled={submitting}
+                            disabled={submitting || deleteLoading}
                         >
                             {categoryId ? (
                                 <Text style={Styles.categorySelectorText}>{categoryName}</Text>
@@ -252,7 +280,6 @@ const CourseForm = ({ navigation }) => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Trường 3: Học phí (Không bắt buộc) */}
                     <View style={Styles.formGroup}>
                         <Text style={Styles.formLabel}>Học phí (VND)</Text>
                         <TextInput
@@ -260,17 +287,16 @@ const CourseForm = ({ navigation }) => {
                             onChangeText={setFee}
                             mode="outlined"
                             style={{ backgroundColor: '#ffffff' }}
-                            placeholder="Nhập số tiền hoặc bỏ trống nếu Miễn phí"
+                            placeholder="Nhập số tiền hoặc bỏ trống nếu miễn phí"
                             placeholderTextColor="#adb5bd"
                             keyboardType="numeric"
                             outlineColor="#dee2e6"
                             activeOutlineColor="#1877F2"
-                            disabled={submitting}
+                            disabled={submitting || deleteLoading}
                             left={<TextInput.Icon icon="cash-multiple" />}
                         />
                     </View>
 
-                    {/* Trường 4: Mô tả chi tiết (Không bắt buộc) */}
                     <View style={Styles.formGroup}>
                         <Text style={Styles.formLabel}>Mô tả khóa học</Text>
                         <TextInput
@@ -284,30 +310,25 @@ const CourseForm = ({ navigation }) => {
                             activeOutlineColor="#1877F2"
                             multiline={true}
                             numberOfLines={4}
-                            disabled={submitting}
+                            disabled={submitting || deleteLoading}
                             left={<TextInput.Icon icon="text-box-outline" />}
                         />
                     </View>
 
-                    {/* Trường 5: Chọn ảnh bìa khóa học */}
                     <View style={Styles.formGroup}>
                         <Text style={Styles.formLabel}>Ảnh bìa khóa học</Text>
                         <TouchableOpacity
                             style={[Styles.imagePickerBox, imageUri && Styles.imagePickerActive]}
                             onPress={handlePickImage}
-                            disabled={submitting}
+                            disabled={submitting || deleteLoading}
                         >
                             {imageUri ? (
                                 <View style={{ width: '100%', height: '100%', position: 'relative' }}>
                                     <Image source={{ uri: imageUri }} style={Styles.imagePreview} />
                                     <View style={{
-                                        position: 'absolute',
-                                        bottom: 10,
-                                        right: 10,
-                                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                                        paddingHorizontal: 10,
-                                        paddingVertical: 5,
-                                        borderRadius: 6
+                                        position: 'absolute', bottom: 10, right: 10,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.6)', paddingHorizontal: 10,
+                                        paddingVertical: 5, borderRadius: 6
                                     }}>
                                         <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>Thay đổi ảnh</Text>
                                     </View>
@@ -322,7 +343,6 @@ const CourseForm = ({ navigation }) => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Nút gửi hoặc tiến trình tải lên */}
                     <View style={{ marginTop: 10 }}>
                         <Button
                             mode="contained"
@@ -330,21 +350,32 @@ const CourseForm = ({ navigation }) => {
                             style={{ backgroundColor: '#1877F2', borderRadius: 8, paddingVertical: 4 }}
                             labelStyle={{ fontSize: 16, fontWeight: 'bold' }}
                             loading={submitting}
-                            disabled={submitting}
+                            disabled={submitting || deleteLoading}
                         >
-                            Tạo khóa học mới
+                            {course ? 'Cập nhật khóa học' : 'Tạo khóa học mới'}
                         </Button>
                     </View>
+
+                    {/* Chỉ hiện nút XÓA khi đang ở chế độ CHỈNH SỬA (có tồn tại course) */}
+                    {course && (
+                        <View style={{ marginTop: 16 }}>
+                            <Button
+                                mode="contained"
+                                onPress={handleDelete}
+                                style={{ backgroundColor: '#dc3545', borderRadius: 8, paddingVertical: 4 }}
+                                labelStyle={{ fontSize: 16, fontWeight: 'bold', color: '#ffffff' }}
+                                loading={deleteLoading}
+                                disabled={submitting || deleteLoading}
+                                icon="delete-outline"
+                            >
+                                Xóa khóa học
+                            </Button>
+                        </View>
+                    )}
                 </View>
             </ScrollView>
 
-            {/* Modal bộ chọn danh mục */}
-            <Modal
-                visible={categoryModalVisible}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setCategoryModalVisible(false)}
-            >
+            <Modal visible={categoryModalVisible} transparent={true} animationType="fade" onRequestClose={() => setCategoryModalVisible(false)}>
                 <View style={Styles.modalOverlay}>
                     <View style={Styles.modalContainer}>
                         <View style={Styles.modalHeader}>
@@ -353,7 +384,6 @@ const CourseForm = ({ navigation }) => {
                                 <Ionicons name="close" size={24} color="#6c757d" />
                             </TouchableOpacity>
                         </View>
-
                         {loading ? (
                             <ActivityIndicator size="small" color="#1877F2" style={{ paddingVertical: 20 }} />
                         ) : (
@@ -363,14 +393,8 @@ const CourseForm = ({ navigation }) => {
                                 renderItem={({ item }) => {
                                     const isSelected = categoryId === item.id;
                                     return (
-                                        <TouchableOpacity
-                                            style={Styles.modalItem}
-                                            onPress={() => handleSelectCategory(item)}
-                                        >
-                                            <Text style={[
-                                                Styles.modalItemText,
-                                                isSelected && Styles.modalItemTextActive
-                                            ]}>
+                                        <TouchableOpacity style={Styles.modalItem} onPress={() => handleSelectCategory(item)}>
+                                            <Text style={[Styles.modalItemText, isSelected && Styles.modalItemTextActive]}>
                                                 {item.name}
                                             </Text>
                                         </TouchableOpacity>

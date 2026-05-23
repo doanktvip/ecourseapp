@@ -127,6 +127,11 @@ const MyCoursesStackNavigator = () => {
         component={CourseReviews}
         options={{ title: 'Đánh giá khóa học' }}
       />
+      <MyCoursesStack.Screen 
+        name="CourseForm" 
+        component={CourseForm} 
+        options={{ title: 'Thông tin khóa học' }} 
+    />
     </MyCoursesStack.Navigator>
   );
 }
