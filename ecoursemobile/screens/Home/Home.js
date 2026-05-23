@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { use, useEffect, useState } from "react";
 import Apis, { endpoints } from "../../configs/Apis";
 import { Card, Searchbar } from "react-native-paper";
+import { useIsFocused } from '@react-navigation/native';
 
 
 
@@ -15,32 +16,41 @@ const Home = ({ navigation }) => {
     const [cateId, setCateId] = useState();
     const [q, setQ] = useState("");
     const [page, setPage] = useState(1);
+    // Biến này sẽ có giá trị true nếu mở màn hình Home, false nếu ở màn hình khác
+    const isFocused = useIsFocused();
 
 
     const loadCategories = async () => {
         let res = await Apis.get(endpoints['categories']);
         setCategories(res.data);
     }
+    // Hàm load khóa học, isRefresh để ép làm mới từ trang 1
+    const loadCourses = async (isRefresh = false) => {
+        let currentPage = isRefresh ? 1 : page;
+        
+        // Nếu hết trang và không phải lệnh làm mới thì bỏ qua
+        if (currentPage === 0 && !isRefresh) return; 
 
-    const loadCourses = async () => {
-        if (page === 0) return;
         try {
             setLoading(true);
-            let url = `${endpoints['courses']}?page=${page}`;
-            if (q) {
-                url = `${url}&search=${q}`;
-            }
-            if (cateId) {
-                url = `${url}&category_id=${cateId}`;
-            }
+            let url = `${endpoints['courses']}?page=${currentPage}`;
+            if (q) url += `&search=${q}`;
+            if (cateId) url += `&category_id=${cateId}`;
 
             let res = await Apis.get(url);
-            if (page === 1)
-                setCourses(res.data.results);
-            else if (page > 1)
-                setCourses([...courses, ...res.data.results]);
-            if (res.data.next === null)
+
+            if (currentPage === 1) {
+                setCourses(res.data.results); // Nạp lại mới hoàn toàn nếu ở trang 1
+            } else {
+                 setCourses([...courses, ...res.data.results]);
+            }
+
+            // Xử lý cờ trang tiếp theo
+            if (res.data.next === null) {
                 setPage(0);
+            } else if (isRefresh) {
+                setPage(1); 
+            } 
         } catch (ex) {
             console.error(ex);
             if (ex.response && ex.response.status === 404) {
@@ -55,21 +65,26 @@ const Home = ({ navigation }) => {
         loadCategories();
     }, []);
 
-    useEffect(() => {
+    // 2. RE-RENDER: màn hình Home hiển thị lên làm mới danh sách
+   useEffect(() => {
+        if (!isFocused) return; // Nếu đang ở màn hình khác
+
         let timer = setTimeout(() => {
-            if (page > 0)
-                loadCourses();
+            loadCourses(true); // Luôn làm mới về trang 1
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [q, cateId, page]);
+    }, [q, cateId, isFocused]);
 
+    // Xử lý riêng biệt cho việc cuộn trang
     useEffect(() => {
-        setPage(1);
-    }, [q, cateId]);
+        if (page > 1 && isFocused) {
+            loadCourses(false);
+        }
+    }, [page]);
 
     const loadMore = () => {
-        if (page > 0 && !loading)
+        if (page > 0 && !loading && courses.length > 0)
             setPage(page + 1);
     }
 
