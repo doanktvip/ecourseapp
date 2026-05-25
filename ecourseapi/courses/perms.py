@@ -25,6 +25,9 @@ class IsAdmin(IsAuthenticatedUser):
 class IsCourseOwner(IsAuthenticatedUser):
     def has_object_permission(self, request, view, obj):
         instructor = getattr(obj, 'instructor', getattr(getattr(obj, 'course', None), 'instructor', None))
+        user = request.user
+        if user.role == User.Role.ADMIN:
+            return True
         return instructor == request.user
 
 

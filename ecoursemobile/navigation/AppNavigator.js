@@ -28,6 +28,9 @@ import StatsDashboard from '../screens/Stats/StatsDashboard';
 import VerifyInstructors from '../screens/Admin/VerifyInstructors';
 import PaymentProcess from '../screens/Payment/PaymentProcess';
 
+import CategoryManage from '../screens/Admin/CategoryManage';
+import TagManage from '../screens/Admin/TagManage';
+
 // Khởi tạo Stack và Tab Navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -220,6 +223,20 @@ const AccountStackNavigator = () => {
         name="AdminVerifyDetails"
         component={VerifyInstructors}
         options={{ title: 'Duyệt đơn giảng viên' }}
+      />
+      <AccountStack.Screen
+        name="CategoryManage"
+        component={CategoryManage}
+        options={({ route }) => ({
+          title: 'Quản lý danh mục khóa học'
+        })}
+      />
+      <AccountStack.Screen
+        name="TagManage"
+        component={TagManage}
+        options={({ route }) => ({
+          title: 'Quản lý thẻ Tag'
+        })}
       />
     </AccountStack.Navigator>
   );
