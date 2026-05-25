@@ -14,6 +14,7 @@ import MyCourses from '../screens/Home/MyCourses';
 import CourseForm from '../screens/Home/CourseForm';
 import CourseReviews from '../screens/Home/CourseReviews';
 import StudentProgress from '../screens/Home/StudentProgress';
+import LessonForm from '../screens/Home/LessonForm';
 
 import Login from '../screens/User/Login';
 import Register from '../screens/User/Register';
@@ -88,6 +89,11 @@ const HomeStackNavigator = () => {
         component={CourseReviews}
         options={{ title: 'Đánh giá khóa học' }}
       />
+      <HomeStack.Screen
+        name="LessonForm"
+        component={LessonForm}
+        options={{ title: 'Thêm bài học mới' }}
+      />
     </HomeStack.Navigator>
   );
 }
@@ -134,7 +140,12 @@ const MyCoursesStackNavigator = () => {
         name="CourseForm" 
         component={CourseForm} 
         options={{ title: 'Thông tin khóa học' }} 
-    />
+      />
+      <MyCoursesStack.Screen 
+        name="LessonForm" 
+        component={LessonForm} 
+        options={{ title: 'Thêm bài học mới' }} 
+      />
     </MyCoursesStack.Navigator>
   );
 }

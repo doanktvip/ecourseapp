@@ -2,7 +2,6 @@ import stripe
 import logging
 from ecourse import settings
 from courses.payments.base import PaymentGateway
-from courses.payments.utils import generate_qr_base64
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,6 @@ class StripePayment(PaymentGateway):
 
             return {
                 "payment_url": session.url,
-                "qr_code_base64": generate_qr_base64(session.url),
                 "transaction_id": session.id,
                 "amount": amount,
                 "method": "STRIPE"

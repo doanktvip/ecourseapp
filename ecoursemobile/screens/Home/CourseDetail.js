@@ -1,9 +1,11 @@
 import React, { useMemo, useEffect, useState, useContext } from 'react';
 import { Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Apis, { endpoints } from '../../configs/Apis';
+import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from "../../styles/Styles";
 import { MyUserContext } from '../../configs/Contexts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 
 const CourseDetail = ({ route, navigation }) => {
   const { course } = route.params || {};
@@ -11,6 +13,20 @@ const CourseDetail = ({ route, navigation }) => {
   const [user] = useContext(MyUserContext);
   const [lessons, setLessons] = useState([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [loadingEnrollment, setLoadingEnrollment] = useState(false);
+  const isFocused = useIsFocused();
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollmentRecord, setEnrollmentRecord] = useState(null);
+
+  const shouldShowEnrollButton = useMemo(() => {
+    if (isEnrolled) return false;
+    if (user) {
+      if (user.role === 'ADMIN') return false;
+      if (user.role === 'INSTRUCTOR' && currentCourse.instructor?.email === user.email) return false;
+    }
+    return true;
+  }, [isEnrolled, user, currentCourse]);
 
   const loadLessons = async () => {
     if (!currentCourse.id) return;
@@ -28,9 +44,110 @@ const CourseDetail = ({ route, navigation }) => {
     }
   };
 
+  const checkEnrollmentStatus = async () => {
+    if (!user || !currentCourse.id) {
+      setEnrollmentRecord(null);
+      setIsEnrolled(false);
+      return;
+    }
+    try {
+      setLoadingEnrollment(true);
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        const res = await authApis(token).get(endpoints['my-enrolls']);
+        const enrollments = res.data || [];
+        const record = enrollments.find(e => e.course?.id === currentCourse.id);
+
+        setEnrollmentRecord(record || null);
+        setIsEnrolled(!!record && record.payment?.is_successful === true);
+      } else {
+        setEnrollmentRecord(null);
+        setIsEnrolled(false);
+      }
+    } catch (err) {
+      console.error("Lỗi kiểm tra trạng thái đăng ký:", err);
+      setEnrollmentRecord(null);
+      setIsEnrolled(false);
+    } finally {
+      setLoadingEnrollment(false);
+    }
+  };
+
+  const handleEnroll = async () => {
+    if (!user) {
+      navigation.navigate('Login', {
+        next: 'Main',
+        params: {
+          screen: 'HomeTab',
+          params: {
+            screen: 'CourseDetail',
+            params: { course: currentCourse }
+          }
+        }
+      });
+      return;
+    }
+
+    if (enrollmentRecord && !isEnrolled) {
+      navigation.navigate('PaymentProcess', { course: currentCourse, payment: enrollmentRecord.payment });
+      return;
+    }
+
+    try {
+      setEnrolling(true);
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        let url = endpoints['course-enrolls'](currentCourse.id);
+        const res = await authApis(token).post(url);
+
+        if (currentCourse.fee && parseFloat(currentCourse.fee) > 0) {
+          const enrollmentData = res.data || {};
+          navigation.navigate('PaymentProcess', { course: currentCourse, payment: enrollmentData.payment });
+          checkEnrollmentStatus();
+          loadLessons();
+        } else {
+          Alert.alert(
+            "Đăng ký thành công",
+            `Chúc mừng! Bạn đã đăng ký khóa học miễn phí "${currentCourse.subject}" thành công. Bây giờ bạn có thể bắt đầu học tập ngay lập tức!`,
+            [{
+              text: "Bắt đầu học ngay", onPress: () => {
+                checkEnrollmentStatus();
+                loadLessons();
+              }
+            }]
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi đăng ký khóa học:", err);
+      let errMsg = "Đăng ký khóa học thất bại. Vui lòng thử lại sau.";
+      if (err.response && err.response.data && err.response.data.detail) {
+        errMsg = err.response.data.detail;
+      }
+      Alert.alert("Đăng ký thất bại", errMsg);
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
   useEffect(() => {
-    loadLessons();
-  }, [currentCourse.id]);
+    if (isFocused) {
+      loadLessons();
+      checkEnrollmentStatus();
+    }
+  }, [currentCourse.id, user, isFocused]);
+
+  const getLessonSubtitle = (lesson, isUnlocked) => {
+    if (lesson.is_preview) return '• Học thử miễn phí';
+    if (!isUnlocked) return '• Chưa mở khóa';
+    if (user) {
+      if (user.role === 'ADMIN') return '• Quyền Admin';
+      if (user.role === 'INSTRUCTOR' && currentCourse.instructor?.email === user.email) {
+        return '• Bài giảng của bạn';
+      }
+    }
+    return '• Đã mở khóa';
+  };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#ffffff' }} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
@@ -38,9 +155,21 @@ const CourseDetail = ({ route, navigation }) => {
       <View style={{ padding: 16 }}>
         {/* Tổng quan */}
         <View style={Styles.card}>
-          <Text style={[Styles.h1, { fontSize: 22, lineHeight: 28 }]}>
-            {currentCourse.subject}
-          </Text>
+          <View style={[Styles.row, { justifyContent: 'space-between', alignItems: 'center' }]}>
+            <Text style={[Styles.h1, { fontSize: 22, lineHeight: 28, flex: 1, marginRight: 8 }]}>
+              {currentCourse.subject}
+            </Text>
+            {user && (user.role === 'ADMIN' || (user.role === 'INSTRUCTOR' && currentCourse.instructor?.email === user.email)) && (
+              <TouchableOpacity
+                style={[Styles.row, { backgroundColor: '#e8f0fe', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }]}
+                onPress={() => navigation.navigate('CourseForm', { course: currentCourse })}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="create-outline" size={16} color="#1877F2" />
+                <Text style={{ color: '#1877F2', fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Sửa</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           <View style={[Styles.row, { marginVertical: 8 }]}>
             <Ionicons name="star" size={18} color="gold" style={{ marginRight: 4 }} />
@@ -70,6 +199,41 @@ const CourseDetail = ({ route, navigation }) => {
             <Text style={[Styles.title, { fontSize: 16 }]}>{currentCourse.instructor_name}</Text>
           </View>
         </View>
+
+        {/* Nút Đăng ký / Thanh toán khóa học */}
+        {shouldShowEnrollButton && (
+          <TouchableOpacity
+            style={[
+              Styles.btnPrimary,
+              {
+                marginVertical: 8,
+                backgroundColor: user ? '#1877F2' : '#65676b',
+                borderRadius: 10,
+                height: 50,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: user ? '#1877F2' : '#65676b',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 6,
+                elevation: 4
+              }
+            ]}
+            onPress={handleEnroll}
+            disabled={enrolling}
+            activeOpacity={0.8}
+          >
+            {enrolling ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: 'bold' }}>
+                {user
+                  ? (enrollmentRecord ? "THANH TOÁN KHÓA HỌC" : "ĐĂNG KÝ & THANH TOÁN KHÓA HỌC")
+                  : "ĐĂNG NHẬP ĐỂ ĐĂNG KÝ HỌC"}
+              </Text>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
       {/* Tiến độ học của sinh viên  */}
       {user && user.role === ('INSTRUCTOR' || 'ADMIN') && currentCourse?.instructor && user.email === currentCourse.instructor.email && (
@@ -95,30 +259,55 @@ const CourseDetail = ({ route, navigation }) => {
         </Text>
       </View>
       {/* Danh sách các bài học của khóa học */}
-      <Text style={[Styles.h2, { marginTop: 16, marginBottom: 10, marginLeft: 20, marginRight: 20 }]}>
-        Nội dung bài học ({lessons.length})
-      </Text>
+      <View style={[Styles.row, { justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 10, marginLeft: 20, marginRight: 20 }]}>
+        <Text style={[Styles.h2, { marginTop: 0, marginBottom: 0 }]}>
+          Nội dung bài học ({lessons.length})
+        </Text>
+        {user && (user.role === 'ADMIN' || (user.role === 'INSTRUCTOR' && currentCourse.instructor?.email === user.email)) && (
+          <TouchableOpacity
+            style={[Styles.row, { backgroundColor: '#e8f0fe', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }]}
+            onPress={() => navigation.navigate('LessonForm', { courseId: currentCourse.id })}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add-circle-outline" size={16} color="#1877F2" />
+            <Text style={{ color: '#1877F2', fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Thêm bài học</Text>
+          </TouchableOpacity>
+        )}
+      </View>
       <View style={[Styles.card, { marginLeft: 20, marginRight: 20 }]} >
         {lessons.map((lesson, idx) => {
-          // Quy ước bài học đầu tiên (order === 1) cho phép học thử
-          const isFreeLesson = lesson.order === 1;
+          // Kiểm tra xem bài học có được mở khóa hay không
+          const isUnlocked = !!lesson.is_preview ||
+            (!!user && (
+              user.role === 'ADMIN' ||
+              (user.role === 'INSTRUCTOR' && currentCourse.instructor?.email === user.email) ||
+              isEnrolled
+            ));
 
           return (
             <TouchableOpacity
               key={lesson.id}
               style={[Styles.row, { paddingVertical: 12, borderBottomWidth: idx === lessons.length - 1 ? 0 : 1, borderBottomColor: '#eee' }]}
               onPress={() => {
-                if (isFreeLesson || user) {
-                  navigation.navigate('LessonDetail', { lesson: lesson, courseTitle: currentCourse.subject });
+                if (isUnlocked) {
+                  navigation.navigate('LessonDetail', {
+                    lesson: lesson,
+                    courseTitle: currentCourse.subject,
+                    courseInstructorEmail: currentCourse.instructor?.email
+                  });
                 } else {
-                  Alert.alert('Nội dung bị khóa', 'Vui lòng đăng nhập và đăng ký khóa học để mở khóa bài học này.');
+                  if (!user) {
+                    Alert.alert('Nội dung bị khóa', 'Vui lòng đăng nhập để học thử bài học miễn phí hoặc đăng ký để học toàn bộ khóa học.');
+                  } else {
+                    Alert.alert('Nội dung bị khóa', 'Vui lòng thanh toán khóa học để mở khóa học tập bài học này.');
+                  }
                 }
               }}
             >
               <Ionicons
-                name={isFreeLesson ? "play-circle" : "lock-closed"}
+                name={isUnlocked ? "play-circle" : "lock-closed"}
                 size={24}
-                color={isFreeLesson ? "#28a745" : "#999"}
+                color={isUnlocked ? "#28a745" : "#999"}
                 style={{ marginRight: 12 }}
               />
               <View style={{ flex: 1 }}>
@@ -126,7 +315,7 @@ const CourseDetail = ({ route, navigation }) => {
                   {lesson.subject}
                 </Text>
                 <Text style={Styles.small}>
-                  Bài {lesson.order} {lesson.video_seconds ? `• ${Math.floor(lesson.video_seconds / 60)} phút` : ''} {isFreeLesson && '• Học thử miễn phí'}
+                  Bài {lesson.order} {lesson.video_seconds ? `• ${Math.floor(lesson.video_seconds / 60)} phút` : ''} {getLessonSubtitle(lesson, isUnlocked)}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#999" />

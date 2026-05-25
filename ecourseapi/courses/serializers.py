@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from courses.models import (Course, Category, Tag, User, InstructorApplication, Lesson, Enrollment, Payment, Comment,
-                            CourseReview)
+                            CourseReview, LessonProgress)
 from courses.validators import validate_custom_username
 from django.contrib.auth.password_validation import validate_password
 
@@ -42,17 +42,19 @@ class CourseSerializer(ItemSerializer):
     category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category',
                                                      write_only=True)
     lesson_count = serializers.SerializerMethodField()
-    review_count=serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = ['id', 'subject', 'description', 'fee', 'image', 'average_rating',
-                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor','lesson_count','review_count']
+                  'total_duration_video', 'total_students', 'total_revenue', 'category', 'category_id', 'instructor',
+                  'lesson_count', 'review_count']
         read_only_fields = ['average_rating', 'total_duration_video', 'total_students', 'total_revenue', 'instructor']
 
-    def get_lesson_count(self,obj):
+    def get_lesson_count(self, obj):
         return obj.lessons.count()
-    def get_review_count(self,obj):
+
+    def get_review_count(self, obj):
         return obj.reviews.count()
 
 
@@ -151,19 +153,29 @@ class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = ['id', 'subject', 'content', 'image', 'video', 'video_seconds', 'order', 'tags', 'tag_ids',
-                  'created_date']
+                  'created_date', 'is_preview']
         read_only_fields = ['id', 'order', 'video_seconds', 'created_date']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.image:
-            data['image'] = instance.image.url
+            if hasattr(instance.image, 'url'):
+                data['image'] = instance.image.url
         if instance.video:
-            data['video'] = instance.video.url
-
+            if hasattr(instance.video, 'url'):
+                data['video'] = instance.video.url
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
             data['liked'] = instance.likes.filter(user=request.user, active=True).exists()
+
+            # Lấy thông tin tiến độ bài học của học viên
+            progress = LessonProgress.objects.filter(enrollment__student=request.user, lesson=instance).first()
+            if progress:
+                data['completed'] = progress.status == LessonProgress.Status.COMPLETED
+                data['watched_seconds'] = progress.watched_seconds
+            else:
+                data['completed'] = False
+                data['watched_seconds'] = 0
 
         return data
 
@@ -205,5 +217,3 @@ class CourseReviewSerializer(serializers.ModelSerializer):
         model = CourseReview
         fields = ['id', 'course', 'user', 'rating', 'comment', 'created_date']
         read_only_fields = ['id', 'course', 'user', 'created_date']
-
-

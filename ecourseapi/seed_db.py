@@ -83,7 +83,7 @@ l1 = Lesson.objects.create(
     subject='Bài 1: Cài đặt môi trường', content='<p>Hướng dẫn cài đặt.</p>',
     image='image/upload/v1778204683/cai_dat_moi_truong_gnrtvq.jpg',
     video='video/upload/v1778204725/cai_dat_moi_truong_wklmse.mp4',
-    video_seconds=334, course=course_python
+    video_seconds=334, course=course_python, is_preview=True
 )
 l1.tags.add(tag_py)
 

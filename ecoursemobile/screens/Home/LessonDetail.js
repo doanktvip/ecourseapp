@@ -1,13 +1,632 @@
-import { Text, ScrollView } from 'react-native';
+import React, { useContext, useEffect, useState, useRef, useMemo } from 'react';
+import {
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import Apis, { BASE_URL, authApis, endpoints } from '../../configs/Apis';
+import Styles from '../../styles/Styles';
+import { MyUserContext } from '../../configs/Contexts';
+import TagsModal from './Modal/TagsModal';
+import { useIsFocused } from '@react-navigation/native';
 
-const LessonDetail = () => {
+const LessonDetail = ({ route, navigation }) => {
+  const { lesson, courseTitle, courseInstructorEmail } = route.params || {};
+  const [user] = useContext(MyUserContext);
+
+  const isOwner = useMemo(() => {
+    return user && (user.role === 'ADMIN' || (user.role === 'INSTRUCTOR' && user.email === courseInstructorEmail));
+  }, [user, courseInstructorEmail]);
+
+  const isFocused = useIsFocused();
+  const [lessonDetail, setLessonDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // States cho Bình luận
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [sendingComment, setSendingComment] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
+
+  // Tách bình luận gốc và phản hồi
+  const rootComments = useMemo(() => {
+    return comments.filter(c => !c.parent);
+  }, [comments]);
+
+  const replyComments = useMemo(() => {
+    return comments.filter(c => !!c.parent);
+  }, [comments]);
+
+  // States Tương tác & Tiến độ
+  const [isLiked, setIsLiked] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  // State hiển thị Modal gán nhãn (logic nằm trong TagsModal.js)
+  const [tagsModalVisible, setTagsModalVisible] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+
+  // Cấu hình video và lưu trữ tiến độ
+  const lastSyncedTime = useRef(0);
+  const currentSecondsRef = useRef(0);
+  const hasSought = useRef(false);
+  const [loadingComplete, setLoadingComplete] = useState(false);
+
+  const getAbsoluteUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    const base = BASE_URL ? (BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL) : '';
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return `${base}${path}`;
+  };
+
+  const rawVideo = lessonDetail?.video || lesson?.video;
+  const rawImage = lessonDetail?.image || lesson?.image;
+
+  const videoUrl = getAbsoluteUrl(rawVideo);
+  const imageUrl = getAbsoluteUrl(rawImage) || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600';
+
+  const player = useVideoPlayer(videoUrl || '', (playerInstance) => {
+    playerInstance.timeUpdateEventInterval = 1; // Nhận sự kiện cập nhật mỗi 1 giây
+    playerInstance.loop = false;
+  });
+
+  useEffect(() => {
+    if (player && videoUrl) {
+      player.replaceAsync({ uri: videoUrl });
+    }
+  }, [videoUrl, player]);
+
+  useEffect(() => {
+    if (!player) return;
+
+    const timeUpdateSub = player.addListener('timeUpdate', (payload) => {
+      const currentSeconds = Math.floor(payload.currentTime);
+      currentSecondsRef.current = currentSeconds;
+
+      if (!hasSought.current && lessonDetail && lessonDetail.watched_seconds > 0) {
+        hasSought.current = true;
+        player.currentTime = lessonDetail.watched_seconds;
+        lastSyncedTime.current = lessonDetail.watched_seconds;
+        return;
+      }
+
+      if (currentSeconds - lastSyncedTime.current >= 10 && user) {
+        lastSyncedTime.current = currentSeconds;
+        syncProgress(currentSeconds);
+      }
+    });
+
+    const playToEndSub = player.addListener('playToEnd', () => {
+      if (user) {
+        syncProgress(currentSecondsRef.current, true);
+      }
+    });
+
+    return () => {
+      timeUpdateSub.remove();
+      playToEndSub.remove();
+    };
+  }, [player, lessonDetail, user]);
+
+  // Hàm làm sạch văn bản HTML
+  const stripHtmlTags = (str) => {
+    if (!str) return '';
+    return str.replace(/<[^>]*>/g, '').trim();
+  };
+
+  // 1. Tải thông tin chi tiết bài học
+  const loadLessonDetail = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      let res;
+      if (token && user) {
+        res = await authApis(token).get(endpoints['lesson-details'](lesson.id));
+      } else {
+        res = await Apis.get(endpoints['lesson-details'](lesson.id));
+      }
+
+      const data = res.data;
+      setLessonDetail(data);
+      setIsLiked(!!data.liked);
+      setIsCompleted(!!data.completed);
+    } catch (err) {
+      console.error("Lỗi tải chi tiết bài học:", err);
+      Alert.alert("Lỗi tải dữ liệu", "Không thể tải chi tiết bài học lúc này.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Tải danh sách bình luận
+  const loadComments = async () => {
+    try {
+      setLoadingComments(true);
+      const token = await AsyncStorage.getItem('token');
+      let res;
+      if (token && user) {
+        res = await authApis(token).get(endpoints['lesson-comments'](lesson.id));
+      } else {
+        res = await Apis.get(endpoints['lesson-comments'](lesson.id));
+      }
+      setComments(res.data.results || res.data || []);
+    } catch (err) {
+      console.error("Lỗi tải bình luận:", err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  // Đồng bộ tiến độ xem video lên Server
+  const syncProgress = async (seconds, isFinished = false) => {
+    if (!user || user.role === 'ADMIN' || user.role === 'INSTRUCTOR') return;
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        const res = await authApis(token).post(endpoints['lesson-update-progress'](lesson.id), {
+          watched_seconds: seconds
+        });
+        if (res.data.status === 'COMPLETED' || isFinished) {
+          setIsCompleted(true);
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi đồng bộ tiến độ tự động:", err);
+    }
+  };
+
+  // Thích / Bỏ thích bài học
+  const handleLike = async () => {
+    if (!user) {
+      Alert.alert("Đăng nhập", "Vui lòng đăng nhập để thích bài học.");
+      return;
+    }
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        const res = await authApis(token).post(endpoints['lesson-like'](lesson.id));
+        setIsLiked(res.data.liked);
+      }
+    } catch (err) {
+      console.error("Łỗi khi thích bài học:", err);
+    }
+  };
+
+
+  // Đánh dấu hoàn thành bài học một cách chủ động (Nhấn nút)
+  const handleComplete = async () => {
+    if (!user) {
+      Alert.alert("Yêu cầu đăng nhập", "Vui lòng đăng nhập để đánh dấu hoàn thành bài học.");
+      return;
+    }
+    try {
+      setLoadingComplete(true);
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        await authApis(token).post(endpoints['lesson-complete'](lesson.id));
+        setIsCompleted(true);
+        Alert.alert("Hoàn thành bài học", "Tuyệt vời! Bạn đã hoàn thành bài học này.");
+      }
+    } catch (err) {
+      console.error("Lỗi đánh dấu hoàn thành:", err);
+      Alert.alert("Lỗi", "Không thể cập nhật trạng thái bài học.");
+    } finally {
+      setLoadingComplete(false);
+    }
+  };
+
+  // Xóa bài học
+  const handleDeleteLesson = () => {
+    Alert.alert(
+      'Xác nhận xóa bài học',
+      'Bạn có chắc chắn muốn xóa bài học này không? Hành động này không thể hoàn tác.',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa bài học',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeleteLoading(true);
+              const token = await AsyncStorage.getItem('token');
+              if (token) {
+                await authApis(token).delete(endpoints['lesson-details'](lesson.id));
+                Alert.alert('Thành công', 'Bài học đã được xóa thành công!', [
+                  { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
+              }
+            } catch (err) {
+              console.error("Lỗi khi xóa bài học:", err);
+              Alert.alert('Thất bại', 'Không thể xóa bài học lúc này.');
+            } finally {
+              setDeleteLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Đăng bình luận mới
+  const handleSendComment = async () => {
+    if (!commentText.trim()) return;
+    if (!user) {
+      Alert.alert("Yêu cầu đăng nhập", "Vui lòng đăng nhập để viết bình luận.");
+      return;
+    }
+    try {
+      setSendingComment(true);
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        const payload = { content: commentText };
+        if (replyTo) {
+          payload.parent = replyTo.id;
+        }
+        const res = await authApis(token).post(endpoints['lesson-comments'](lesson.id), payload);
+        setComments(prev => [res.data, ...prev]);
+        setCommentText('');
+        setReplyTo(null);
+      }
+    } catch (err) {
+      console.error("Lỗi gửi bình luận:", err);
+      Alert.alert("Lỗi", "Gửi bình luận không thành công.");
+    } finally {
+      setSendingComment(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLessonDetail();
+    loadComments();
+    navigation.setOptions({ title: lesson.subject || 'Chi tiết bài học' });
+
+    // Cleanup: Tự động lưu tiến độ hiện tại khi người dùng thoát khỏi màn hình
+    return () => {
+      if (currentSecondsRef.current > 0 && user && user.role !== 'ADMIN' && user.role !== 'INSTRUCTOR') {
+        AsyncStorage.getItem('token').then(token => {
+          if (token) {
+            authApis(token).post(endpoints['lesson-update-progress'](lesson.id), {
+              watched_seconds: currentSecondsRef.current
+            }).catch(err => console.error("Lỗi đồng bộ tiến độ khi thoát màn hình:", err));
+          }
+        });
+      }
+    };
+  }, [lesson.id]);
+
+  useEffect(() => {
+    if (isFocused) {
+      loadLessonDetail();
+      loadComments();
+    }
+  }, [isFocused]);
+
+  useEffect(() => {
+    if (lessonDetail) {
+      navigation.setOptions({ title: lessonDetail.subject || 'Chi tiết bài học' });
+    }
+  }, [lessonDetail, navigation]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
+        <ActivityIndicator size="large" color="#1877F2" />
+        <Text style={[Styles.small, { marginTop: 10 }]}>Đang tải bài học...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView>
-      <Text>
-        LessonDetail
-      </Text>
-    </ScrollView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+
+          {/* Trình phát Video bài học hiện đại từ expo-video */}
+          <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
+            <View style={Styles.lessonVideoContainer}>
+              {videoUrl ? (
+                <VideoView
+                  style={Styles.lessonVideo}
+                  player={player}
+                  fullscreenOptions={{}}
+                  allowsPictureInPicture
+                />
+              ) : (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e9ecef' }}>
+                  <Image
+                    source={{ uri: imageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600' }}
+                    style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0.6 }}
+                  />
+                  <Ionicons name="play-circle" size={64} color="#1877F2" style={{ zIndex: 1 }} />
+                  <Text style={[Styles.title, { color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginTop: 8, zIndex: 1 }]}>
+                    Bài học lý thuyết / Không có video
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Phần thông tin chi tiết */}
+          <View style={{ paddingHorizontal: 16 }}>
+            <Text style={[Styles.small, { color: '#888888', fontWeight: 'bold' }]}>
+              {courseTitle ? courseTitle.toUpperCase() : 'KHÓA HỌC TRỰC TUYẾN'}
+            </Text>
+            <View style={[Styles.row, { justifyContent: 'space-between', alignItems: 'center', marginVertical: 6 }]}>
+              <Text style={[Styles.h1, { fontSize: 20, lineHeight: 26, flex: 1, marginRight: 8 }]}>
+                {lessonDetail?.subject || lesson?.subject}
+              </Text>
+              {isOwner && (
+                <View style={[Styles.row, { gap: 8 }]}>
+                  <TouchableOpacity
+                    style={[Styles.row, { backgroundColor: '#e8f0fe', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }]}
+                    onPress={() => navigation.navigate('LessonForm', {
+                      lesson: lessonDetail || lesson,
+                      courseId: lesson.course
+                    })}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="create-outline" size={16} color="#1877F2" />
+                    <Text style={{ color: '#1877F2', fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Sửa</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[Styles.row, { backgroundColor: '#ffebee', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }]}
+                    onPress={handleDeleteLesson}
+                    activeOpacity={0.8}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? (
+                      <ActivityIndicator size="small" color="#dc3545" />
+                    ) : (
+                      <>
+                        <Ionicons name="trash-outline" size={16} color="#dc3545" />
+                        <Text style={{ color: '#dc3545', fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Xóa</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            {/* Dòng metadata (Tags & Like) */}
+            <View style={Styles.lessonMetaRow}>
+              <View style={[Styles.lessonTagContainer, { flex: 1 }]}>
+                {lessonDetail?.tags && lessonDetail.tags.length > 0 && (
+                  lessonDetail.tags.map((tag) => (
+                    <View key={tag.id} style={Styles.lessonTagPill}>
+                      <Text style={Styles.lessonTagText}>#{tag.name}</Text>
+                    </View>
+                  ))
+                )}
+                {/* Nút chỉnh sửa Tags - chỉ hiển thị cho Admin hoặc Giảng viên */}
+                {user && (user.role === 'ADMIN' || user.role === 'INSTRUCTOR') && (
+                  <TouchableOpacity
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 16,
+                      backgroundColor: '#f0f7ff',
+                      borderWidth: 1,
+                      borderColor: '#c8d8f0',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => setTagsModalVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="pricetag-outline" size={13} color="#1877F2" />
+                    <Text style={{ color: '#1877F2', fontSize: 12, fontWeight: '600', marginLeft: 3 }}>
+                      Gán nhãn
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Nút Thích bài học */}
+              <TouchableOpacity
+                style={[Styles.lessonLikeBtn, isLiked && Styles.lessonLikeBtnActive]}
+                onPress={handleLike}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={isLiked ? "heart" : "heart-outline"}
+                  size={20}
+                  color={isLiked ? "#e81c4f" : "#65676b"}
+                />
+                <Text style={[Styles.lessonLikeText, isLiked && Styles.lessonLikeTextActive]}>
+                  {isLiked ? 'Đã thích' : 'Thích'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={Styles.divider} />
+
+            {/* Nội dung bài học */}
+            <Text style={[Styles.h2, { marginBottom: 8 }]}>Tóm tắt bài học</Text>
+            <View style={Styles.card}>
+              <Text style={Styles.body}>
+                {lessonDetail?.content ? stripHtmlTags(lessonDetail.content) : "Không có nội dung tóm tắt cho bài học này."}
+              </Text>
+            </View>
+
+            {/* Nút Đánh dấu hoàn thành bài học */}
+            {user && user.role === 'STUDENT' && (
+              <View>
+                {isCompleted ? (
+                  <View style={[Styles.btnCompleteLesson, Styles.btnCompleteLessonActive]}>
+                    <Ionicons name="checkmark-circle" size={24} color="#28a745" />
+                    <Text style={[Styles.btnCompleteLessonText, Styles.btnCompleteLessonTextActive]}>
+                      Đã hoàn thành bài học
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={Styles.btnCompleteLesson}
+                    onPress={handleComplete}
+                    disabled={loadingComplete}
+                    activeOpacity={0.8}
+                  >
+                    {loadingComplete ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Ionicons name="checkmark-circle-outline" size={24} color="#ffffff" />
+                        <Text style={Styles.btnCompleteLessonText}>Đánh dấu hoàn thành</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {/* Phần Bình luận */}
+            <Text style={Styles.commentSectionTitle}>Bình luận ({comments.length})</Text>
+            {loadingComments && comments.length === 0 ? (
+              <ActivityIndicator size="small" color="#1877F2" style={{ marginVertical: 10 }} />
+            ) : comments.length === 0 ? (
+              <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+                <Ionicons name="chatbubble-ellipses-outline" size={48} color="#adb5bd" />
+                <Text style={[Styles.small, { marginTop: 8 }]}>Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</Text>
+              </View>
+            ) : (
+              <View>
+                {rootComments.map((comment) => {
+                  const avatarUrl = comment.user?.avatar || 'https://via.placeholder.com/150';
+                  const commentUserFullName = comment.user
+                    ? `${comment.user.last_name || ''} ${comment.user.first_name || ''}`.trim() || 'Học viên'
+                    : 'Học viên';
+                  const formattedDate = comment.created_date
+                    ? new Date(comment.created_date).toLocaleDateString('vi-VN')
+                    : 'Gần đây';
+
+                  const replies = replyComments.filter(r => r.parent === comment.id);
+
+                  return (
+                    <View key={comment.id} style={{ marginBottom: 12 }}>
+                      <View style={Styles.commentItem}>
+                        <Image source={{ uri: avatarUrl }} style={Styles.commentAvatar} />
+                        <View style={Styles.commentContentContainer}>
+                          <View style={Styles.commentUserRow}>
+                            <Text style={Styles.commentUserName}>{commentUserFullName}</Text>
+                            <Text style={Styles.commentDate}>{formattedDate}</Text>
+                          </View>
+                          <Text style={Styles.commentText}>{comment.content}</Text>
+
+                          {user && (
+                            <TouchableOpacity
+                              style={[Styles.row, { marginTop: 6 }]}
+                              onPress={() => {
+                                setReplyTo(comment);
+                                Alert.alert("Trả lời bình luận", `Viết phản hồi cho ${commentUserFullName}`);
+                              }}
+                            >
+                              <Ionicons name="arrow-undo-outline" size={14} color="#1877F2" />
+                              <Text style={Styles.commentReplyBtnText}> Trả lời</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+
+                      {replies.map((reply) => {
+                        const replyAvatarUrl = reply.user?.avatar || 'https://via.placeholder.com/150';
+                        const replyUserFullName = reply.user
+                          ? `${reply.user.last_name || ''} ${reply.user.first_name || ''}`.trim() || 'Học viên'
+                          : 'Học viên';
+                        const replyFormattedDate = reply.created_date
+                          ? new Date(reply.created_date).toLocaleDateString('vi-VN')
+                          : 'Gần đây';
+
+                        return (
+                          <View key={reply.id} style={Styles.replyCommentItem}>
+                            <Image source={{ uri: replyAvatarUrl }} style={[Styles.commentAvatar, { width: 30, height: 30, borderRadius: 15 }]} />
+                            <View style={Styles.commentContentContainer}>
+                              <View style={Styles.commentUserRow}>
+                                <Text style={[Styles.commentUserName, { fontSize: 13 }]}>{replyUserFullName}</Text>
+                                <Text style={Styles.commentDate}>{replyFormattedDate}</Text>
+                              </View>
+                              <Text style={[Styles.commentText, { fontSize: 13 }]}>{reply.content}</Text>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+          </View>
+        </ScrollView>
+
+        {/* Thanh viết bình luận cố định ở cuối màn hình */}
+        <View style={{ backgroundColor: '#ffffff' }}>
+          {replyTo && (
+            <View style={Styles.replyingBar}>
+              <Text style={Styles.replyingText}>
+                Đang trả lời {replyTo.user ? `${replyTo.user.last_name || ''} ${replyTo.user.first_name || ''}`.trim() : 'Học viên'}
+              </Text>
+              <TouchableOpacity onPress={() => setReplyTo(null)}>
+                <Ionicons name="close-circle" size={18} color="#e81c4f" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={Styles.commentBarContainer}>
+            <TextInput
+              style={Styles.commentBarInput}
+              placeholder={user ? (replyTo ? "Nhập phản hồi..." : "Viết bình luận...") : "Đăng nhập để bình luận"}
+              value={commentText}
+              onChangeText={setCommentText}
+              editable={!!user && !sendingComment}
+              multiline
+            />
+            <TouchableOpacity
+              style={[Styles.commentBarSendBtn, (!commentText.trim() || sendingComment || !user) && Styles.commentBarSendBtnDisabled]}
+              onPress={handleSendComment}
+              disabled={!commentText.trim() || sendingComment || !user}
+              activeOpacity={0.8}
+            >
+              {sendingComment ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Ionicons name="send" size={16} color="#ffffff" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+
+      </KeyboardAvoidingView>
+
+      {/* Modal gán nhãn (Tags) - toàn bộ logic nằm trong TagsModal.js */}
+      <TagsModal
+        visible={tagsModalVisible}
+        onClose={() => setTagsModalVisible(false)}
+        lessonId={lessonDetail?.id || lesson?.id}
+        currentTags={lessonDetail?.tags || []}
+        user={user}
+        onSaved={loadLessonDetail}
+      />
+
+    </SafeAreaView>
   );
 };
 

@@ -116,6 +116,8 @@ class Lesson(BaseModel):
     video = CloudinaryField(resource_type='video', null=True, blank=True)
     video_seconds = models.PositiveIntegerField(default=0, blank=True, help_text="Thời lượng video (tính bằng giây)")
     order = models.PositiveIntegerField(default=1, help_text="Thứ tự bài học trong khóa")
+    is_preview = models.BooleanField(default=False,
+                                     help_text="Cho phép xem thử bài học miễn phí trước khi đăng ký khóa học")
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
     tags = models.ManyToManyField(Tag, blank=True)
@@ -125,10 +127,10 @@ class Lesson(BaseModel):
         ordering = ['order']
 
     def save(self, *args, **kwargs):
-        if self.video and isinstance(self.video, str) and not self.video.startswith('http'):
+        if self.video and isinstance(self.video, str) and not self.video.startswith('http') and 'upload/' not in self.video:
             self.video = None
 
-        if self.image and isinstance(self.image, str) and not self.image.startswith('http'):
+        if self.image and isinstance(self.image, str) and not self.image.startswith('http') and 'upload/' not in self.image:
             self.image = None
 
         if not self.pk:
@@ -138,7 +140,7 @@ class Lesson(BaseModel):
 
         super().save(*args, **kwargs)
 
-        if self.video and self.video_seconds == 0:
+        if self.video and self.video_seconds == 0 and hasattr(self.video, 'public_id'):
             try:
                 duration = self.video.metadata.get('duration') if hasattr(self.video, 'metadata') else None
 

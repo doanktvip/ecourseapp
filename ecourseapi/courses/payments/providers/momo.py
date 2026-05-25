@@ -5,7 +5,6 @@ import uuid
 import logging
 from courses.payments.base import PaymentGateway
 from ecourse import settings
-from courses.payments.utils import generate_qr_base64
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +67,6 @@ class MoMoPayment(PaymentGateway):
             # Trả về một dictionary chứa các thông tin quan trọng cần thiết cho việc xử lý tiếp theo của hệ thống
             return {
                 "payment_url": res_data.get("payUrl"),
-                "qr_code_base64": generate_qr_base64(res_data.get("qrCodeUrl")),
                 "transaction_id": order_id,
                 "amount": amount,
                 "method": "MOMO"
