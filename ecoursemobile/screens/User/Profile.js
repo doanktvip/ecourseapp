@@ -178,6 +178,20 @@ const ProfileMain = ({ navigation }) => {
                             </View>
                             <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
                         </TouchableOpacity>
+                        <TouchableOpacity style={Styles.listItem} onPress={() => navigation.navigate('CategoryManage')}>
+                            <View style={Styles.listItemLeft}>
+                                <Ionicons name="bookmarks-outline" size={22} color="#1976d2" />
+                                <Text style={Styles.listItemText}>Quản lý danh mục khóa học</Text>
+                            </View>
+                            <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={Styles.listItem} onPress={() => navigation.navigate('TagManage')}>
+                            <View style={Styles.listItemLeft}>
+                                <Ionicons name="pricetags-outline" size={22} color="#1976d2" />
+                                <Text style={Styles.listItemText}>Quản lý thẻ Tag</Text>
+                            </View>
+                            <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
+                        </TouchableOpacity>
                     </View>
                 )}
             </View>
