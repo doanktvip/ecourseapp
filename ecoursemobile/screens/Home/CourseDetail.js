@@ -71,6 +71,22 @@ const CourseDetail = ({ route, navigation }) => {
           </View>
         </View>
       </View>
+      {/* Tiến độ học của sinh viên  */}
+      {user && user.role === ('INSTRUCTOR' || 'ADMIN') && currentCourse?.instructor && user.email === currentCourse.instructor.email && (
+        <View style={[Styles.card, { marginLeft: 20, marginRight: 20, borderColor: '#1877F2', borderWidth: 1 }]}>
+          <TouchableOpacity
+            style={[Styles.infoBox, Styles.row, { justifyContent: 'center' }]}
+            onPress={() => {
+              // Điều hướng sang trang xem Tiến độ học viên (bạn cần tạo trang này trong Stack Navigator)
+              if (navigation) navigation.navigate('StudentProgress', { 
+                  courseId: currentCourse.id, 
+                  courseSubject: currentCourse.subject 
+              });
+            }}
+          ><Text style={[Styles.body, { color: '#1877F2', fontWeight: 'bold' }]}>Xem tiến độ học viên</Text></TouchableOpacity>
+        </View>
+      )}
+
       {/* 4. Giới thiệu khóa học */}
       <Text style={[Styles.h2, { marginTop: 16, marginBottom: 10, marginLeft: 20, marginRight: 20 }]}>Giới thiệu khóa học</Text>
       <View style={[Styles.card, { marginLeft: 20, marginRight: 20 }]}>

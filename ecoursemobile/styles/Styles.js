@@ -937,5 +937,98 @@ export default StyleSheet.create({
         fontSize: 15,
         fontWeight: 'bold',
         color: '#1877F2',
+    },
+
+    // Tiến độ Student Progress
+    progressBarTrack: {
+        width: 80,
+        height: 8,
+        backgroundColor: '#e9ecef',
+        borderRadius: 4,
+        overflow: 'hidden',
+    },
+    progressBarFill: {
+        height: '100%',
+        backgroundColor: '#1877F2',
+    },
+    //CategoryForm
+    formLabel: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#34495e',
+        marginBottom: 8,
+    },
+    requiredStar: {
+        color: '#e74c3c',
+    },
+    customInput: {
+        height: 50,
+        backgroundColor: '#f8f9fa',
+        borderWidth: 1,
+        borderColor: '#ced4da',
+        borderRadius: 10,
+        paddingHorizontal: 16,
+        fontSize: 16,
+        color: '#212529',
+    },
+    //Quản lý tag
+    tagItem: {
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        padding: 16,
+        marginBottom: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    tagDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#1877F2',
+        marginRight: 12,
+    },
+    tagText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333333',
+    },
+    actionBtn: {
+        padding: 8,
+        marginLeft: 4,
+    },
+    btnAdd: {
+        backgroundColor: '#1877F2',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 14,
+        borderRadius: 10,
+        marginBottom: 16,
+    },
+    btnAddText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        marginTop: 60,
+    },
+    emptyText: {
+        color: '#adb5bd',
+        marginTop: 16,
+        fontSize: 16,
+    },
+    modalActions: {
+        flexDirection: 'row',
+        marginTop: 16,
+        justifyContent: 'flex-end',
+        gap: 12,
     }
 });
