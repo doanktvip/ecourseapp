@@ -4,7 +4,6 @@ from courses.payments.base import PaymentGateway
 from paypalcheckoutsdk.core import PayPalHttpClient, SandboxEnvironment, LiveEnvironment
 from paypalcheckoutsdk.orders import OrdersCreateRequest, OrdersCaptureRequest
 from paypalhttp.http_error import HttpError
-from courses.payments.utils import generate_qr_base64
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +77,6 @@ class PayPalPayment(PaymentGateway):
             # Đóng gói và trả về một bộ thông tin tổng hợp cho View xử lý việc điều hướng người dùng
             return {
                 "payment_url": approve_url,
-                "qr_code_base64": generate_qr_base64(approve_url),
                 "transaction_id": order_id,
                 "amount": amount,
                 "method": "PAYPAL"

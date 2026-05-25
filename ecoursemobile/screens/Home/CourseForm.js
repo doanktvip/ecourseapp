@@ -52,6 +52,21 @@ const CourseForm = ({ route, navigation }) => {
         }
     }, [user]);
 
+    useEffect(() => {
+        if (course) {
+            setSubject(course.subject || '');
+            setDescription(course.description || '');
+            setFee(course.fee ? course.fee.toString() : '');
+            if (course.category) {
+                setCategoryId(course.category.id);
+                setCategoryName(course.category.name);
+            }
+            if (course.image) {
+                setImageUri(course.image);
+            }
+        }
+    }, [course]);
+
     // Chọn ảnh bìa từ thư viện thiết bị
     const handlePickImage = async () => {
         try {
@@ -116,7 +131,7 @@ const CourseForm = ({ route, navigation }) => {
                 formData.append('fee', parsedFee.toString());
                 formData.append('category_id', categoryId.toString());
 
-                if (imageUri) {
+                if (imageUri && imageUri.startsWith('file://')) {
                     const filename = imageUri.split('/').pop();
                     const match = /\.(\w+)$/.exec(filename);
                     const type = match ? `image/${match[1]}` : `image/jpeg`;

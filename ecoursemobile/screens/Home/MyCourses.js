@@ -204,12 +204,6 @@ const MyCoursesMain = ({ navigation }) => {
                                             {instructorName}
                                         </Text>
                                     </View>
-                                    <Ionicons
-                                        name="chevron-forward-outline"
-                                        size={20}
-                                        color="#adb5bd"
-                                        style={Styles.myCourseChevron}
-                                    />
                                     {activeTab === 'teaching' ? (
                                         <TouchableOpacity
                                             style={{

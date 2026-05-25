@@ -1,0 +1,460 @@
+import React, { useContext, useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image, Switch } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Button, TextInput } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MyUserContext } from '../../configs/Contexts';
+import Apis, { authApis, endpoints } from '../../configs/Apis';
+import Styles from '../../styles/Styles';
+
+const LessonForm = ({ route, navigation }) => {
+    const [user] = useContext(MyUserContext);
+    const { courseId, lesson } = route?.params || {};
+
+    // Form state variables
+    const [subject, setSubject] = useState('');
+    const [content, setContent] = useState('');
+    const [isPreview, setIsPreview] = useState(false);
+    const [imageUri, setImageUri] = useState(null);
+    const [videoUri, setVideoUri] = useState(null);
+
+    // Tags states
+    const [tags, setTags] = useState([]);
+    const [selectedTagIds, setSelectedTagIds] = useState([]);
+    const [loadingTags, setLoadingTags] = useState(false);
+
+    // UI state variables
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Tải danh sách nhãn (tags) từ Backend
+    const loadTags = async () => {
+        try {
+            setLoadingTags(true);
+            const token = await AsyncStorage.getItem('token');
+            let res;
+            if (token) {
+                res = await authApis(token).get(endpoints['tags']);
+            } else {
+                res = await Apis.get(endpoints['tags']);
+            }
+            setTags(res.data.results || res.data || []);
+        } catch (ex) {
+            console.error("Lỗi lấy danh sách nhãn:", ex);
+            Alert.alert("Lỗi", "Không thể tải danh sách nhãn bài học.");
+        } finally {
+            setLoadingTags(false);
+        }
+    };
+
+    useEffect(() => {
+        // Chỉ cho phép Instructor và Admin truy cập
+        if (user && (user.role === 'INSTRUCTOR' || user.role === 'ADMIN')) {
+            setLoading(false);
+            loadTags();
+        } else {
+            setLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (lesson) {
+            setSubject(lesson.subject || '');
+            setContent(lesson.content || '');
+            setIsPreview(!!lesson.is_preview);
+            if (lesson.image) setImageUri(lesson.image);
+            if (lesson.video) setVideoUri(lesson.video);
+            if (lesson.tags) setSelectedTagIds(lesson.tags.map(t => t.id));
+        }
+    }, [lesson]);
+
+    useEffect(() => {
+        navigation.setOptions({
+            title: lesson ? 'Chỉnh sửa bài học' : 'Thêm bài học mới'
+        });
+    }, [lesson, navigation]);
+
+    // Chọn ảnh bài học từ thư viện thiết bị
+    const handlePickImage = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Quyền truy cập', 'eCourse cần quyền truy cập thư viện ảnh để tải lên ảnh minh họa bài học.');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: 'images',
+                allowsEditing: true,
+                aspect: [16, 9],
+                quality: 0.9,
+            });
+
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                setImageUri(result.assets[0].uri);
+            }
+        } catch (err) {
+            console.error("Lỗi chọn ảnh bài học:", err);
+            Alert.alert("Lỗi", "Không thể chọn hình ảnh minh họa.");
+        }
+    };
+
+    // Chọn video bài học từ thư viện thiết bị
+    const handlePickVideo = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Quyền truy cập', 'eCourse cần quyền truy cập thư viện để tải lên video bài học.');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: 'videos',
+                allowsEditing: true,
+                quality: 0.9,
+            });
+
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                setVideoUri(result.assets[0].uri);
+            }
+        } catch (err) {
+            console.error("Lỗi chọn video bài học:", err);
+            Alert.alert("Lỗi", "Không thể chọn video bài học.");
+        }
+    };
+
+    // Gán/Hủy gán nhãn bài học
+    const handleToggleTag = (tagId) => {
+        setSelectedTagIds(prev =>
+            prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+        );
+    };
+
+    // Gửi biểu mẫu tạo bài học mới lên API
+    // Gửi biểu mẫu tạo bài học mới hoặc cập nhật bài học lên API
+    const handleSaveLesson = async () => {
+        if (!subject || !subject.trim()) {
+            Alert.alert("Lỗi nhập liệu", "Vui lòng nhập tên bài học.");
+            return;
+        }
+
+        if (!content || !content.trim()) {
+            Alert.alert("Lỗi nhập liệu", "Vui lòng nhập mô tả chi tiết bài học.");
+            return;
+        }
+
+        if (!lesson && !courseId) {
+            Alert.alert("Lỗi", "Thiếu ID khóa học. Không thể thêm bài học.");
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            const token = await AsyncStorage.getItem('token');
+            if (token) {
+                const formData = new FormData();
+                formData.append('subject', subject.trim());
+                formData.append('content', content.trim());
+                formData.append('is_preview', isPreview.toString());
+
+                // Gửi danh sách tag_ids lên Django
+                selectedTagIds.forEach(id => {
+                    formData.append('tag_ids', id.toString());
+                });
+
+                // Chỉ gửi ảnh nếu là ảnh mới chọn từ thiết bị (có dạng file://)
+                if (imageUri && imageUri.startsWith('file://')) {
+                    const filename = imageUri.split('/').pop();
+                    const match = /\.(\w+)$/.exec(filename);
+                    const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+                    formData.append('image', {
+                        uri: imageUri,
+                        name: filename || 'lesson_cover.jpg',
+                        type: type,
+                    });
+                }
+
+                // Chỉ gửi video nếu là video mới chọn từ thiết bị (có dạng file://)
+                if (videoUri && videoUri.startsWith('file://')) {
+                    const filename = videoUri.split('/').pop();
+                    const match = /\.(\w+)$/.exec(filename);
+                    const type = match ? `video/${match[1]}` : `video/mp4`;
+
+                    formData.append('video', {
+                        uri: videoUri,
+                        name: filename || 'lesson_video.mp4',
+                        type: type,
+                    });
+                }
+
+                if (lesson) {
+                    // PATCH: Cập nhật bài học
+                    await authApis(token).patch(endpoints['lesson-details'](lesson.id), formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+
+                    Alert.alert("Thành công", "Cập nhật bài học thành công!", [
+                        { text: "OK", onPress: () => navigation.goBack() }
+                    ]);
+                } else {
+                    // POST: Tạo bài học mới
+                    const response = await authApis(token).post(endpoints['course-lessons'](courseId), formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+
+                    Alert.alert("Thành công", `Bài học "${response.data.subject}" đã được thêm thành công!`, [
+                        { text: "OK", onPress: () => navigation.goBack() }
+                    ]);
+                }
+            } else {
+                Alert.alert("Lỗi xác thực", "Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+            }
+        } catch (error) {
+            console.error("Lỗi gửi dữ liệu bài học:", error);
+            let errMsg = lesson ? "Không thể cập nhật bài học. Vui lòng kiểm tra lại." : "Không thể thêm bài học mới. Vui lòng kiểm tra lại.";
+
+            if (error.response && error.response.data) {
+                const data = error.response.data;
+                if (typeof data === 'object') {
+                    const errors = [];
+                    for (const key in data) {
+                        const errorLabel = key === 'subject' ? 'Tên bài học' : (key === 'content' ? 'Nội dung' : key);
+                        if (Array.isArray(data[key])) {
+                            errors.push(`${errorLabel}: ${data[key].join(", ")}`);
+                        } else if (typeof data[key] === 'string') {
+                            errors.push(`${errorLabel}: ${data[key]}`);
+                        }
+                    }
+                    errMsg = errors.join("\n") || errMsg;
+                } else {
+                    errMsg = data.detail || errMsg;
+                }
+            }
+            Alert.alert(lesson ? "Cập nhật thất bại" : "Thêm bài học thất bại", errMsg);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+
+
+    // 1. Trường hợp: Đang tải xác thực ban đầu
+    if (loading && !user) {
+        return (
+            <View style={Styles.applyLoadingContainer}>
+                <ActivityIndicator size="large" color="#1877F2" />
+                <Text style={Styles.applyLoadingText}>Đang xác thực thông tin...</Text>
+            </View>
+        );
+    }
+
+    // 2. Trường hợp: PHÂN QUYỀN SAI
+    if (!user || (user.role !== 'INSTRUCTOR' && user.role !== 'ADMIN')) {
+        return (
+            <ScrollView style={[Styles.container, { padding: 20 }]} showsVerticalScrollIndicator={false}>
+                <View style={{ paddingVertical: 60, alignItems: 'center' }}>
+                    <View style={[Styles.illustrationWrapper, { backgroundColor: '#ffebee', width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center' }]}>
+                        <Ionicons name="lock-closed-outline" size={60} color="#dc3545" />
+                    </View>
+                    <Text style={[Styles.h1, { textAlign: 'center', marginTop: 24, marginBottom: 12, color: '#dc3545' }]}>
+                        Quyền truy cập bị từ chối
+                    </Text>
+                    <Text style={[Styles.body, { textAlign: 'center', marginBottom: 30, paddingHorizontal: 15 }]}>
+                        Chức năng thêm bài học mới chỉ khả dụng đối với vai trò <Text style={{ fontWeight: 'bold', color: '#1877F2' }}>Giảng viên</Text> hoặc <Text style={{ fontWeight: 'bold' }}>Quản trị viên</Text> của hệ thống eCourse.
+                    </Text>
+                    <TouchableOpacity style={Styles.btnSecondary} onPress={() => navigation.goBack()}>
+                        <Text style={Styles.btnSecondaryText}>Quay lại</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        );
+    }
+
+    // 3. Hiển thị biểu mẫu thêm bài học
+    return (
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={Styles.container}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 50 }}>
+                <View style={Styles.formContainer}>
+                    <Text style={[Styles.h2, { marginBottom: 20, color: '#212529' }]}>
+                        {lesson ? 'Chỉnh sửa bài học 📝' : 'Bài học mới 📝'}
+                    </Text>
+
+                    <View style={Styles.formGroup}>
+                        <Text style={Styles.formLabel}>Tên bài học <Text style={{ color: '#dc3545' }}>*</Text></Text>
+                        <TextInput
+                            value={subject}
+                            onChangeText={setSubject}
+                            mode="outlined"
+                            style={{ backgroundColor: '#ffffff' }}
+                            placeholder="Ví dụ: Giới thiệu và thiết lập môi trường"
+                            placeholderTextColor="#adb5bd"
+                            outlineColor="#dee2e6"
+                            activeOutlineColor="#1877F2"
+                            disabled={submitting}
+                            maxLength={255}
+                            left={<TextInput.Icon icon="book-open-outline" />}
+                        />
+                    </View>
+
+                    <View style={Styles.formGroup}>
+                        <Text style={Styles.formLabel}>Mô tả / Nội dung bài học <Text style={{ color: '#dc3545' }}>*</Text></Text>
+                        <TextInput
+                            value={content}
+                            onChangeText={setContent}
+                            mode="outlined"
+                            style={{ backgroundColor: '#ffffff', minHeight: 120 }}
+                            placeholder="Mô tả chi tiết nội dung của bài học..."
+                            placeholderTextColor="#adb5bd"
+                            outlineColor="#dee2e6"
+                            activeOutlineColor="#1877F2"
+                            multiline={true}
+                            numberOfLines={5}
+                            disabled={submitting}
+                            left={<TextInput.Icon icon="text-box-outline" />}
+                        />
+                    </View>
+
+                    <View style={[Styles.formGroup, {
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        backgroundColor: '#f8f9fa',
+                        padding: 12,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: '#dee2e6',
+                        marginBottom: 20
+                    }]}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                            <Text style={[Styles.formLabel, { marginBottom: 2 }]}>Học thử miễn phí</Text>
+                            <Text style={{ fontSize: 12, color: '#6c757d' }}>Bài học này sẽ mở khóa công khai cho tất cả mọi người học thử.</Text>
+                        </View>
+                        <Switch
+                            value={isPreview}
+                            onValueChange={setIsPreview}
+                            trackColor={{ false: "#ced4da", true: "#a0c4ff" }}
+                            thumbColor={isPreview ? "#1877F2" : "#f4f3f4"}
+                        />
+                    </View>
+
+                    {/* Gán nhãn cho bài học (Tags) */}
+                    <View style={Styles.formGroup}>
+                        <Text style={Styles.formLabel}>Gán nhãn bài học (Tags)</Text>
+                        {loadingTags ? (
+                            <ActivityIndicator size="small" color="#1877F2" style={{ paddingVertical: 10 }} />
+                        ) : (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>
+                                {tags.map(tag => {
+                                    const isSelected = selectedTagIds.includes(tag.id);
+                                    return (
+                                        <TouchableOpacity
+                                            key={tag.id}
+                                            style={{
+                                                paddingHorizontal: 12,
+                                                paddingVertical: 6,
+                                                borderRadius: 20,
+                                                backgroundColor: isSelected ? '#e8f0fe' : '#f8f9fa',
+                                                borderColor: isSelected ? '#1877F2' : '#dee2e6',
+                                                borderWidth: 1,
+                                                marginBottom: 8,
+                                                marginRight: 8
+                                            }}
+                                            onPress={() => handleToggleTag(tag.id)}
+                                            activeOpacity={0.7}
+                                            disabled={submitting}
+                                        >
+                                            <Text style={{
+                                                color: isSelected ? '#1877F2' : '#495057',
+                                                fontWeight: isSelected ? 'bold' : 'normal',
+                                                fontSize: 13
+                                            }}>
+                                                #{tag.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={Styles.formGroup}>
+                        <Text style={Styles.formLabel}>Ảnh minh họa bài học</Text>
+                        <TouchableOpacity
+                            style={[Styles.imagePickerBox, imageUri && Styles.imagePickerActive]}
+                            onPress={handlePickImage}
+                            disabled={submitting}
+                        >
+                            {imageUri ? (
+                                <View style={{ width: '100%', height: '100%', position: 'relative' }}>
+                                    <Image source={{ uri: imageUri }} style={Styles.imagePreview} />
+                                    <View style={{
+                                        position: 'absolute', bottom: 10, right: 10,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.6)', paddingHorizontal: 10,
+                                        paddingVertical: 5, borderRadius: 6
+                                    }}>
+                                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>Thay đổi ảnh</Text>
+                                    </View>
+                                </View>
+                            ) : (
+                                <View style={{ alignItems: 'center' }}>
+                                    <Ionicons name="image-outline" size={40} color="#888888" style={{ marginBottom: 8 }} />
+                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333333' }}>Chọn ảnh minh họa</Text>
+                                    <Text style={{ fontSize: 12, color: '#888888', marginTop: 2 }}>Tỷ lệ tối ưu 16:9</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={Styles.formGroup}>
+                        <Text style={Styles.formLabel}>Video bài học</Text>
+                        <TouchableOpacity
+                            style={[Styles.imagePickerBox, videoUri && Styles.imagePickerActive]}
+                            onPress={handlePickVideo}
+                            disabled={submitting}
+                        >
+                            {videoUri ? (
+                                <View style={{ alignItems: 'center', padding: 20 }}>
+                                    <Ionicons name="videocam" size={40} color="#28a745" style={{ marginBottom: 8 }} />
+                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#28a745', textAlign: 'center' }}>Video đã chọn thành công!</Text>
+                                    <Text style={{ fontSize: 12, color: '#888888', marginTop: 4, textAlign: 'center' }} numberOfLines={1}>
+                                        {videoUri.split('/').pop()}
+                                    </Text>
+                                    <View style={{
+                                        marginTop: 12,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.6)', paddingHorizontal: 12,
+                                        paddingVertical: 6, borderRadius: 6
+                                    }}>
+                                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>Thay đổi video</Text>
+                                    </View>
+                                </View>
+                            ) : (
+                                <View style={{ alignItems: 'center' }}>
+                                    <Ionicons name="videocam-outline" size={40} color="#888888" style={{ marginBottom: 8 }} />
+                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333333' }}>Chọn video bài giảng</Text>
+                                    <Text style={{ fontSize: 12, color: '#888888', marginTop: 2 }}>Hỗ trợ các định dạng mp4, mov, avi...</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={{ marginTop: 10 }}>
+                        <Button
+                            mode="contained"
+                            onPress={handleSaveLesson}
+                            style={{ backgroundColor: '#1877F2', borderRadius: 8, paddingVertical: 4 }}
+                            labelStyle={{ fontSize: 16, fontWeight: 'bold' }}
+                            loading={submitting}
+                            disabled={submitting}
+                        >
+                            {lesson ? 'Cập nhật bài học' : 'Tạo bài học mới'}
+                        </Button>
+                    </View>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
+    );
+};
+
+export default LessonForm;

@@ -12,7 +12,6 @@ export const endpoints = {
     'course-compare': '/courses/compare/',                              // So sánh các khóa học bằng danh sách ids
     'course-lessons': (courseId) => `/courses/${courseId}/lessons/`,    // Danh sách bài học của khóa học/Thêm bài học mới
     'course-enrolls': (courseId) => `/courses/${courseId}/enrolls/`,    // Đăng ký học (Được phép học thử / Tạo hóa đơn chờ)
-    'course-enroll-detail': (courseId, enrollId) => `/courses/${courseId}/enrolls/${enrollId}/`, // Chi tiết đăng ký
     'course-students': (courseId) => `/courses/${courseId}/students/`,  // Danh sách học viên của khóa học (đã đóng tiền)
     'course-reviews': (courseId) => `/courses/${courseId}/reviews/`,    // Lấy/Viết đánh giá của khóa học
 
@@ -34,6 +33,7 @@ export const endpoints = {
     'lesson-details': (lessonId) => `/lessons/${lessonId}/`,            // Chi tiết bài học
     'lesson-tags': (lessonId) => `/lessons/${lessonId}/tags/`,          // Gán nhãn tags cho bài học (POST)
     'lesson-complete': (lessonId) => `/lessons/${lessonId}/complete/`,  // Đánh dấu đã hoàn thành bài học (POST)
+    'lesson-update-progress': (lessonId) => `/lessons/${lessonId}/update-progress/`, // Cập nhật số giây đã xem (POST)
     'lesson-comments': (lessonId) => `/lessons/${lessonId}/comments/`,  // Lấy danh sách/Viết bình luận bài học (GET, POST)
     'lesson-like': (lessonId) => `/lessons/${lessonId}/like/`,          // Thích/Bỏ thích bài học (POST)
 

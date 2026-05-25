@@ -53,6 +53,20 @@ class IsEnrolled(IsAuthenticatedUser):
         return Enrollment.objects.filter(student=user, course=course, payment__is_successful=True).exists()
 
 
+class IsEnrolledOrPreview(IsEnrolled):
+    def has_permission(self, request, view):
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        if type(obj).__name__ == 'Lesson' and getattr(obj, 'is_preview', False):
+            return True
+
+        if not (request.user and request.user.is_authenticated):
+            return False
+
+        return super().has_object_permission(request, view, obj)
+
+
 class HasEnrollmentRecord(IsAuthenticatedUser):
     def has_object_permission(self, request, view, obj):
         user = request.user

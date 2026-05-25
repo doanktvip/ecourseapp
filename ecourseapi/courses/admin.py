@@ -89,9 +89,9 @@ class CourseAdmin(admin.ModelAdmin):
 
 class LessonAdmin(admin.ModelAdmin):
     form = LessonForm
-    list_display = ('subject', 'course', 'order', 'active')
+    list_display = ('subject', 'course', 'order', 'active', 'is_preview')
     search_fields = ('subject',)
-    list_filter = ('course',)
+    list_filter = ('course', 'is_preview')
 
 
 class CourseReviewAdmin(admin.ModelAdmin):

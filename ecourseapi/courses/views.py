@@ -53,9 +53,6 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
         if self.action == 'enrolls':
             return [perms.IsAuthenticatedUser()]
 
-        if self.action == 'enroll_detail':
-            return [perms.HasEnrollmentRecord()]
-
         if self.action == 'reviews' and self.request.method == 'POST':
             return [perms.IsEnrolled()]
 
@@ -150,13 +147,6 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
                                        payment_method=None)
 
         return Response(serializers.EnrollmentDetailSerializer(enrollment).data, status=status.HTTP_201_CREATED)
-
-    @action(methods=['get'], detail=True, url_path=r'enrolls/(?P<enroll_id>\d+)')
-    def enroll_detail(self, request, pk=None, enroll_id=None):
-        course = self.get_object()
-        enrollment = get_object_or_404(Enrollment, pk=enroll_id, course=course)
-        serializer = serializers.EnrollmentDetailSerializer(enrollment)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=True, url_path='students')
     def students(self, request, pk=None):
@@ -332,8 +322,12 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
     serializer_class = serializers.LessonSerializer
 
     def get_permissions(self):
-        if self.action in ['retrieve', 'complete']:
+        if self.action == 'retrieve':
+            return [perms.IsEnrolledOrPreview()]
+
+        if self.action in ['complete', 'update_progress']:
             return [perms.IsEnrolled()]
+            
         if self.action in ['partial_update', 'destroy', 'add_tags']:
             return [perms.IsCourseOwner()]
 
@@ -341,7 +335,9 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
             return [perms.IsAdmin()]
 
         if self.action == 'comments':
-            return [perms.HasEnrollmentRecord()]
+            if self.request.method == 'POST':
+                return [perms.HasEnrollmentRecord()]
+            return [permissions.AllowAny()]
 
         if self.action == 'like':
             return [perms.HasEnrollmentRecord()]
@@ -385,6 +381,47 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
 
         return Response({"detail": "Đã đánh dấu hoàn thành bài học.",
                          "current_progress": enrollment.progress}, status=status.HTTP_200_OK)
+
+    @action(methods=['post'], detail=True, url_path='update-progress')
+    def update_progress(self, request, pk=None):
+        lesson = self.get_object()
+        enrollment = Enrollment.objects.filter(student=request.user, course=lesson.course).first()
+
+        if not enrollment:
+            return Response({"detail": "Không tìm thấy thông tin đăng ký."}, status=status.HTTP_404_NOT_FOUND)
+
+        seconds = request.data.get('watched_seconds')
+        if seconds is None:
+            return Response({"detail": "Thiếu thông tin watched_seconds."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            seconds = int(seconds)
+        except ValueError:
+            return Response({"detail": "watched_seconds phải là số nguyên."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if seconds > lesson.video_seconds:
+            seconds = lesson.video_seconds
+
+        progress, created = LessonProgress.objects.get_or_create(
+            enrollment=enrollment,
+            lesson=lesson,
+            defaults={'status': LessonProgress.Status.IN_PROGRESS, 'watched_seconds': seconds}
+        )
+
+        if not created:
+            progress.watched_seconds = seconds
+            if lesson.video_seconds > 0 and (seconds / lesson.video_seconds) >= 0.9:
+                progress.status = LessonProgress.Status.COMPLETED
+                progress.watched_seconds = lesson.video_seconds
+
+            progress.save(update_fields=['watched_seconds', 'status'])
+
+        enrollment.refresh_from_db()
+        return Response({
+            "watched_seconds": progress.watched_seconds,
+            "status": progress.status,
+            "current_progress": enrollment.progress
+        }, status=status.HTTP_200_OK)
 
     @action(methods=['get', 'post'], detail=True, url_path='comments')
     def comments(self, request, pk=None):
