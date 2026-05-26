@@ -1,7 +1,7 @@
-import { View, Text, TextInput, TouchableOpacity,  FlatList,  Alert, Modal, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity,  FlatList,  Alert, Modal, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from "../../styles/Styles";
 
@@ -13,6 +13,9 @@ const TagManage = ({ navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [editingTag, setEditingTag] = useState(null);
     const [tagName, setTagName] = useState('');
+
+    const scrollViewRef = useRef(null);
+    const formPositionY = useRef(0);
 
     const loadTags = async () => {
         try {
@@ -167,9 +170,13 @@ const TagManage = ({ navigation }) => {
 
             {/* Modal Create/Update */}
             <Modal visible={modalVisible} animationType="fade" transparent={true} onRequestClose={closeModal}>
-                <View style={Styles.modalOverlay}>
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={Styles.modalOverlay}>
+                    <ScrollView ref={scrollViewRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{flexGrow: 1, justifyContent: 'center'}}>
                     {/* 1. Sửa modalContent thành modalContainer */}
-                    <View style={Styles.modalContainer}>
+                    <View 
+                        style={Styles.modalContainer}
+                        onLayout={(e) => formPositionY.current = e.nativeEvent.layout.y}
+                    >
                         <View style={Styles.modalHeader}>
                             <Text style={Styles.h2}>{editingTag ? 'Cập nhật Tag' : 'Thêm Tag mới'}</Text>
                             <TouchableOpacity onPress={closeModal} disabled={submitting}>
@@ -190,6 +197,14 @@ const TagManage = ({ navigation }) => {
                             value={tagName}
                             onChangeText={setTagName}
                             editable={!submitting}
+                            onFocus={() => {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollTo({ 
+                                        y: formPositionY.current,
+                                        animated: true 
+                                    });
+                                }, 200);
+                            }}
                         />
 
                         <View style={Styles.modalActions}>
@@ -211,7 +226,8 @@ const TagManage = ({ navigation }) => {
                             </TouchableOpacity>
                         </View>
                     </View>
-                </View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
             </Modal>
         </View>
     );

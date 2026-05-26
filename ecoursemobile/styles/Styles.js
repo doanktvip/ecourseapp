@@ -116,8 +116,8 @@ export default StyleSheet.create({
     cardContainer: {
         marginBottom: 20,
         backgroundColor: '#fff',
-        marginLeft:20,
-        marginRight:20,
+        marginLeft: 20,
+        marginRight: 20,
     },
     cardContent: {
         marginTop: 10,
@@ -596,14 +596,14 @@ export default StyleSheet.create({
         fontWeight: 'bold',
     },
     // 6. Styles cho phần đánh giá từ học viên
-     reviewSectionTitle: {
-     fontSize: 18,
-     fontWeight: 'bold',
-     color: '#333333',
-     marginTop: 20,
-     marginBottom: 10,
-     marginLeft: 20,
-     marginRight: 20,
+    reviewSectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333333',
+        marginTop: 20,
+        marginBottom: 10,
+        marginLeft: 20,
+        marginRight: 20,
     },
     reviewContainer: {
         marginLeft: 20,
@@ -680,25 +680,25 @@ export default StyleSheet.create({
     // Style cho nút Gửi đánh giá (Trạng thái bình thường)
     btnSubmitReview: {
         alignSelf: 'flex-end',   // Neo chuẩn ở góc dưới bên phải giống trong ảnh
-        flexDirection: 'row',    
-        alignItems: 'center',    
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingHorizontal: 20,   // Thu gọn chiều ngang lại một chút cho thanh thoát
         paddingVertical: 10,     // Giảm chiều dọc để nút không bị quá mập
         borderRadius: 30,        // Bo tròn góc tuyệt đối (pill-shape)
         marginTop: 8,            // Tạo một khoảng thở vừa đủ với ô nhập chữ phía trên
         backgroundColor: '#1877F2',
-        
+
         // Hiệu ứng đổ bóng (Shadow) tinh tế hơn
         shadowColor: '#1877F2',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        elevation: 4, 
+        elevation: 4,
     },
 
     // Style ghi đè khi nút đang ở trạng thái xử lý (Disabled)
     btnSubmitReviewDisabled: {
-        backgroundColor: '#a0c4ff', 
+        backgroundColor: '#a0c4ff',
         shadowOpacity: 0,        // Tắt đổ bóng để nút chìm xuống tự nhiên khi đang load
         elevation: 0,
     },
@@ -706,7 +706,7 @@ export default StyleSheet.create({
     // Chữ bên trong nút
     btnSubmitReviewText: {
         color: '#ffffff',
-        fontSize: 15, 
+        fontSize: 15,
         fontWeight: 'bold',
     },
     // === Form Styles for Course Creation ===
@@ -1297,6 +1297,7 @@ export default StyleSheet.create({
         height: 32,
         borderRadius: 6,
         resizeMode: 'contain',
+    },
     // Tiến độ Student Progress
     progressBarTrack: {
         width: 80,

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, Image, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, TextInput } from 'react-native-paper';
@@ -10,6 +10,9 @@ import Styles from '../../styles/Styles';
 
 const CourseForm = ({ route, navigation }) => {
     const [user] = useContext(MyUserContext);
+
+    const scrollViewRef = useRef(null);
+    const formPositions = useRef({});
 
     // Nhận dữ liệu khóa học truyền sang khi là chế độ CHỈNH SỬA
     const { course } = route?.params || {};
@@ -255,17 +258,28 @@ const CourseForm = ({ route, navigation }) => {
     // 3. Trường hợp: Giảng viên hợp lệ -> Hiển thị biểu mẫu Tạo Khóa học
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={Styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 50 }}>
+            <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 50 }} keyboardShouldPersistTaps="handled">
                 <View style={Styles.formContainer}>
                     <Text style={[Styles.h2, { marginBottom: 20, color: '#212529' }]}>
                         {course ? 'Chỉnh sửa khóa học ' : 'Thông tin khóa học mới 🎓'}
                     </Text>
 
-                    <View style={Styles.formGroup}>
+                    <View 
+                        style={Styles.formGroup}
+                        onLayout={(e) => formPositions.current['subject'] = e.nativeEvent.layout.y}
+                    >
                         <Text style={Styles.formLabel}>Tên khóa học <Text style={{ color: '#dc3545' }}>*</Text></Text>
                         <TextInput
                             value={subject}
                             onChangeText={setSubject}
+                            onFocus={() => {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollTo({ 
+                                        y: formPositions.current['subject'] || 0,
+                                        animated: true 
+                                    });
+                                }, 200);
+                            }}
                             mode="outlined"
                             style={{ backgroundColor: '#ffffff' }}
                             placeholder="Ví dụ: React Native cơ bản"
@@ -295,11 +309,22 @@ const CourseForm = ({ route, navigation }) => {
                         </TouchableOpacity>
                     </View>
 
-                    <View style={Styles.formGroup}>
+                    <View 
+                        style={Styles.formGroup}
+                        onLayout={(e) => formPositions.current['fee'] = e.nativeEvent.layout.y}
+                    >
                         <Text style={Styles.formLabel}>Học phí (VND)</Text>
                         <TextInput
                             value={fee}
                             onChangeText={setFee}
+                            onFocus={() => {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollTo({ 
+                                        y: formPositions.current['fee'] || 0,
+                                        animated: true 
+                                    });
+                                }, 200);
+                            }}
                             mode="outlined"
                             style={{ backgroundColor: '#ffffff' }}
                             placeholder="Nhập số tiền hoặc bỏ trống nếu miễn phí"
@@ -312,11 +337,22 @@ const CourseForm = ({ route, navigation }) => {
                         />
                     </View>
 
-                    <View style={Styles.formGroup}>
+                    <View 
+                        style={Styles.formGroup}
+                        onLayout={(e) => formPositions.current['description'] = e.nativeEvent.layout.y}
+                    >
                         <Text style={Styles.formLabel}>Mô tả khóa học</Text>
                         <TextInput
                             value={description}
                             onChangeText={setDescription}
+                            onFocus={() => {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollTo({ 
+                                        y: formPositions.current['description'] || 0,
+                                        animated: true 
+                                    });
+                                }, 200);
+                            }}
                             mode="outlined"
                             style={{ backgroundColor: '#ffffff', minHeight: 100 }}
                             placeholder="Mô tả tóm tắt nội dung khóa học và đối tượng người học..."

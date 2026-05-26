@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, TextInput } from 'react-native-paper';
 import { authApis, endpoints } from '../../../configs/Apis';
@@ -30,6 +30,9 @@ const UpdateProfileModal = ({ visible, onClose, user, token, onUpdate }) => {
 
     const [profileData, setProfileData] = useState({});
     const [loading, setLoading] = useState(false);
+
+    const scrollViewRef = useRef(null);
+    const inputPositions = useRef({});
 
     useEffect(() => {
         if (visible && user) {
@@ -100,13 +103,26 @@ const UpdateProfileModal = ({ visible, onClose, user, token, onUpdate }) => {
                         )}
                     </View>
 
-                    {profileFields.map((field) => (
-                        <View key={field.field} style={Styles.modalInputGroup}>
-                            <Text style={Styles.modalLabel}>{field.title}</Text>
-                            <TextInput
-                                value={profileData[field.field] || ''}
-                                onChangeText={(t) => setProfileData({ ...profileData, [field.field]: t })}
-                                mode="outlined"
+                    <ScrollView ref={scrollViewRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                        {profileFields.map((field) => (
+                            <View 
+                                key={field.field} 
+                                style={Styles.modalInputGroup}
+                                onLayout={(e) => inputPositions.current[field.field] = e.nativeEvent.layout.y}
+                            >
+                                <Text style={Styles.modalLabel}>{field.title}</Text>
+                                <TextInput
+                                    value={profileData[field.field] || ''}
+                                    onChangeText={(t) => setProfileData({ ...profileData, [field.field]: t })}
+                                    onFocus={() => {
+                                        setTimeout(() => {
+                                            scrollViewRef.current?.scrollTo({ 
+                                                y: inputPositions.current[field.field] || 0,
+                                                animated: true 
+                                            });
+                                        }, 200);
+                                    }}
+                                    mode="outlined"
                                 style={Styles.modalInput}
                                 placeholder={field.placeholder}
                                 keyboardType={field.keyboardType || 'default'}
@@ -117,6 +133,7 @@ const UpdateProfileModal = ({ visible, onClose, user, token, onUpdate }) => {
                             />
                         </View>
                     ))}
+                    </ScrollView>
 
                     <View style={Styles.modalBtnGroup}>
                         <Button mode="outlined" onPress={onClose} style={Styles.modalBtnCancel} disabled={loading}>

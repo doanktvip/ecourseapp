@@ -13,11 +13,26 @@ const CourseDetail = ({ route, navigation }) => {
   const [user] = useContext(MyUserContext);
   const [lessons, setLessons] = useState([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
+  const [nextLessonsUrl, setNextLessonsUrl] = useState(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [loadingEnrollment, setLoadingEnrollment] = useState(false);
   const isFocused = useIsFocused();
   const [enrolling, setEnrolling] = useState(false);
   const [enrollmentRecord, setEnrollmentRecord] = useState(null);
+  const [totalLessons, setTotalLessons] = useState(currentCourse.lesson_count || 0);
+
+  const formatVideoDuration = (totalSeconds) => {
+    if (!totalSeconds || isNaN(totalSeconds)) return '0 phút';
+    
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      return `${hours} giờ ${minutes} phút`;
+    }
+    return `${minutes} phút`;
+  };
 
   const shouldShowEnrollButton = useMemo(() => {
     if (isEnrolled) return false;
@@ -32,13 +47,58 @@ const CourseDetail = ({ route, navigation }) => {
     if (!currentCourse.id) return;
     try {
       setLoadingLessons(true);
-      // Gọi API lấy danh sách bài học theo Id khóa học
       let url = endpoints['course-lessons'](currentCourse.id);
-      let res = await Apis.get(url);
-      setLessons(res.data.results || res.data);
-
+      
+      let res;
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        res = await authApis(token).get(url);
+      } else {
+        res = await Apis.get(url);
+      }
+      
+      const data = res.data;
+      if (data && data.results !== undefined) {
+        setLessons(data.results);
+        setNextLessonsUrl(data.next || null);
+        setTotalLessons(data.count || 0);
+      } else {
+        setLessons(data || []);
+        setNextLessonsUrl(null);
+        setTotalLessons(data ? data.length : 0);
+      }
     } catch (ex) {
       console.error("Lỗi khi tải danh sách bài học:", ex);
+    } finally {
+      setLoadingLessons(false);
+    }
+  };
+
+  const loadMoreLessons = async () => {
+    if (!nextLessonsUrl || loadingLessons) return;
+    try {
+      setLoadingLessons(true);
+      let url = nextLessonsUrl;
+      // Trích xuất path nếu có chứa domain để luôn dùng đúng BASE_URL
+      if (url.includes('/courses/')) {
+        url = url.substring(url.indexOf('/courses/'));
+      }
+      
+      let res;
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        res = await authApis(token).get(url);
+      } else {
+        res = await Apis.get(url);
+      }
+      
+      const data = res.data;
+      if (data && data.results !== undefined) {
+        setLessons(prev => [...prev, ...data.results]);
+        setNextLessonsUrl(data.next || null);
+      }
+    } catch (ex) {
+      console.error("Lỗi khi tải thêm bài học:", ex);
     } finally {
       setLoadingLessons(false);
     }
@@ -138,6 +198,7 @@ const CourseDetail = ({ route, navigation }) => {
   }, [currentCourse.id, user, isFocused]);
 
   const getLessonSubtitle = (lesson, isUnlocked) => {
+    if (lesson.completed) return '• Đã hoàn thành';
     if (lesson.is_preview) return '• Học thử miễn phí';
     if (!isUnlocked) return '• Chưa mở khóa';
     if (user) {
@@ -171,14 +232,19 @@ const CourseDetail = ({ route, navigation }) => {
             )}
           </View>
 
-          <View style={[Styles.row, { marginVertical: 8 }]}>
+          <View style={[Styles.row, { marginVertical: 8, flexWrap: 'wrap' }]}>
             <Ionicons name="star" size={18} color="gold" style={{ marginRight: 4 }} />
             <Text style={[Styles.body, { fontSize: 14, fontWeight: '700' }]}>
-              {currentCourse.rating || "0.0"} ({currentCourse.reviews_count || 0} đánh giá)
+              {currentCourse.rating || "0.0"}
             </Text>
             <Text style={[Styles.small, { marginHorizontal: 8 }]}>•</Text>
             <Text style={[Styles.small, { fontSize: 14 }]}>
-              {lessons.length || 0} Bài học
+              {totalLessons} Bài học
+            </Text>
+            <Text style={[Styles.small, { marginHorizontal: 8 }]}>•</Text>
+            <Ionicons name="time-outline" size={16} color="#666" style={{ marginRight: 4 }} />
+            <Text style={[Styles.small, { fontSize: 14 }]}>
+              {formatVideoDuration(currentCourse.total_duration_video)}
             </Text>
           </View>
 
@@ -261,7 +327,7 @@ const CourseDetail = ({ route, navigation }) => {
       {/* Danh sách các bài học của khóa học */}
       <View style={[Styles.row, { justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 10, marginLeft: 20, marginRight: 20 }]}>
         <Text style={[Styles.h2, { marginTop: 0, marginBottom: 0 }]}>
-          Nội dung bài học ({lessons.length})
+          Nội dung bài học ({totalLessons})
         </Text>
         {user && (user.role === 'ADMIN' || (user.role === 'INSTRUCTOR' && currentCourse.instructor?.email === user.email)) && (
           <TouchableOpacity
@@ -287,7 +353,7 @@ const CourseDetail = ({ route, navigation }) => {
           return (
             <TouchableOpacity
               key={lesson.id}
-              style={[Styles.row, { paddingVertical: 12, borderBottomWidth: idx === lessons.length - 1 ? 0 : 1, borderBottomColor: '#eee' }]}
+              style={[Styles.row, { paddingVertical: 12, borderBottomWidth: (idx === lessons.length - 1 && !nextLessonsUrl) ? 0 : 1, borderBottomColor: '#eee' }]}
               onPress={() => {
                 if (isUnlocked) {
                   navigation.navigate('LessonDetail', {
@@ -305,9 +371,9 @@ const CourseDetail = ({ route, navigation }) => {
               }}
             >
               <Ionicons
-                name={isUnlocked ? "play-circle" : "lock-closed"}
+                name={lesson.completed ? "checkmark-circle" : (isUnlocked ? "play-circle" : "lock-closed")}
                 size={24}
-                color={isUnlocked ? "#28a745" : "#999"}
+                color={lesson.completed ? "#2e7d32" : (isUnlocked ? "#28a745" : "#999")}
                 style={{ marginRight: 12 }}
               />
               <View style={{ flex: 1 }}>
@@ -322,6 +388,32 @@ const CourseDetail = ({ route, navigation }) => {
             </TouchableOpacity>
           );
         })}
+
+        {nextLessonsUrl && (
+          <TouchableOpacity
+            style={{
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              borderTopWidth: 1,
+              borderTopColor: '#f1f3f5',
+              marginTop: 4
+            }}
+            onPress={loadMoreLessons}
+            disabled={loadingLessons}
+            activeOpacity={0.7}
+          >
+            {loadingLessons ? (
+              <ActivityIndicator size="small" color="#1877F2" />
+            ) : (
+              <>
+                <Text style={{ color: '#1877F2', fontWeight: 'bold', fontSize: 14 }}>Xem thêm bài học</Text>
+                <Ionicons name="chevron-down" size={16} color="#1877F2" style={{ marginLeft: 4 }} />
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
       {/* 5. Đánh giá từ học viên */}
       <View>

@@ -1,7 +1,7 @@
 import { Image, Text, TouchableOpacity, View, ScrollView, Alert } from "react-native";
 import Styles from "./Styles";
 import { Button, HelperText, TextInput } from "react-native-paper";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,6 +25,8 @@ const Login = ({ route }) => {
 
     const [user, setUser] = useState({});
     const [err, setErr] = useState(null);
+    const scrollViewRef = useRef(null);
+    const inputPositions = useRef({});
     const nav = useNavigation();
     const [loading, setLoading] = useState(false);
     const [, dispatch] = useContext(MyUserContext);
@@ -113,7 +115,7 @@ const Login = ({ route }) => {
     };
 
     return (
-        <ScrollView style={Styles.loginContainer} contentContainerStyle={Styles.loginScrollContent}>
+        <ScrollView ref={scrollViewRef} style={Styles.loginContainer} contentContainerStyle={Styles.loginScrollContent} keyboardShouldPersistTaps="handled">
             <View style={Styles.logoWrapper}>
                 <View style={Styles.logoCircle}>
                     <Ionicons name="school" size={44} color="#ffffff" />
@@ -126,11 +128,25 @@ const Login = ({ route }) => {
                 <Text style={Styles.cardTitle}>Đăng nhập</Text>
 
                 {userInfo.map(u => (
-                    <View key={u.field} style={Styles.inputGroup}>
+                    <View 
+                        key={u.field} 
+                        style={Styles.inputGroup}
+                        onLayout={(event) => {
+                            inputPositions.current[u.field] = event.nativeEvent.layout.y;
+                        }}
+                    >
                         <Text style={Styles.inputLabel}>{u.title}</Text>
                         <TextInput
                             value={user[u.field] || ''}
                             onChangeText={(t) => setUser({ ...user, [u.field]: t })}
+                            onFocus={() => {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollTo({ 
+                                        y: inputPositions.current[u.field] || 0,
+                                        animated: true 
+                                    });
+                                }, 200);
+                            }}
                             mode="outlined"
                             style={Styles.paperInput}
                             placeholder={u.placeholder}

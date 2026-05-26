@@ -94,6 +94,16 @@ const HomeStackNavigator = () => {
         component={LessonForm}
         options={{ title: 'Thêm bài học mới' }}
       />
+      <HomeStack.Screen 
+        name="CourseForm" 
+        component={CourseForm} 
+        options={{ title: 'Thông tin khóa học' }} 
+      />
+      <HomeStack.Screen
+        name="StudentProgress"
+        component={StudentProgress}
+        options={{ title: 'Tiến độ học viên' }}
+      />
     </HomeStack.Navigator>
   );
 }

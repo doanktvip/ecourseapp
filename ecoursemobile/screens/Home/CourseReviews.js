@@ -12,6 +12,7 @@ const CourseReviews = ({ route, navigation }) => {
     const [loadingReviews, setLoadingReviews] = useState(false);
     const [user] = useContext(MyUserContext); // Lấy thông tin user từ Context toàn cục
     const [page, setPage] = useState(1);
+    const [totalReviews, setTotalReviews] = useState(0);
 
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState("");
@@ -91,17 +92,12 @@ const CourseReviews = ({ route, navigation }) => {
                 setComment("");
                 setRating(5);
 
-                // Cập nhật giao diện real-time bằng cách đưa review mới lên trên cùng đầu mảng
-                const newReviewItem = {
-                    ...reviewRes.data,
-                    user: {
-                        first_name: user.first_name,
-                        last_name: user.last_name,
-                        avatar: user.avatar,
-                        role: user.role
-                    }
-                };
-                setReviews(prev => [newReviewItem, ...prev]);
+                // Tải lại trang 1 từ Backend để cập nhật danh sách đánh giá mới và tổng số lượng chính xác nhất
+                if (page === 1) {
+                    loadReviews();
+                } else {
+                    setPage(1);
+                }
             }
         } catch (ex) {
             console.error("Lỗi xử lý gửi đánh giá:", ex);
@@ -132,6 +128,13 @@ const CourseReviews = ({ route, navigation }) => {
                 setReviews(newReviews);
             } else if (page > 1) {
                 setReviews(prev => [...prev, ...newReviews]);
+            }
+
+            // Lưu tổng số lượng đánh giá thực tế từ thuộc tính count của API phân trang
+            if (res.data.count !== undefined) {
+                setTotalReviews(res.data.count);
+            } else {
+                setTotalReviews(newReviews.length);
             }
 
             if (res.data.next === null) {
@@ -199,7 +202,7 @@ const CourseReviews = ({ route, navigation }) => {
                 // Tiêu đề danh sách
                 ListHeaderComponent={() => (
                     <Text style={[Styles.reviewSectionTitle, { marginTop: 16, paddingHorizontal: 16 }]}>
-                        Tất cả đánh giá về khóa học ({reviews.length})
+                        Tất cả đánh giá về khóa học ({totalReviews})
                     </Text>
                 )}
 
@@ -210,57 +213,39 @@ const CourseReviews = ({ route, navigation }) => {
             />
 
             {/* 2. VIEW: FORM ĐÁNH GIÁ (Nằm ngoài FlatList để cố định dưới đáy) */}
-            <View style={{
-                padding: 16,
-                backgroundColor: '#fff',
-                borderTopWidth: 1,
-                borderColor: '#eee',
-                // Đổ bóng mờ ngăn cách với danh sách phía trên
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: -3 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 10
-            }}>
-                <Text style={[Styles.writeReviewTitle, { marginBottom: 8 }]}>Viết đánh giá của bạn</Text>
-
+            <View style={{ backgroundColor: '#ffffff', borderTopWidth: 1, borderColor: '#eee' }}>
                 {/* Chọn số sao */}
-                <View style={[Styles.ratingSelectorContainer, { marginVertical: 4 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
                     {[1, 2, 3, 4, 5].map(s => (
                         <TouchableOpacity key={s} onPress={() => setRating(s)} style={{ paddingHorizontal: 4 }}>
-                            <Ionicons name={s <= rating ? "star" : "star-outline"} size={28} color="gold" />
+                            <Ionicons name={s <= rating ? "star" : "star-outline"} size={26} color="gold" />
                         </TouchableOpacity>
                     ))}
                 </View>
 
-                {/* Ô nhập chữ */}
-                <TextInput
-                    style={[Styles.reviewTextInput, { minHeight: 60, marginBottom: 10 }]}
-                    placeholder="Khóa học này có bổ ích với bạn không?"
-                    multiline
-                    numberOfLines={2}
-                    value={comment}
-                    onChangeText={setComment}
-                />
-
-                {/* Nút gửi */}
-                <TouchableOpacity
-                    style={[
-                        Styles.btnSubmitReview, submittingReview && Styles.btnSubmitReviewDisabled]}
-                    onPress={handleSubmitReview}
-                    disabled={submittingReview} >
-                    {submittingReview ? (
-                        <>
-                            <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
-                            <Text style={Styles.btnSubmitReviewText}>Đang gửi...</Text>
-                        </>
-                    ) : (
-                        <>
-                            <Ionicons name="send" size={18} color="#fff" style={{ marginRight: 8 }} />
-                            <Text style={Styles.btnSubmitReviewText}>Gửi</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
+                {/* Thanh nhập đánh giá giống comment bài học */}
+                <View style={Styles.commentBarContainer}>
+                    <TextInput
+                        style={Styles.commentBarInput}
+                        placeholder={user ? "Viết đánh giá khóa học..." : "Đăng nhập để đánh giá"}
+                        value={comment}
+                        onChangeText={setComment}
+                        editable={!!user && !submittingReview}
+                        multiline
+                    />
+                    <TouchableOpacity
+                        style={[Styles.commentBarSendBtn, (!comment.trim() || submittingReview || !user) && Styles.commentBarSendBtnDisabled]}
+                        onPress={handleSubmitReview}
+                        disabled={!comment.trim() || submittingReview || !user}
+                        activeOpacity={0.8}
+                    >
+                        {submittingReview ? (
+                            <ActivityIndicator size="small" color="#ffffff" />
+                        ) : (
+                            <Ionicons name="send" size={16} color="#ffffff" />
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
         </KeyboardAvoidingView>
     );

@@ -1,5 +1,7 @@
 import uuid
 import random
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 import re
 from datetime import timedelta
 from decimal import Decimal
@@ -570,6 +572,13 @@ videos_list = [
     'video/upload/v1778204938/javascript_co_ban_ljztix.mp4',
 ]
 
+# Ánh xạ thời lượng thực tế (tính bằng giây) của các video trên Cloudinary
+VIDEO_DURATIONS = {
+    'video/upload/v1778204725/cai_dat_moi_truong_wklmse.mp4': 335,
+    'video/upload/v1778204823/bien_va_kieu_du_lieu_phytrl.mp4': 199,
+    'video/upload/v1778204938/javascript_co_ban_ljztix.mp4': 260
+}
+
 lessons_created_count = 0
 for course in courses:
     subjects = COURSE_LESSONS.get(course.subject, [])
@@ -580,7 +589,7 @@ for course in courses:
         # Chọn ngẫu nhiên ảnh và video
         img = random.choice(images_list)
         vid = random.choice(videos_list)
-        vid_sec = random.randint(300, 1800)  # Từ 5 phút đến 30 phút
+        vid_sec = VIDEO_DURATIONS.get(vid, 300)
 
         # Rich content mẫu
         content = f"""
@@ -790,23 +799,49 @@ comments_created = 0
 
 # Duyệt qua các khóa học và bài học để bình luận ngẫu nhiên
 for course in courses:
-    all_lessons = list(course.lessons.all())
+    all_lessons = list(course.lessons.all().order_by('order'))
     if not all_lessons:
         continue
 
-    # Chọn ngẫu nhiên khoảng 3-4 bài học trong khóa học để bình luận
-    commented_lessons = random.sample(all_lessons, k=min(4, len(all_lessons)))
+    # Đảm bảo bài học đầu tiên (bài giới thiệu/preview) luôn luôn được chọn để nạp bình luận
+    first_lesson = all_lessons[0]
+    other_lessons = all_lessons[1:]
+    
+    # Chọn ngẫu nhiên thêm tối đa 3 bài học khác trong khóa học
+    sampled_others = random.sample(other_lessons, k=min(3, len(other_lessons)))
+    commented_lessons = [first_lesson] + sampled_others
     for lesson in commented_lessons:
         # Lấy danh sách học viên đăng ký học khóa này để comment cho thực tế
         active_enrollments = list(course.enrollments.filter(payment__is_successful=True))
-        if not active_enrollments:
-            continue
 
-        # Sinh 2-3 bình luận gốc từ các học viên khác nhau
-        commenters = random.sample(active_enrollments, k=min(3, len(active_enrollments)))
-        for en in commenters:
-            student_user = en.student
+        # Nếu là bài học giới thiệu Python, sinh nhiều bình luận từ mọi sinh viên để kích hoạt phân trang (comment pagination)
+        is_python_intro = (course.subject == 'Lập trình Python từ Zero đến Hero' and lesson.subject == 'Giới thiệu và Cài đặt Python')
+        num_comments = 15 if is_python_intro else 3
+
+        if is_python_intro:
+            commenters = random.sample(students, k=min(num_comments, len(students)))
+        elif active_enrollments:
+            commenters = [en.student for en in random.sample(active_enrollments, k=min(num_comments, len(active_enrollments)))]
+        else:
+            # Fallback nếu khóa học chưa có học viên đăng ký thành công
+            commenters = random.sample(students, k=min(num_comments, len(students)))
+
+        for idx_cmt, student_user in enumerate(commenters):
             content = random.choice(student_comments)
+            if is_python_intro:
+                # Tạo nội dung phong phú thêm cho nhiều comment
+                additional_student_comments = [
+                    "Em rất thích cách truyền đạt của thầy cô, slide đẹp quá.",
+                    "Hi vọng sẽ hoàn thành tốt khóa học Python này!",
+                    "Kiến thức chuẩn chỉnh, thực hành rất đã tay.",
+                    "Chào cả lớp, chúc mọi người cùng hoàn thành khóa học xuất sắc nhé.",
+                    "Em đã cài đặt thành công Python 3.11 rồi ạ.",
+                    "Khóa học tuyệt vời ngoài mong đợi luôn ạ!",
+                    "Có bài tập nâng cao thêm không thầy cô?",
+                    "Bài giảng cực kỳ chi tiết, rất phù hợp cho người mới bắt đầu.",
+                    "Em đã xem hết video và làm bài tập xong rồi nha."
+                ]
+                content = random.choice(student_comments + additional_student_comments)
 
             # Tạo Comment gốc
             cmt_goc = Comment.objects.create(
@@ -816,14 +851,38 @@ for course in courses:
                 parent=None
             )
             # Ghi đè ngày tạo comment
-            cmt_date = en.created_date + timedelta(days=random.randint(1, 5))
-            if cmt_date > now:
-                cmt_date = now
+            if is_python_intro:
+                # Phân bổ các mốc thời gian gần thời điểm chạy (để hiển thị đẹp mắt như Facebook)
+                recent_offsets = [
+                    timedelta(seconds=15),       # 15 giây trước
+                    timedelta(minutes=2),        # 2 phút trước
+                    timedelta(minutes=15),       # 15 phút trước
+                    timedelta(minutes=45),       # 45 phút trước
+                    timedelta(hours=1, minutes=30), # 1 giờ trước
+                    timedelta(hours=3),          # 3 giờ trước
+                    timedelta(hours=8),          # 8 giờ trước
+                    timedelta(days=1),           # 1 ngày trước
+                    timedelta(days=2),           # 2 ngày trước
+                    timedelta(days=3, hours=4),  # 3 ngày trước
+                    timedelta(days=5),           # 5 ngày trước
+                    timedelta(days=8),           # 1 tuần trước
+                    timedelta(days=14),          # 2 tuần trước
+                    timedelta(days=20),          # 2 tuần trước
+                    timedelta(days=30)           # 1 tháng trước
+                ]
+                cmt_date = now - recent_offsets[idx_cmt % len(recent_offsets)]
+            else:
+                base_enrollment_date = active_enrollments[0].created_date if active_enrollments else now - timedelta(days=30)
+                cmt_date = base_enrollment_date + timedelta(days=random.randint(1, 5), hours=idx_cmt)
+                if cmt_date > now:
+                    cmt_date = now
+
             Comment.objects.filter(pk=cmt_goc.pk).update(created_date=cmt_date, updated_date=cmt_date)
             comments_created += 1
 
-            # Giảng viên trả lời (60% cơ hội)
-            if random.random() < 0.60:
+            # Giảng viên trả lời (60% cơ hội, hoặc 80% đối với Python intro để tăng thêm số lượng comment)
+            reply_chance = 0.8 if is_python_intro else 0.6
+            if random.random() < reply_chance:
                 reply_content = instructor_replies["default"]
                 if "SyntaxError" in content:
                     reply_content = instructor_replies["SyntaxError"]
@@ -838,10 +897,16 @@ for course in courses:
                     content=reply_content,
                     parent=cmt_goc
                 )
-                # Trả lời sau comment gốc vài giờ
-                reply_date = cmt_date + timedelta(hours=random.randint(1, 12))
-                if reply_date > now:
-                    reply_date = now
+                # Trả lời sau comment gốc vài giờ (hoặc vài phút đối với Python intro)
+                if is_python_intro:
+                    reply_date = cmt_date + timedelta(minutes=random.randint(1, 10))
+                    if reply_date > now:
+                        reply_date = now
+                else:
+                    reply_date = cmt_date + timedelta(hours=random.randint(1, 12))
+                    if reply_date > now:
+                        reply_date = now
+                        
                 Comment.objects.filter(pk=reply.pk).update(created_date=reply_date, updated_date=reply_date)
                 comments_created += 1
 
@@ -977,6 +1042,80 @@ for enrollment in eligible_enrollments:
             # Bỏ qua nếu có lỗi validation bất ngờ
             print(f"   [Validation Error Bỏ Qua] {e}")
             pass
+
+    # --- SINH THÊM ĐÁNH GIÁ KIỂM THỬ PHÂN TRANG (PAGINATION TEST) CHO KHÓA HỌC PYTHON ---
+    python_course = Course.objects.filter(subject='Lập trình Python từ Zero đến Hero').first()
+    if python_course:
+        print(f"\n[9.1] Đang sinh thêm đánh giá kiểm thử cho khóa '{python_course.subject}' (Cần tối thiểu 11 đánh giá để test phân trang)...")
+        python_lessons = list(python_course.lessons.all())
+        existing_reviewer_ids = CourseReview.objects.filter(course=python_course).values_list('user_id', flat=True)
+        potential_reviewers = [s for s in students if s.id not in existing_reviewer_ids]
+
+        reviews_needed = 15 - CourseReview.objects.filter(course=python_course).count()
+        if reviews_needed > 0:
+            for idx in range(min(reviews_needed, len(potential_reviewers))):
+                student_user = potential_reviewers[idx]
+                
+                # 1. Đăng ký học
+                enrollment, created = Enrollment.objects.get_or_create(
+                    student=student_user,
+                    course=python_course
+                )
+                
+                # 2. Thanh toán thành công
+                payment, p_created = Payment.objects.get_or_create(
+                    enrollment=enrollment,
+                    defaults={
+                        'amount': python_course.fee,
+                        'payment_method': 'CASH',
+                        'is_successful': True,
+                        'transaction_id': str(uuid.uuid4())
+                    }
+                )
+                if not p_created and not payment.is_successful:
+                    payment.is_successful = True
+                    payment.save()
+
+                # 3. Tiến độ học tập >= 20% (Hoàn thành 2 bài học)
+                for lesson in python_lessons[:2]:
+                    LessonProgress.objects.get_or_create(
+                        enrollment=enrollment,
+                        lesson=lesson,
+                        defaults={
+                            'status': 'COMPLETED',
+                            'watched_seconds': lesson.video_seconds
+                        }
+                    )
+                enrollment.update_progress()
+                
+                # 4. Đánh giá
+                r = random.random()
+                if r < 0.60:
+                    rating = 5
+                elif r < 0.90:
+                    rating = 4
+                else:
+                    rating = 3
+                    
+                comment = random.choice(reviews_pool[rating])
+                
+                try:
+                    review = CourseReview.objects.create(
+                        user=student_user,
+                        course=python_course,
+                        rating=rating,
+                        comment=comment
+                    )
+                    
+                    # Ghi đè ngày tạo review ngẫu nhiên lùi về trước
+                    rev_date = now - timedelta(days=random.randint(1, 10), hours=random.randint(1, 23))
+                    CourseReview.objects.filter(pk=review.pk).update(created_date=rev_date, updated_date=rev_date)
+                    reviews_created_count += 1
+                except ValidationError as e:
+                    print(f"   [Validation Error Bỏ Qua trong seed Python] {e}")
+                    pass
+
+            print(f" -> Đã gieo thêm thành công. Tổng số đánh giá hiện tại của '{python_course.subject}': {python_course.reviews.count()}")
 
 print(f" -> Đã tạo thành công {reviews_created_count} đánh giá khóa học chất lượng cao.")
 

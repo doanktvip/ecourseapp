@@ -164,6 +164,7 @@ class LessonSerializer(serializers.ModelSerializer):
         if instance.video:
             if hasattr(instance.video, 'url'):
                 data['video'] = instance.video.url
+        data['likes_count'] = instance.likes.filter(active=True).count()
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
             data['liked'] = instance.likes.filter(user=request.user, active=True).exists()
@@ -203,11 +204,19 @@ class EnrollmentSerializer(serializers.Serializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = SimpleUserSerializer(read_only=True)
+    replies = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'content', 'user', 'lesson', 'parent']
-        read_only_fields = ['id', 'user', 'lesson']
+        fields = ['id', 'content', 'user', 'lesson', 'parent', 'replies', 'created_date']
+        read_only_fields = ['id', 'user', 'lesson', 'created_date']
+
+    def get_replies(self, obj):
+        # Tránh đệ quy vô hạn: Chỉ lấy replies cho bình luận cấp gốc (không có parent)
+        if obj.parent is not None:
+            return []
+        active_replies = obj.replies.filter(active=True).order_by('-created_date')
+        return CommentSerializer(active_replies, many=True, context=self.context).data
 
 
 class CourseReviewSerializer(serializers.ModelSerializer):

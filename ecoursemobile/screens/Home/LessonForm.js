@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, TextInput } from 'react-native-paper';
@@ -11,6 +11,9 @@ import Styles from '../../styles/Styles';
 const LessonForm = ({ route, navigation }) => {
     const [user] = useContext(MyUserContext);
     const { courseId, lesson } = route?.params || {};
+
+    const scrollViewRef = useRef(null);
+    const formPositions = useRef({});
 
     // Form state variables
     const [subject, setSubject] = useState('');
@@ -275,17 +278,28 @@ const LessonForm = ({ route, navigation }) => {
     // 3. Hiển thị biểu mẫu thêm bài học
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={Styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 50 }}>
+            <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 50 }} keyboardShouldPersistTaps="handled">
                 <View style={Styles.formContainer}>
                     <Text style={[Styles.h2, { marginBottom: 20, color: '#212529' }]}>
                         {lesson ? 'Chỉnh sửa bài học 📝' : 'Bài học mới 📝'}
                     </Text>
 
-                    <View style={Styles.formGroup}>
+                    <View 
+                        style={Styles.formGroup}
+                        onLayout={(e) => formPositions.current['subject'] = e.nativeEvent.layout.y}
+                    >
                         <Text style={Styles.formLabel}>Tên bài học <Text style={{ color: '#dc3545' }}>*</Text></Text>
                         <TextInput
                             value={subject}
                             onChangeText={setSubject}
+                            onFocus={() => {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollTo({ 
+                                        y: formPositions.current['subject'] || 0,
+                                        animated: true 
+                                    });
+                                }, 200);
+                            }}
                             mode="outlined"
                             style={{ backgroundColor: '#ffffff' }}
                             placeholder="Ví dụ: Giới thiệu và thiết lập môi trường"
@@ -298,11 +312,22 @@ const LessonForm = ({ route, navigation }) => {
                         />
                     </View>
 
-                    <View style={Styles.formGroup}>
+                    <View 
+                        style={Styles.formGroup}
+                        onLayout={(e) => formPositions.current['content'] = e.nativeEvent.layout.y}
+                    >
                         <Text style={Styles.formLabel}>Mô tả / Nội dung bài học <Text style={{ color: '#dc3545' }}>*</Text></Text>
                         <TextInput
                             value={content}
                             onChangeText={setContent}
+                            onFocus={() => {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollTo({ 
+                                        y: formPositions.current['content'] || 0,
+                                        animated: true 
+                                    });
+                                }, 200);
+                            }}
                             mode="outlined"
                             style={{ backgroundColor: '#ffffff', minHeight: 120 }}
                             placeholder="Mô tả chi tiết nội dung của bài học..."
