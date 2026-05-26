@@ -149,14 +149,6 @@ const ProfileMain = ({ navigation }) => {
                             <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={Styles.listItem} onPress={() => navigation.navigate('StudentProgress')}>
-                            <View style={Styles.listItemLeft}>
-                                <Ionicons name="people-outline" size={22} color="#1976d2" />
-                                <Text style={Styles.listItemText}>Quản lý học viên & Tiến độ</Text>
-                            </View>
-                            <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
-                        </TouchableOpacity>
-
                         <TouchableOpacity style={[Styles.listItem, { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('ApplyInstructor')}>
                             <View style={Styles.listItemLeft}>
                                 <Ionicons name="school-outline" size={22} color="#1976d2" />

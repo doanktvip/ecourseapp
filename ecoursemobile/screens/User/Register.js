@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform, Switch, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, TextInput, HelperText } from 'react-native-paper';
@@ -65,6 +65,9 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState(null);
+
+  const scrollViewRef = useRef(null);
+  const inputPositions = useRef({});
 
   const nav = useNavigation();
 
@@ -174,7 +177,7 @@ const Register = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
-      <ScrollView style={Styles.loginContainer} contentContainerStyle={Styles.loginScrollContent}>
+      <ScrollView ref={scrollViewRef} style={Styles.loginContainer} contentContainerStyle={Styles.loginScrollContent} keyboardShouldPersistTaps="handled">
         <View style={Styles.loginCard}>
           <Text style={Styles.cardTitle}>Đăng ký tài khoản mới</Text>
 
@@ -197,11 +200,25 @@ const Register = () => {
 
           {/* Vòng lặp map qua mảng cấu hình để render các input */}
           {registerFields.map((field) => (
-            <View key={field.field} style={Styles.inputGroup}>
+            <View
+              key={field.field}
+              style={Styles.inputGroup}
+              onLayout={(event) => {
+                inputPositions.current[field.field] = event.nativeEvent.layout.y;
+              }}
+            >
               <Text style={Styles.inputLabel}>{field.title}</Text>
               <TextInput
                 value={formData[field.field] || ''}
                 onChangeText={(t) => setFormData({ ...formData, [field.field]: t })}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({
+                      y: inputPositions.current[field.field] || 0,
+                      animated: true
+                    });
+                  }, 200);
+                }}
                 mode="outlined"
                 style={Styles.paperInput}
                 placeholder={field.placeholder}

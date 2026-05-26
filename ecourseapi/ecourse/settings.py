@@ -131,11 +131,11 @@ CUSTOM_USERNAME_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
-
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
+# TIME_ZONE = 'UTC'
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
@@ -148,7 +148,6 @@ cloudinary.config(
     api_key=os.getenv('API_KEY'),
     api_secret=os.getenv('API_SECRET')
 )
-
 
 BASE_DOMAIN = os.getenv('BASE_DOMAIN', 'http://localhost:8000')
 

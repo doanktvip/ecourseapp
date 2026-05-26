@@ -428,18 +428,25 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
         lesson = self.get_object()
 
         if request.method == 'GET':
-            comments = lesson.comments.select_related('user').filter(active=True)
+            comments = lesson.comments.select_related('user').filter(active=True, parent__isnull=True).order_by('-created_date')
 
             p = paginators.CommentPaginator()
             page = p.paginate_queryset(comments, request)
 
+            total_count = lesson.comments.filter(active=True).count()
+
             if page is not None:
                 serializer = serializers.CommentSerializer(page, many=True)
-                return p.get_paginated_response(serializer.data)
+                return Response({
+                    "count": total_count,
+                    "next": p.get_next_link(),
+                    "previous": p.get_previous_link(),
+                    "results": serializer.data
+                }, status=status.HTTP_200_OK)
 
             serializer = serializers.CommentSerializer(comments, many=True)
             return Response({
-                "count": comments.count(),
+                "count": total_count,
                 "next": None,
                 "previous": None,
                 "results": serializer.data

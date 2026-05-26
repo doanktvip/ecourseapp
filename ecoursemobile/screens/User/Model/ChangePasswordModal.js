@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, TextInput } from 'react-native-paper';
 import { authApis, endpoints } from '../../../configs/Apis';
@@ -33,6 +33,9 @@ const ChangePasswordModal = ({ visible, onClose, token }) => {
     const [passwordData, setPasswordData] = useState({});
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    const scrollViewRef = useRef(null);
+    const inputPositions = useRef({});
 
     useEffect(() => {
         if (!visible) {
@@ -102,13 +105,26 @@ const ChangePasswordModal = ({ visible, onClose, token }) => {
                         )}
                     </View>
 
-                    {passwordFields.map((field) => (
-                        <View key={field.field} style={Styles.modalInputGroup}>
-                            <Text style={Styles.modalLabel}>{field.title}</Text>
-                            <TextInput
-                                value={passwordData[field.field] || ''}
-                                onChangeText={(t) => setPasswordData({ ...passwordData, [field.field]: t })}
-                                mode="outlined"
+                    <ScrollView ref={scrollViewRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                        {passwordFields.map((field) => (
+                            <View 
+                                key={field.field} 
+                                style={Styles.modalInputGroup}
+                                onLayout={(e) => inputPositions.current[field.field] = e.nativeEvent.layout.y}
+                            >
+                                <Text style={Styles.modalLabel}>{field.title}</Text>
+                                <TextInput
+                                    value={passwordData[field.field] || ''}
+                                    onChangeText={(t) => setPasswordData({ ...passwordData, [field.field]: t })}
+                                    onFocus={() => {
+                                        setTimeout(() => {
+                                            scrollViewRef.current?.scrollTo({ 
+                                                y: inputPositions.current[field.field] || 0,
+                                                animated: true 
+                                            });
+                                        }, 200);
+                                    }}
+                                    mode="outlined"
                                 style={Styles.modalInput}
                                 placeholder={field.placeholder}
                                 secureTextEntry={field.secureTextEntry && !showPassword}
@@ -125,6 +141,7 @@ const ChangePasswordModal = ({ visible, onClose, token }) => {
                             />
                         </View>
                     ))}
+                    </ScrollView>
 
                     <View style={Styles.modalBtnGroup}>
                         <Button mode="outlined" onPress={onClose} style={Styles.modalBtnCancel} disabled={loading}>
