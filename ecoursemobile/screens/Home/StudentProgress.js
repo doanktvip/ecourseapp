@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
-import Styles from '../../styles/Styles';
+import { MyUserContext } from '../../configs/Contexts';
+import Styles from './Styles';
 
 const StudentProgress = ({ route, navigation }) => {
   const { courseId, courseSubject } = route.params || {};
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user] = useContext(MyUserContext);
 
   const loadProgress = async () => {
     if (!courseId) return;
@@ -35,6 +37,30 @@ const StudentProgress = ({ route, navigation }) => {
   useEffect(() => {
     loadProgress();
   } , [courseId]);
+
+  const handleChatWithStudent = (student) => {
+    if (!user) {
+      Alert.alert("Lỗi", "Vui lòng đăng nhập để tiếp tục.");
+      return;
+    }
+    const studentId = student.id;
+    const instructorId = user.id;
+    const roomId = `room_${studentId}_${instructorId}`;
+    const receiverName = `${student.last_name} ${student.first_name}`;
+    const receiverAvatar = student.avatar;
+
+    navigation.navigate('ChatTab', {
+      screen: 'ChatRoom',
+      params: {
+        roomId,
+        receiverId: studentId,
+        receiverName,
+        receiverAvatar,
+        studentId,
+        instructorId,
+      }
+    });
+  };
 
   return (
     <ScrollView 
@@ -83,6 +109,7 @@ const StudentProgress = ({ route, navigation }) => {
                 {/* Nút chat với học viên */}
                 <TouchableOpacity 
                   style={{ padding: 8, backgroundColor: '#e8f0fe', borderRadius: 8 }}
+                  onPress={() => handleChatWithStudent(student)}
                 >
                   <Ionicons name="chatbubble-ellipses-outline" size={22} color="#1877F2" />
                 </TouchableOpacity>
@@ -104,7 +131,5 @@ const StudentProgress = ({ route, navigation }) => {
     </ScrollView>
   );
 }
-
-    
 
 export default StudentProgress;

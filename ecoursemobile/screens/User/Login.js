@@ -1,5 +1,5 @@
 import { Image, Text, TouchableOpacity, View, ScrollView, Alert } from "react-native";
-import Styles from "./Styles";
+import Styles from './Styles';
 import { Button, HelperText, TextInput } from "react-native-paper";
 import { useContext, useState, useRef } from "react";
 import Apis, { authApis, endpoints } from "../../configs/Apis";

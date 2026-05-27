@@ -14,7 +14,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'avatar', 'role']
+        fields = ['id', 'first_name', 'last_name', 'email', 'avatar', 'role']
         read_only_fields = ['role']
 
     def to_representation(self, instance):
@@ -182,10 +182,49 @@ class LessonSerializer(serializers.ModelSerializer):
 
 
 class PaymentSerializer(serializers.ModelSerializer):
+    course_subject = serializers.SerializerMethodField()
+    student_name = serializers.SerializerMethodField()
+    student_email = serializers.SerializerMethodField()
+    course_image = serializers.SerializerMethodField()
+    course_fee = serializers.SerializerMethodField()
+    instructor_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Payment
-        fields = ['id', 'amount', 'payment_method', 'is_successful', 'transaction_id', 'created_date']
+        fields = ['id', 'amount', 'payment_method', 'is_successful', 'transaction_id', 'created_date', 
+                  'course_subject', 'student_name', 'student_email', 'course_image', 'course_fee', 'instructor_name']
         read_only_fields = ['id', 'amount', 'is_successful', 'transaction_id', 'created_date']
+
+    def get_course_subject(self, obj):
+        return obj.enrollment.course.subject if getattr(obj, 'enrollment', None) else None
+
+    def get_student_name(self, obj):
+        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'student', None):
+            return obj.enrollment.student.get_full_name()
+        return None
+
+    def get_student_email(self, obj):
+        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'student', None):
+            return obj.enrollment.student.email
+        return None
+
+    def get_course_image(self, obj):
+        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'course', None) and obj.enrollment.course.image:
+            try:
+                return obj.enrollment.course.image.url
+            except AttributeError:
+                return f"https://res.cloudinary.com/db4bjqp4f/{obj.enrollment.course.image}"
+        return None
+
+    def get_course_fee(self, obj):
+        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'course', None):
+            return obj.enrollment.course.fee
+        return None
+
+    def get_instructor_name(self, obj):
+        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'course', None) and getattr(obj.enrollment.course, 'instructor', None):
+            return obj.enrollment.course.instructor.get_full_name()
+        return None
 
 
 class EnrollmentDetailSerializer(serializers.ModelSerializer):

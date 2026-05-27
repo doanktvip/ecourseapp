@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import { MyUserContext } from '../../configs/Contexts';
-import Styles from "../../styles/Styles";
+import Styles from './Styles';
 
 const CourseReviews = ({ route, navigation }) => {
     const { courseId, courseSubject } = route.params;

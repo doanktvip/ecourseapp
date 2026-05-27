@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Apis, { endpoints } from '../../configs/Apis';
-import Styles from "../../styles/Styles";
+import Styles from './Styles';
 
 const CourseCompare = ({ route, navigation }) => {
   const {courseA}= route.params || {};

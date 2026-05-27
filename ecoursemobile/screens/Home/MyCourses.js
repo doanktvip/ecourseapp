@@ -5,7 +5,7 @@ import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from '../../configs/Contexts';
 import UserStyles from '../User/Styles';
-import Styles from '../../styles/Styles';
+import Styles from './Styles';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 
 const MyCoursesMain = ({ navigation }) => {

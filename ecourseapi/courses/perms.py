@@ -97,4 +97,6 @@ class IsPaymentStudentOwner(IsAuthenticatedUser):
 
 class IsPaymentCourseInstructor(IsAuthenticatedUser):
     def has_object_permission(self, request, view, obj):
+        if request.user.role == User.Role.ADMIN:
+            return True
         return request.user == obj.enrollment.course.instructor

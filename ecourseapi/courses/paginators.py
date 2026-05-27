@@ -9,3 +9,6 @@ class CommentPaginator(pagination.PageNumberPagination):
 
 class CourseReviewPaginator(pagination.PageNumberPagination):
     page_size = 10
+
+class PaymentPaginator(pagination.PageNumberPagination):
+    page_size = 10
