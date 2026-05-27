@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApis, endpoints } from '../../configs/Apis';
 import { MyUserContext } from '../../configs/Contexts';
-import Styles from '../../styles/Styles';
+import Styles from './Styles';
 
 const StatsTab = () => {
     const [user] = useContext(MyUserContext);

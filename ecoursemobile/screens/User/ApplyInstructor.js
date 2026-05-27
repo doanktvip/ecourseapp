@@ -5,7 +5,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from '../../configs/Contexts';
 import { authApis, endpoints } from '../../configs/Apis';
-import Styles from '../../styles/Styles';
+import Styles from './Styles';
 
 const ApplyInstructor = ({ navigation }) => {
     const [user] = useContext(MyUserContext);

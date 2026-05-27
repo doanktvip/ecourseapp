@@ -1,5 +1,5 @@
 import { ScrollView, View, TextInput, Text, Image, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
-import Styles from "../../styles/Styles";
+import Styles from './Styles';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { use, useEffect, useState } from "react";
@@ -27,9 +27,9 @@ const Home = ({ navigation }) => {
     // Hàm load khóa học, isRefresh để ép làm mới từ trang 1
     const loadCourses = async (isRefresh = false) => {
         let currentPage = isRefresh ? 1 : page;
-        
+
         // Nếu hết trang và không phải lệnh làm mới thì bỏ qua
-        if (currentPage === 0 && !isRefresh) return; 
+        if (currentPage === 0 && !isRefresh) return;
 
         try {
             setLoading(true);
@@ -42,15 +42,15 @@ const Home = ({ navigation }) => {
             if (currentPage === 1) {
                 setCourses(res.data.results); // Nạp lại mới hoàn toàn nếu ở trang 1
             } else {
-                 setCourses([...courses, ...res.data.results]);
+                setCourses([...courses, ...res.data.results]);
             }
 
             // Xử lý cờ trang tiếp theo
             if (res.data.next === null) {
                 setPage(0);
             } else if (isRefresh) {
-                setPage(1); 
-            } 
+                setPage(1);
+            }
         } catch (ex) {
             console.error(ex);
             if (ex.response && ex.response.status === 404) {
@@ -66,7 +66,7 @@ const Home = ({ navigation }) => {
     }, []);
 
     // 2. RE-RENDER: màn hình Home hiển thị lên làm mới danh sách
-   useEffect(() => {
+    useEffect(() => {
         if (!isFocused) return; // Nếu đang ở màn hình khác
 
         let timer = setTimeout(() => {
@@ -212,7 +212,7 @@ const Home = ({ navigation }) => {
                 showsVerticalScrollIndicator={false}
 
                 // Nạp toàn bộ các View thành phần phía trên vào đây
-                ListHeaderComponent={renderHeaderComponents}
+                ListHeaderComponent={renderHeaderComponents()}
 
                 // Cấu hình sự kiện cuộn xuống cuối để load trang tiếp theo
                 onEndReached={loadMore}

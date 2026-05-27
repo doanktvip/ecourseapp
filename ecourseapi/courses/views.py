@@ -30,7 +30,7 @@ class CategoryViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Cre
 
 class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
                     mixins.UpdateModelMixin, mixins.DestroyModelMixin):
-    queryset = Course.objects.filter(active=True)
+    queryset = Course.objects.filter(active=True).order_by('-created_date')
     pagination_class = paginators.ItemPaginator
     http_method_names = ['get', 'post', 'patch', 'head', 'options', 'delete']
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -489,8 +489,12 @@ class TagViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
 
 class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     http_method_names = ['get', 'post', 'head', 'options']
-    queryset = Payment.objects.all()
+    queryset = Payment.objects.all().order_by('-created_date')
     serializer_class = serializers.PaymentSerializer
+    pagination_class = paginators.PaymentPaginator
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['enrollment__course__subject', 'enrollment__student__first_name', 'enrollment__student__last_name', 'transaction_id']
+    filterset_fields = ['is_successful']
 
     def get_permissions(self):
         if self.action == 'confirm_cash':
@@ -508,12 +512,50 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
 
         user_role = getattr(user, 'role', None)
         if user_role == User.Role.ADMIN:
-            return Payment.objects.all()
+            return Payment.objects.all().order_by('-created_date')
 
         if user_role == User.Role.INSTRUCTOR:
-            return Payment.objects.filter(enrollment__course__instructor=user)
+            return Payment.objects.filter(enrollment__course__instructor=user).order_by('-created_date')
 
-        return Payment.objects.filter(enrollment__student=user)
+        return Payment.objects.filter(enrollment__student=user).order_by('-created_date')
+
+    def list(self, request, *args, **kwargs):
+        # 1. Lấy queryset gốc theo vai trò
+        queryset = self.get_queryset()
+
+        # 2. Chỉ áp dụng SearchFilter để tính toán thống kê chính xác trước khi lọc trạng thái (is_successful)
+        search_backend = filters.SearchFilter()
+        searched_queryset = search_backend.filter_queryset(request, queryset, self)
+
+        successful_qs = searched_queryset.filter(is_successful=True)
+        pending_qs = searched_queryset.filter(is_successful=False)
+
+        total_successful_amount = successful_qs.aggregate(total=Sum('amount'))['total'] or 0
+        total_successful_count = successful_qs.count()
+        total_pending_count = pending_qs.count()
+
+        # 3. Áp dụng tất cả bộ lọc (bao gồm cả is_successful từ DjangoFilterBackend)
+        final_queryset = self.filter_queryset(searched_queryset)
+
+        page = self.paginate_queryset(final_queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data['total_successful_amount'] = total_successful_amount
+            response.data['total_successful_count'] = total_successful_count
+            response.data['total_pending_count'] = total_pending_count
+            return response
+
+        serializer = self.get_serializer(final_queryset, many=True)
+        return Response({
+            'count': len(serializer.data),
+            'next': None,
+            'previous': None,
+            'results': serializer.data,
+            'total_successful_amount': total_successful_amount,
+            'total_successful_count': total_successful_count,
+            'total_pending_count': total_pending_count
+        }, status=status.HTTP_200_OK)
 
     @action(methods=['post'], detail=True, url_path='process')
     def process(self, request, pk=None):

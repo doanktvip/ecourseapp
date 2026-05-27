@@ -27,6 +27,8 @@ import ChatRoom from '../screens/Chat/ChatRoom';
 import StatsDashboard from '../screens/Stats/StatsDashboard';
 import VerifyInstructors from '../screens/Admin/VerifyInstructors';
 import PaymentProcess from '../screens/Payment/PaymentProcess';
+import PaymentHistory from '../screens/Payment/PaymentHistory';
+import PaymentDetail from '../screens/Payment/PaymentDetail';
 
 import CategoryManage from '../screens/Admin/CategoryManage';
 import TagManage from '../screens/Admin/TagManage';
@@ -39,6 +41,7 @@ const HomeStack = createNativeStackNavigator();
 const MyCoursesStack = createNativeStackNavigator();
 const ChatStack = createNativeStackNavigator();
 const StatsStack = createNativeStackNavigator();
+const PaymentStack = createNativeStackNavigator();
 const AccountStack = createNativeStackNavigator();
 
 // Helper hook to get unified header options with clean premium look
@@ -94,10 +97,10 @@ const HomeStackNavigator = () => {
         component={LessonForm}
         options={{ title: 'Thêm bài học mới' }}
       />
-      <HomeStack.Screen 
-        name="CourseForm" 
-        component={CourseForm} 
-        options={{ title: 'Thông tin khóa học' }} 
+      <HomeStack.Screen
+        name="CourseForm"
+        component={CourseForm}
+        options={{ title: 'Thông tin khóa học' }}
       />
       <HomeStack.Screen
         name="StudentProgress"
@@ -146,15 +149,15 @@ const MyCoursesStackNavigator = () => {
         component={CourseReviews}
         options={{ title: 'Đánh giá khóa học' }}
       />
-      <MyCoursesStack.Screen 
-        name="CourseForm" 
-        component={CourseForm} 
-        options={{ title: 'Thông tin khóa học' }} 
+      <MyCoursesStack.Screen
+        name="CourseForm"
+        component={CourseForm}
+        options={{ title: 'Thông tin khóa học' }}
       />
-      <MyCoursesStack.Screen 
-        name="LessonForm" 
-        component={LessonForm} 
-        options={{ title: 'Thêm bài học mới' }} 
+      <MyCoursesStack.Screen
+        name="LessonForm"
+        component={LessonForm}
+        options={{ title: 'Thêm bài học mới' }}
       />
     </MyCoursesStack.Navigator>
   );
@@ -200,7 +203,29 @@ const StatsStackNavigator = () => {
 }
 
 // =========================================================================
-// 5. ACCOUNT STACK: Thông tin cá nhân, cài đặt & Duyệt của Admin
+// 5. PAYMENT STACK: Lịch sử giao dịch (Giảng viên & Sinh viên)
+// =========================================================================
+const PaymentStackNavigator = () => {
+  const headerOptions = useHeaderOptions();
+
+  return (
+    <PaymentStack.Navigator screenOptions={headerOptions}>
+      <PaymentStack.Screen
+        name="PaymentHistory"
+        component={PaymentHistory}
+        options={{ title: 'Lịch sử giao dịch' }}
+      />
+      <PaymentStack.Screen
+        name="PaymentDetail"
+        component={PaymentDetail}
+        options={{ title: 'Chi tiết hóa đơn' }}
+      />
+    </PaymentStack.Navigator>
+  );
+}
+
+// =========================================================================
+// 6. ACCOUNT STACK: Thông tin cá nhân, cài đặt & Duyệt của Admin
 // =========================================================================
 const AccountStackNavigator = () => {
   const headerOptions = useHeaderOptions();
@@ -253,7 +278,7 @@ const AccountStackNavigator = () => {
 }
 
 // =========================================================================
-// 6. MAIN BOTTOM TAB: Thanh điều hướng chính ở đáy màn hình
+// 7. MAIN BOTTOM TAB: Thanh điều hướng chính ở đáy màn hình
 // =========================================================================
 const MainTabNavigator = () => {
   const { user } = useUser();
@@ -273,6 +298,8 @@ const MainTabNavigator = () => {
             iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
           } else if (route.name === 'StatsTab') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'PaymentTab') {
+            iconName = focused ? 'receipt' : 'receipt-outline';
           } else if (route.name === 'AccountTab') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -317,8 +344,8 @@ const MainTabNavigator = () => {
         options={{ tabBarLabel: 'Nhắn tin' }}
       />
 
-      {/* 4. Tab Thống kê (Chỉ giảng viên hoặc admin) */}
-      {(user?.role?.toUpperCase() === 'INSTRUCTOR' || user?.role?.toUpperCase() === 'ADMIN') && (
+      {/* 4. Tab Thống kê (Chỉ giảng viên) */}
+      {user?.role?.toUpperCase() === 'INSTRUCTOR' && (
         <Tab.Screen
           name="StatsTab"
           component={StatsStackNavigator}
@@ -326,7 +353,16 @@ const MainTabNavigator = () => {
         />
       )}
 
-      {/* 5. Tab Tài khoản */}
+      {/* 5. Tab Giao dịch (Chỉ hiển thị khi đã đăng nhập) */}
+      {user && (
+        <Tab.Screen
+          name="PaymentTab"
+          component={PaymentStackNavigator}
+          options={{ tabBarLabel: 'Giao dịch' }}
+        />
+      )}
+
+      {/* 6. Tab Tài khoản */}
       <Tab.Screen
         name="AccountTab"
         component={AccountStackNavigator}
@@ -337,7 +373,7 @@ const MainTabNavigator = () => {
 }
 
 // =========================================================================
-// 7. ROOT NATIVE STACK: Navigator gốc bao quát toàn bộ ứng dụng
+// 8. ROOT NATIVE STACK: Navigator gốc bao quát toàn bộ ứng dụng
 // =========================================================================
 const AppNavigator = () => {
   const headerOptions = useHeaderOptions();

@@ -5,10 +5,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
 
-// Import các Modals từ folder Model
-import AvatarModal from './Model/AvatarModal';
-import UpdateProfileModal from './Model/UpdateProfileModal';
-import ChangePasswordModal from './Model/ChangePasswordModal';
+// Import các Modals từ folder Modal
+import AvatarModal from './Modal/AvatarModal';
+import UpdateProfileModal from './Modal/UpdateProfileModal';
+import ChangePasswordModal from './Modal/ChangePasswordModal';
 
 const ProfileMain = ({ navigation }) => {
     const [user, dispatch] = useContext(MyUserContext);

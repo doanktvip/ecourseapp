@@ -3,7 +3,7 @@ import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator, Ale
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
-import Styles from '../../styles/Styles';
+import Styles from './Styles';
 
 const PaymentProcess = ({ route, navigation }) => {
   const { course, payment } = route.params || {};

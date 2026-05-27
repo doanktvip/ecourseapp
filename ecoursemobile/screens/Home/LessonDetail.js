@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import Apis, { BASE_URL, authApis, endpoints } from '../../configs/Apis';
-import Styles from '../../styles/Styles';
+import Styles from './Styles';
 import { MyUserContext } from '../../configs/Contexts';
 import TagsModal from './Modal/TagsModal';
 import { useIsFocused } from '@react-navigation/native';

@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useState, useContext } from 'react';
 import { Text, View, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
-import Styles from "../../styles/Styles";
+import Styles from './Styles';
 import { MyUserContext } from '../../configs/Contexts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
@@ -23,7 +23,7 @@ const CourseDetail = ({ route, navigation }) => {
 
   const formatVideoDuration = (totalSeconds) => {
     if (!totalSeconds || isNaN(totalSeconds)) return '0 phút';
-    
+
     const totalMinutes = Math.floor(totalSeconds / 60);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
@@ -48,7 +48,7 @@ const CourseDetail = ({ route, navigation }) => {
     try {
       setLoadingLessons(true);
       let url = endpoints['course-lessons'](currentCourse.id);
-      
+
       let res;
       const token = await AsyncStorage.getItem('token');
       if (token) {
@@ -56,7 +56,7 @@ const CourseDetail = ({ route, navigation }) => {
       } else {
         res = await Apis.get(url);
       }
-      
+
       const data = res.data;
       if (data && data.results !== undefined) {
         setLessons(data.results);
@@ -83,7 +83,7 @@ const CourseDetail = ({ route, navigation }) => {
       if (url.includes('/courses/')) {
         url = url.substring(url.indexOf('/courses/'));
       }
-      
+
       let res;
       const token = await AsyncStorage.getItem('token');
       if (token) {
@@ -91,7 +91,7 @@ const CourseDetail = ({ route, navigation }) => {
       } else {
         res = await Apis.get(url);
       }
-      
+
       const data = res.data;
       if (data && data.results !== undefined) {
         setLessons(prev => [...prev, ...data.results]);
@@ -190,6 +190,43 @@ const CourseDetail = ({ route, navigation }) => {
     }
   };
 
+  const handleChatWithInstructor = () => {
+    if (!user) {
+      Alert.alert(
+        "Yêu cầu đăng nhập",
+        "Vui lòng đăng nhập để liên hệ trực tiếp với Giảng viên giải đáp thắc mắc.",
+        [
+          { text: "Hủy", style: "cancel" },
+          { text: "Đăng nhập ngay", onPress: () => navigation.navigate('Login') }
+        ]
+      );
+      return;
+    }
+
+    const studentId = user.id;
+    const instructorId = currentCourse.instructor?.id;
+    if (!instructorId) {
+      Alert.alert("Lỗi", "Thông tin Giảng viên không khả dụng lúc này.");
+      return;
+    }
+
+    const roomId = `room_${studentId}_${instructorId}`;
+    const receiverName = currentCourse.instructor_name || `${currentCourse.instructor?.last_name} ${currentCourse.instructor?.first_name}`;
+    const receiverAvatar = currentCourse.instructor_avatar || currentCourse.instructor?.avatar;
+
+    navigation.navigate('ChatTab', {
+      screen: 'ChatRoom',
+      params: {
+        roomId,
+        receiverId: instructorId,
+        receiverName,
+        receiverAvatar,
+        studentId,
+        instructorId,
+      }
+    });
+  };
+
   useEffect(() => {
     if (isFocused) {
       loadLessons();
@@ -255,7 +292,7 @@ const CourseDetail = ({ route, navigation }) => {
           </Text>
         </View>
         {/* Giảng viên phụ trách */}
-        <View style={[Styles.card, Styles.row]}>
+        <View style={[Styles.card, Styles.row, { alignItems: 'center' }]}>
           <Image
             source={{ uri: currentCourse.instructor_avatar }}
             style={[Styles.avatar, { width: 48, height: 48, borderRadius: 24, marginRight: 12 }]}
@@ -264,6 +301,16 @@ const CourseDetail = ({ route, navigation }) => {
             <Text style={Styles.small}>Giảng viên phụ trách</Text>
             <Text style={[Styles.title, { fontSize: 16 }]}>{currentCourse.instructor_name}</Text>
           </View>
+          {/* Nút chat với Giảng viên - Ẩn nếu là chính giáo viên đó vào xem khóa học của mình hoặc là Admin */}
+          {(!user || (user.role !== 'ADMIN' && currentCourse.instructor?.id !== user.id && currentCourse.instructor?.email !== user.email)) && (
+            <TouchableOpacity
+              style={{ padding: 8, backgroundColor: '#e8f0fe', borderRadius: 8 }}
+              onPress={handleChatWithInstructor}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#1877F2" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Nút Đăng ký / Thanh toán khóa học */}
@@ -308,9 +355,9 @@ const CourseDetail = ({ route, navigation }) => {
             style={[Styles.infoBox, Styles.row, { justifyContent: 'center' }]}
             onPress={() => {
               // Điều hướng sang trang xem Tiến độ học viên (bạn cần tạo trang này trong Stack Navigator)
-              if (navigation) navigation.navigate('StudentProgress', { 
-                  courseId: currentCourse.id, 
-                  courseSubject: currentCourse.subject 
+              if (navigation) navigation.navigate('StudentProgress', {
+                courseId: currentCourse.id,
+                courseSubject: currentCourse.subject
               });
             }}
           ><Text style={[Styles.body, { color: '#1877F2', fontWeight: 'bold' }]}>Xem tiến độ học viên</Text></TouchableOpacity>

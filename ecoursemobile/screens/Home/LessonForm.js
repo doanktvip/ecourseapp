@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from '../../configs/Contexts';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
-import Styles from '../../styles/Styles';
+import Styles from './Styles';
 
 const LessonForm = ({ route, navigation }) => {
     const [user] = useContext(MyUserContext);
