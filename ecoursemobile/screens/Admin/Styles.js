@@ -1,0 +1,302 @@
+import { StyleSheet } from "react-native";
+import GlobalStyles from "../../styles/Styles";
+import theme from "../../styles/theme";
+
+const localStyles = StyleSheet.create({
+container: {
+    flex: 1,
+    backgroundColor: '#f4f6f9',
+  },
+  titleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#212529',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginTop: 2,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 3,
+    backgroundColor: '#f8f9fa',
+  },
+  activeFilterTab: {
+    backgroundColor: '#1976d2',
+  },
+  filterTabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#495057',
+  },
+  activeFilterTabText: {
+    color: '#fff',
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#6c757d',
+    fontSize: 14,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#edf2f7',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#e9ecef',
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#e3f2fd',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarPlaceholderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1976d2',
+  },
+  headerInfo: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1a202c',
+  },
+  email: {
+    fontSize: 12,
+    color: '#718096',
+    marginTop: 2,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  cardBody: {
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#f7fafc',
+    marginBottom: 12,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  dateText: {
+    marginLeft: 8,
+    fontSize: 13,
+    color: '#4a5568',
+  },
+  cvButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ebf8ff',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#bee3f8',
+    marginTop: 4,
+  },
+  cvButtonText: {
+    marginLeft: 8,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2b6cb0',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  rejectBtn: {
+    backgroundColor: '#e53e3e',
+  },
+  approveBtn: {
+    backgroundColor: '#38a169',
+  },
+  actionBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
+    marginLeft: 6,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 80,
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#495057',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#868e96',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+    //CategoryForm
+    formLabel: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#34495e',
+        marginBottom: 8,
+    },
+    requiredStar: {
+        color: '#e74c3c',
+    },
+    customInput: {
+        height: 50,
+        backgroundColor: '#f8f9fa',
+        borderWidth: 1,
+        borderColor: '#ced4da',
+        borderRadius: 10,
+        paddingHorizontal: 16,
+        fontSize: 16,
+        color: '#212529',
+    },
+    //Quản lý tag
+    tagItem: {
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        padding: 16,
+        marginBottom: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    tagDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#1877F2',
+        marginRight: 12,
+    },
+    tagText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333333',
+    },
+    actionBtn: {
+        padding: 8,
+        marginLeft: 4,
+    },
+    btnAdd: {
+        backgroundColor: '#1877F2',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 14,
+        borderRadius: 10,
+        marginBottom: 16,
+    },
+    btnAddText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        marginTop: 60,
+    },
+    emptyText: {
+        color: '#adb5bd',
+        marginTop: 16,
+        fontSize: 16,
+    },
+    modalActions: {
+        flexDirection: 'row',
+        marginTop: 16,
+        justifyContent: 'flex-end',
+        gap: 12,
+    },
+});
+
+export default { ...GlobalStyles, ...localStyles };
