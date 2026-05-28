@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from '../../configs/Contexts';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
+import theme from '../../styles/theme';
 
 const LessonForm = ({ route, navigation }) => {
     const [user] = useContext(MyUserContext);
@@ -15,23 +16,19 @@ const LessonForm = ({ route, navigation }) => {
     const scrollViewRef = useRef(null);
     const formPositions = useRef({});
 
-    // Form state variables
     const [subject, setSubject] = useState('');
     const [content, setContent] = useState('');
     const [isPreview, setIsPreview] = useState(false);
     const [imageUri, setImageUri] = useState(null);
     const [videoUri, setVideoUri] = useState(null);
 
-    // Tags states
     const [tags, setTags] = useState([]);
     const [selectedTagIds, setSelectedTagIds] = useState([]);
     const [loadingTags, setLoadingTags] = useState(false);
 
-    // UI state variables
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    // Tải danh sách nhãn (tags) từ Backend
     const loadTags = async () => {
         try {
             setLoadingTags(true);
@@ -52,7 +49,6 @@ const LessonForm = ({ route, navigation }) => {
     };
 
     useEffect(() => {
-        // Chỉ cho phép Instructor và Admin truy cập
         if (user && (user.role === 'INSTRUCTOR' || user.role === 'ADMIN')) {
             setLoading(false);
             loadTags();
@@ -78,7 +74,6 @@ const LessonForm = ({ route, navigation }) => {
         });
     }, [lesson, navigation]);
 
-    // Chọn ảnh bài học từ thư viện thiết bị
     const handlePickImage = async () => {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -103,7 +98,6 @@ const LessonForm = ({ route, navigation }) => {
         }
     };
 
-    // Chọn video bài học từ thư viện thiết bị
     const handlePickVideo = async () => {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -127,15 +121,12 @@ const LessonForm = ({ route, navigation }) => {
         }
     };
 
-    // Gán/Hủy gán nhãn bài học
     const handleToggleTag = (tagId) => {
         setSelectedTagIds(prev =>
             prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
         );
     };
 
-    // Gửi biểu mẫu tạo bài học mới lên API
-    // Gửi biểu mẫu tạo bài học mới hoặc cập nhật bài học lên API
     const handleSaveLesson = async () => {
         if (!subject || !subject.trim()) {
             Alert.alert("Lỗi nhập liệu", "Vui lòng nhập tên bài học.");
@@ -161,12 +152,10 @@ const LessonForm = ({ route, navigation }) => {
                 formData.append('content', content.trim());
                 formData.append('is_preview', isPreview.toString());
 
-                // Gửi danh sách tag_ids lên Django
                 selectedTagIds.forEach(id => {
                     formData.append('tag_ids', id.toString());
                 });
 
-                // Chỉ gửi ảnh nếu là ảnh mới chọn từ thiết bị (có dạng file://)
                 if (imageUri && imageUri.startsWith('file://')) {
                     const filename = imageUri.split('/').pop();
                     const match = /\.(\w+)$/.exec(filename);
@@ -179,7 +168,6 @@ const LessonForm = ({ route, navigation }) => {
                     });
                 }
 
-                // Chỉ gửi video nếu là video mới chọn từ thiết bị (có dạng file://)
                 if (videoUri && videoUri.startsWith('file://')) {
                     const filename = videoUri.split('/').pop();
                     const match = /\.(\w+)$/.exec(filename);
@@ -193,7 +181,6 @@ const LessonForm = ({ route, navigation }) => {
                 }
 
                 if (lesson) {
-                    // PATCH: Cập nhật bài học
                     await authApis(token).patch(endpoints['lesson-details'](lesson.id), formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                     });
@@ -202,7 +189,6 @@ const LessonForm = ({ route, navigation }) => {
                         { text: "OK", onPress: () => navigation.goBack() }
                     ]);
                 } else {
-                    // POST: Tạo bài học mới
                     const response = await authApis(token).post(endpoints['course-lessons'](courseId), formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                     });
@@ -243,29 +229,27 @@ const LessonForm = ({ route, navigation }) => {
 
 
 
-    // 1. Trường hợp: Đang tải xác thực ban đầu
     if (loading && !user) {
         return (
             <View style={Styles.applyLoadingContainer}>
-                <ActivityIndicator size="large" color="#1877F2" />
+                <ActivityIndicator size="large" color={theme.colors.primary} />
                 <Text style={Styles.applyLoadingText}>Đang xác thực thông tin...</Text>
             </View>
         );
     }
 
-    // 2. Trường hợp: PHÂN QUYỀN SAI
     if (!user || (user.role !== 'INSTRUCTOR' && user.role !== 'ADMIN')) {
         return (
             <ScrollView style={[Styles.container, { padding: 20 }]} showsVerticalScrollIndicator={false}>
                 <View style={{ paddingVertical: 60, alignItems: 'center' }}>
                     <View style={[Styles.illustrationWrapper, { backgroundColor: '#ffebee', width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center' }]}>
-                        <Ionicons name="lock-closed-outline" size={60} color="#dc3545" />
+                        <Ionicons name="lock-closed-outline" size={60} color={theme.colors.danger} />
                     </View>
-                    <Text style={[Styles.h1, { textAlign: 'center', marginTop: 24, marginBottom: 12, color: '#dc3545' }]}>
+                    <Text style={[Styles.h1, { textAlign: 'center', marginTop: 24, marginBottom: 12, color: theme.colors.danger }]}>
                         Quyền truy cập bị từ chối
                     </Text>
                     <Text style={[Styles.body, { textAlign: 'center', marginBottom: 30, paddingHorizontal: 15 }]}>
-                        Chức năng thêm bài học mới chỉ khả dụng đối với vai trò <Text style={{ fontWeight: 'bold', color: '#1877F2' }}>Giảng viên</Text> hoặc <Text style={{ fontWeight: 'bold' }}>Quản trị viên</Text> của hệ thống eCourse.
+                        Chức năng thêm bài học mới chỉ khả dụng đối với vai trò <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>Giảng viên</Text> hoặc <Text style={{ fontWeight: 'bold' }}>Quản trị viên</Text> của hệ thống eCourse.
                     </Text>
                     <TouchableOpacity style={Styles.btnSecondary} onPress={() => navigation.goBack()}>
                         <Text style={Styles.btnSecondaryText}>Quay lại</Text>
@@ -275,65 +259,64 @@ const LessonForm = ({ route, navigation }) => {
         );
     }
 
-    // 3. Hiển thị biểu mẫu thêm bài học
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={Styles.container}>
             <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 50 }} keyboardShouldPersistTaps="handled">
                 <View style={Styles.formContainer}>
-                    <Text style={[Styles.h2, { marginBottom: 20, color: '#212529' }]}>
+                    <Text style={[Styles.h2, { marginBottom: 20, color: theme.colors.text }]}>
                         {lesson ? 'Chỉnh sửa bài học 📝' : 'Bài học mới 📝'}
                     </Text>
 
-                    <View 
+                    <View
                         style={Styles.formGroup}
                         onLayout={(e) => formPositions.current['subject'] = e.nativeEvent.layout.y}
                     >
-                        <Text style={Styles.formLabel}>Tên bài học <Text style={{ color: '#dc3545' }}>*</Text></Text>
+                        <Text style={Styles.formLabel}>Tên bài học <Text style={{ color: theme.colors.danger }}>*</Text></Text>
                         <TextInput
                             value={subject}
                             onChangeText={setSubject}
                             onFocus={() => {
                                 setTimeout(() => {
-                                    scrollViewRef.current?.scrollTo({ 
+                                    scrollViewRef.current?.scrollTo({
                                         y: formPositions.current['subject'] || 0,
-                                        animated: true 
+                                        animated: true
                                     });
                                 }, 200);
                             }}
                             mode="outlined"
-                            style={{ backgroundColor: '#ffffff' }}
+                            style={{ backgroundColor: theme.colors.white }}
                             placeholder="Ví dụ: Giới thiệu và thiết lập môi trường"
                             placeholderTextColor="#adb5bd"
-                            outlineColor="#dee2e6"
-                            activeOutlineColor="#1877F2"
+                            outlineColor={theme.colors.border}
+                            activeOutlineColor={theme.colors.primary}
                             disabled={submitting}
                             maxLength={255}
                             left={<TextInput.Icon icon="book-open-outline" />}
                         />
                     </View>
 
-                    <View 
+                    <View
                         style={Styles.formGroup}
                         onLayout={(e) => formPositions.current['content'] = e.nativeEvent.layout.y}
                     >
-                        <Text style={Styles.formLabel}>Mô tả / Nội dung bài học <Text style={{ color: '#dc3545' }}>*</Text></Text>
+                        <Text style={Styles.formLabel}>Mô tả / Nội dung bài học <Text style={{ color: theme.colors.danger }}>*</Text></Text>
                         <TextInput
                             value={content}
                             onChangeText={setContent}
                             onFocus={() => {
                                 setTimeout(() => {
-                                    scrollViewRef.current?.scrollTo({ 
+                                    scrollViewRef.current?.scrollTo({
                                         y: formPositions.current['content'] || 0,
-                                        animated: true 
+                                        animated: true
                                     });
                                 }, 200);
                             }}
                             mode="outlined"
-                            style={{ backgroundColor: '#ffffff', minHeight: 120 }}
+                            style={{ backgroundColor: theme.colors.white, minHeight: 120 }}
                             placeholder="Mô tả chi tiết nội dung của bài học..."
                             placeholderTextColor="#adb5bd"
-                            outlineColor="#dee2e6"
-                            activeOutlineColor="#1877F2"
+                            outlineColor={theme.colors.border}
+                            activeOutlineColor={theme.colors.primary}
                             multiline={true}
                             numberOfLines={5}
                             disabled={submitting}
@@ -345,22 +328,22 @@ const LessonForm = ({ route, navigation }) => {
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        backgroundColor: '#f8f9fa',
+                        backgroundColor: theme.colors.secondary,
                         padding: 12,
                         borderRadius: 8,
                         borderWidth: 1,
-                        borderColor: '#dee2e6',
+                        borderColor: theme.colors.border,
                         marginBottom: 20
                     }]}>
                         <View style={{ flex: 1, marginRight: 8 }}>
                             <Text style={[Styles.formLabel, { marginBottom: 2 }]}>Học thử miễn phí</Text>
-                            <Text style={{ fontSize: 12, color: '#6c757d' }}>Bài học này sẽ mở khóa công khai cho tất cả mọi người học thử.</Text>
+                            <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>Bài học này sẽ mở khóa công khai cho tất cả mọi người học thử.</Text>
                         </View>
                         <Switch
                             value={isPreview}
                             onValueChange={setIsPreview}
-                            trackColor={{ false: "#ced4da", true: "#a0c4ff" }}
-                            thumbColor={isPreview ? "#1877F2" : "#f4f3f4"}
+                            trackColor={{ false: theme.colors.border, true: "#a0c4ff" }}
+                            thumbColor={isPreview ? theme.colors.primary : "#f4f3f4"}
                         />
                     </View>
 
@@ -368,7 +351,7 @@ const LessonForm = ({ route, navigation }) => {
                     <View style={Styles.formGroup}>
                         <Text style={Styles.formLabel}>Gán nhãn bài học (Tags)</Text>
                         {loadingTags ? (
-                            <ActivityIndicator size="small" color="#1877F2" style={{ paddingVertical: 10 }} />
+                            <ActivityIndicator size="small" color={theme.colors.primary} style={{ paddingVertical: 10 }} />
                         ) : (
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>
                                 {tags.map(tag => {
@@ -380,8 +363,8 @@ const LessonForm = ({ route, navigation }) => {
                                                 paddingHorizontal: 12,
                                                 paddingVertical: 6,
                                                 borderRadius: 20,
-                                                backgroundColor: isSelected ? '#e8f0fe' : '#f8f9fa',
-                                                borderColor: isSelected ? '#1877F2' : '#dee2e6',
+                                                backgroundColor: isSelected ? '#e8f0fe' : theme.colors.secondary,
+                                                borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                                                 borderWidth: 1,
                                                 marginBottom: 8,
                                                 marginRight: 8
@@ -391,7 +374,7 @@ const LessonForm = ({ route, navigation }) => {
                                             disabled={submitting}
                                         >
                                             <Text style={{
-                                                color: isSelected ? '#1877F2' : '#495057',
+                                                color: isSelected ? theme.colors.primary : theme.colors.textSecondary,
                                                 fontWeight: isSelected ? 'bold' : 'normal',
                                                 fontSize: 13
                                             }}>
@@ -419,13 +402,13 @@ const LessonForm = ({ route, navigation }) => {
                                         backgroundColor: 'rgba(0, 0, 0, 0.6)', paddingHorizontal: 10,
                                         paddingVertical: 5, borderRadius: 6
                                     }}>
-                                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>Thay đổi ảnh</Text>
+                                        <Text style={{ color: theme.colors.white, fontSize: 12, fontWeight: 'bold' }}>Thay đổi ảnh</Text>
                                     </View>
                                 </View>
                             ) : (
                                 <View style={{ alignItems: 'center' }}>
                                     <Ionicons name="image-outline" size={40} color="#888888" style={{ marginBottom: 8 }} />
-                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333333' }}>Chọn ảnh minh họa</Text>
+                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.colors.text }}>Chọn ảnh minh họa</Text>
                                     <Text style={{ fontSize: 12, color: '#888888', marginTop: 2 }}>Tỷ lệ tối ưu 16:9</Text>
                                 </View>
                             )}
@@ -441,8 +424,8 @@ const LessonForm = ({ route, navigation }) => {
                         >
                             {videoUri ? (
                                 <View style={{ alignItems: 'center', padding: 20 }}>
-                                    <Ionicons name="videocam" size={40} color="#28a745" style={{ marginBottom: 8 }} />
-                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#28a745', textAlign: 'center' }}>Video đã chọn thành công!</Text>
+                                    <Ionicons name="videocam" size={40} color={theme.colors.success} style={{ marginBottom: 8 }} />
+                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.colors.success, textAlign: 'center' }}>Video đã chọn thành công!</Text>
                                     <Text style={{ fontSize: 12, color: '#888888', marginTop: 4, textAlign: 'center' }} numberOfLines={1}>
                                         {videoUri.split('/').pop()}
                                     </Text>
@@ -451,13 +434,13 @@ const LessonForm = ({ route, navigation }) => {
                                         backgroundColor: 'rgba(0, 0, 0, 0.6)', paddingHorizontal: 12,
                                         paddingVertical: 6, borderRadius: 6
                                     }}>
-                                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>Thay đổi video</Text>
+                                        <Text style={{ color: theme.colors.white, fontSize: 12, fontWeight: 'bold' }}>Thay đổi video</Text>
                                     </View>
                                 </View>
                             ) : (
                                 <View style={{ alignItems: 'center' }}>
                                     <Ionicons name="videocam-outline" size={40} color="#888888" style={{ marginBottom: 8 }} />
-                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333333' }}>Chọn video bài giảng</Text>
+                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.colors.text }}>Chọn video bài giảng</Text>
                                     <Text style={{ fontSize: 12, color: '#888888', marginTop: 2 }}>Hỗ trợ các định dạng mp4, mov, avi...</Text>
                                 </View>
                             )}
@@ -468,7 +451,7 @@ const LessonForm = ({ route, navigation }) => {
                         <Button
                             mode="contained"
                             onPress={handleSaveLesson}
-                            style={{ backgroundColor: '#1877F2', borderRadius: 8, paddingVertical: 4 }}
+                            style={{ backgroundColor: theme.colors.primary, borderRadius: 8, paddingVertical: 4 }}
                             labelStyle={{ fontSize: 16, fontWeight: 'bold' }}
                             loading={submitting}
                             disabled={submitting}

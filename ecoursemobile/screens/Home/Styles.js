@@ -12,41 +12,36 @@ const localStyles = StyleSheet.create({
     userName: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: theme.colors.text,
         marginLeft: 5,
     },
-    // / Khung nền của Banner
     bannerContainer: {
-
         borderRadius: 12,
         padding: 20,
         marginLeft: 20,
         marginRight: 20,
         marginTop: 5,
     },
-    // Chữ tiêu đề lớn của Banner
     bannerTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 5,
     },
-    // Dòng chữ phụ nhỏ hơn
     bannerSubtitle: {
         fontSize: 14,
     },
-    //Danh mục
     sectionContainer: {
         marginTop: 30,
-        paddingHorizontal: 20, // Nếu container ngoài cùng chưa lùi vào thì dùng cái này
+        paddingHorizontal: 20,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: theme.colors.text,
         marginBottom: 15,
     },
     categoryItem: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 20,
@@ -56,21 +51,19 @@ const localStyles = StyleSheet.create({
     categoryText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#555',
+        color: theme.colors.textSecondary,
     },
     categoryItemSelected: {
-        backgroundColor: '#1877F2',
-        borderColor: '#1877F2',
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
     },
-    // ĐỔI MÀU CHỮ KHI ĐƯỢC CHỌN
     categoryTextSelected: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontWeight: 'bold',
     },
-    //Khóa học
     cardContainer: {
         marginBottom: 20,
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.white,
         marginLeft: 20,
         marginRight: 20,
     },
@@ -80,7 +73,7 @@ const localStyles = StyleSheet.create({
     courseTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333',
+        color: theme.colors.text,
         marginBottom: 5,
     },
 
@@ -90,59 +83,54 @@ const localStyles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 8,
     },
-    // Chữ tên giảng viên
     courseInstructor: {
         fontSize: 14,
-        color: '#666',
+        color: theme.colors.textSecondary,
     },
-    // Chữ giá tiền (Màu đỏ nổi bật)
     coursePrice: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#fff',
+        color: theme.colors.white,
     },
-    // Điểm rating 
     courseRating: {
         fontSize: 14,
         fontWeight: 'bold',
 
     },
-    // Số bài học
     courseLessons: {
         fontSize: 14,
-        color: '#555',
+        color: theme.colors.textSecondary,
     },
     priceBadge: {
         position: 'absolute',
         top: 10,
         right: 10,
-        backgroundColor: '#3064df',
-        paddingHorizontal: 12, // Rộng hai bên trái phải
-        paddingVertical: 6,    // Cao trên dưới
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: 8,
 
     },
     priceBadgeText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontWeight: 'bold',
         fontSize: 14,
     },
-    // === Styles for MyCourses Screen ===
     myCoursesHeader: {
         paddingHorizontal: 20,
         paddingTop: 20,
         paddingBottom: 15,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.colors.background,
     },
     myCoursesTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 8,
     },
     myCoursesSubtitle: {
         fontSize: 14,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
         lineHeight: 20,
     },
     myCourseList: {
@@ -150,12 +138,12 @@ const localStyles = StyleSheet.create({
         paddingBottom: 20,
     },
     myCourseCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderRadius: 16,
         padding: 16,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#e9ecef',
+        borderColor: theme.colors.border,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -180,13 +168,13 @@ const localStyles = StyleSheet.create({
     myCourseTitleText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 4,
         lineHeight: 22,
     },
     myCourseInstructorText: {
         fontSize: 13,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
     },
     myCourseChevron: {
         marginLeft: 8,
@@ -202,45 +190,39 @@ const localStyles = StyleSheet.create({
     },
     progressLabelText: {
         fontSize: 13,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
     },
     progressPercentText: {
         fontSize: 13,
         fontWeight: 'bold',
-        color: '#0d6efd',
+        color: theme.colors.primary,
     },
     progressBarTrack: {
         height: 6,
-        backgroundColor: '#e9ecef',
+        backgroundColor: theme.colors.border,
         borderRadius: 3,
         width: '100%',
         overflow: 'hidden',
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: '#0d6efd',
+        backgroundColor: theme.colors.primary,
         borderRadius: 3,
     },
-    // ==========================================
-    // STYLES DÀNH CHO TRANG COURSE DETAIL
-    // ==========================================
-
     detailBannerImage: {
         width: '100%',
         height: 220,
         resizeMode: 'cover',
     },
     card: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderRadius: 12,
         padding: 20,
         marginBottom: 16,
-        // Hiệu ứng đổ bóng cho iOS
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        // Hiệu ứng đổ bóng cho Android
         elevation: 3,
     },
 
@@ -252,39 +234,36 @@ const localStyles = StyleSheet.create({
     h1: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
     },
     h2: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
     },
     title: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333333',
+        color: theme.colors.text,
     },
     body: {
         fontSize: 15,
-        color: '#555555',
+        color: theme.colors.textSecondary,
         lineHeight: 22,
     },
     small: {
         fontSize: 13,
         color: '#888888',
     },
-
-    // 5. Ảnh đại diện (Avatar) của giảng viên
     avatar: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#eeeeee',
+        backgroundColor: theme.colors.border,
     },
-    // Styles dành riêng cho các Tab phân đoạn trong MyCourses
     segmentedContainer: {
         flexDirection: 'row',
-        backgroundColor: '#e9ecef',
+        backgroundColor: theme.colors.border,
         borderRadius: 12,
         padding: 4,
         marginHorizontal: 20,
@@ -299,7 +278,7 @@ const localStyles = StyleSheet.create({
         borderRadius: 10,
     },
     segmentButtonActive: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -309,17 +288,16 @@ const localStyles = StyleSheet.create({
     segmentText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#495057',
+        color: theme.colors.textSecondary,
     },
     segmentTextActive: {
-        color: '#1877F2',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
-    // 6. Styles cho phần đánh giá từ học viên
     reviewSectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
         marginTop: 20,
         marginBottom: 10,
         marginLeft: 20,
@@ -333,7 +311,7 @@ const localStyles = StyleSheet.create({
     reviewItem: {
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: theme.colors.border,
     },
     reviewUserAvatar: {
         width: 36,
@@ -343,7 +321,7 @@ const localStyles = StyleSheet.create({
     },
     reviewUserRole: {
         fontSize: 10,
-        color: '#1877F2',
+        color: theme.colors.primary,
         fontWeight: 'bold',
         backgroundColor: '#e8f0fe',
         paddingHorizontal: 6,
@@ -358,7 +336,7 @@ const localStyles = StyleSheet.create({
     },
     reviewCommentText: {
         fontSize: 14,
-        color: '#555555',
+        color: theme.colors.textSecondary,
         lineHeight: 20,
         marginTop: 4,
     },
@@ -382,57 +360,50 @@ const localStyles = StyleSheet.create({
     writeReviewTitle: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
         marginBottom: 8,
         textAlign: 'center',
     },
     reviewTextInput: {
         borderWidth: 1,
-        borderColor: '#cccccc',
+        borderColor: theme.colors.border,
         borderRadius: 8,
         padding: 12,
         fontSize: 14,
         minHeight: 80,
         textAlignVertical: 'top',
-        backgroundColor: '#fafafa',
+        backgroundColor: theme.colors.background,
         marginBottom: 12,
     },
-    // Style cho nút Gửi đánh giá (Trạng thái bình thường)
     btnSubmitReview: {
-        alignSelf: 'flex-end',   // Neo chuẩn ở góc dưới bên phải giống trong ảnh
+        alignSelf: 'flex-end',
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,   // Thu gọn chiều ngang lại một chút cho thanh thoát
-        paddingVertical: 10,     // Giảm chiều dọc để nút không bị quá mập
-        borderRadius: 30,        // Bo tròn góc tuyệt đối (pill-shape)
-        marginTop: 8,            // Tạo một khoảng thở vừa đủ với ô nhập chữ phía trên
-        backgroundColor: '#1877F2',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 30,
+        marginTop: 8,
+        backgroundColor: theme.colors.primary,
 
-        // Hiệu ứng đổ bóng (Shadow) tinh tế hơn
-        shadowColor: '#1877F2',
+        shadowColor: theme.colors.primary,
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 4,
     },
-
-    // Style ghi đè khi nút đang ở trạng thái xử lý (Disabled)
     btnSubmitReviewDisabled: {
         backgroundColor: '#a0c4ff',
-        shadowOpacity: 0,        // Tắt đổ bóng để nút chìm xuống tự nhiên khi đang load
+        shadowOpacity: 0,
         elevation: 0,
     },
-
-    // Chữ bên trong nút
     btnSubmitReviewText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 15,
         fontWeight: 'bold',
     },
-    // === Form Styles for Course Creation ===
     formContainer: {
         padding: 20,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderRadius: 12,
         marginBottom: 20,
         shadowColor: '#000',
@@ -447,23 +418,23 @@ const localStyles = StyleSheet.create({
     formLabel: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#495057',
+        color: theme.colors.textSecondary,
         marginBottom: 6,
     },
     categorySelector: {
         borderWidth: 1,
-        borderColor: '#dee2e6',
+        borderColor: theme.colors.border,
         borderRadius: 8,
         paddingHorizontal: 16,
         paddingVertical: 14,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
     categorySelectorText: {
         fontSize: 15,
-        color: '#212529',
+        color: theme.colors.text,
     },
     categoryPlaceholderText: {
         fontSize: 15,
@@ -471,18 +442,18 @@ const localStyles = StyleSheet.create({
     },
     imagePickerBox: {
         borderWidth: 2,
-        borderColor: '#cccccc',
+        borderColor: theme.colors.border,
         borderStyle: 'dashed',
         borderRadius: 12,
         height: 180,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#fafafa',
+        backgroundColor: theme.colors.background,
         marginBottom: 20,
         overflow: 'hidden',
     },
     imagePickerActive: {
-        borderColor: '#1877F2',
+        borderColor: theme.colors.primary,
         backgroundColor: '#f0f7ff',
         borderStyle: 'solid',
     },
@@ -491,9 +462,6 @@ const localStyles = StyleSheet.create({
         height: '100%',
         resizeMode: 'cover',
     },
-    // ==========================================
-    // STYLES DÀNH CHO TRANG CHI TIẾT BÀI HỌC (LESSON DETAIL)
-    // ==========================================
     lessonVideoContainer: {
         width: '100%',
         height: 220,
@@ -528,7 +496,7 @@ const localStyles = StyleSheet.create({
     },
     lessonTagText: {
         fontSize: 12,
-        color: '#1877F2',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
     lessonLikeBtn: {
@@ -549,10 +517,10 @@ const localStyles = StyleSheet.create({
         marginLeft: 6,
     },
     lessonLikeTextActive: {
-        color: '#e81c4f',
+        color: theme.colors.danger,
     },
     btnCompleteLesson: {
-        backgroundColor: '#28a745',
+        backgroundColor: theme.colors.success,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -560,7 +528,7 @@ const localStyles = StyleSheet.create({
         borderRadius: 10,
         width: '100%',
         marginVertical: 16,
-        shadowColor: '#28a745',
+        shadowColor: theme.colors.success,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 6,
@@ -569,23 +537,23 @@ const localStyles = StyleSheet.create({
     btnCompleteLessonActive: {
         backgroundColor: '#e2f0d9',
         borderWidth: 1,
-        borderColor: '#28a745',
+        borderColor: theme.colors.success,
         shadowOpacity: 0,
         elevation: 0,
     },
     btnCompleteLessonText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 16,
         fontWeight: 'bold',
         marginLeft: 8,
     },
     btnCompleteLessonTextActive: {
-        color: '#28a745',
+        color: theme.colors.success,
     },
     commentSectionTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
         marginTop: 20,
         marginBottom: 12,
     },
@@ -599,7 +567,7 @@ const localStyles = StyleSheet.create({
         width: 38,
         height: 38,
         borderRadius: 19,
-        backgroundColor: '#eeeeee',
+        backgroundColor: theme.colors.border,
         marginRight: 10,
     },
     commentContentContainer: {
@@ -617,7 +585,7 @@ const localStyles = StyleSheet.create({
     commentUserName: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
     },
     commentDate: {
         fontSize: 11,
@@ -625,15 +593,15 @@ const localStyles = StyleSheet.create({
     },
     commentText: {
         fontSize: 14,
-        color: '#495057',
+        color: theme.colors.textSecondary,
         lineHeight: 18,
     },
     commentBarContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderTopWidth: 1,
-        borderTopColor: '#dee2e6',
-        backgroundColor: '#ffffff',
+        borderTopColor: theme.colors.border,
+        backgroundColor: theme.colors.white,
         paddingHorizontal: 12,
         paddingVertical: 8,
     },
@@ -646,14 +614,14 @@ const localStyles = StyleSheet.create({
         paddingVertical: 8,
         fontSize: 14,
         maxHeight: 80,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.colors.secondary,
         marginRight: 10,
     },
     commentBarSendBtn: {
         width: 38,
         height: 38,
         borderRadius: 19,
-        backgroundColor: '#1877F2',
+        backgroundColor: theme.colors.primary,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -665,7 +633,7 @@ const localStyles = StyleSheet.create({
         paddingVertical: 10,
         marginLeft: 40,
         marginTop: 6,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.colors.secondary,
         borderRadius: 12,
         paddingHorizontal: 12,
         borderWidth: 1,
@@ -677,7 +645,7 @@ const localStyles = StyleSheet.create({
     commentReplyBtnText: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#1877F2',
+        color: theme.colors.primary,
     },
     replyingBar: {
         flexDirection: 'row',
@@ -691,7 +659,7 @@ const localStyles = StyleSheet.create({
     },
     replyingText: {
         fontSize: 12,
-        color: '#1877F2',
+        color: theme.colors.primary,
         fontWeight: '500',
     },
 });

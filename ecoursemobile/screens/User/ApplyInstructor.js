@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from '../../configs/Contexts';
 import { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
+import theme from '../../styles/theme';
 
 const ApplyInstructor = ({ navigation }) => {
     const [user] = useContext(MyUserContext);
@@ -60,7 +61,6 @@ const ApplyInstructor = ({ navigation }) => {
 
             if (!result.canceled && result.assets && result.assets.length > 0) {
                 const file = result.assets[0];
-                // Kiểm tra kích thước file (tối đa 10MB)
                 if (file.size && file.size > 10 * 1024 * 1024) {
                     Alert.alert("Lỗi tệp tin", "Kích thước tệp tin không được vượt quá 10MB.");
                     return;
@@ -85,7 +85,6 @@ const ApplyInstructor = ({ navigation }) => {
             if (token) {
                 const formData = new FormData();
 
-                // Trích xuất tên tệp và định dạng tệp phù hợp cho React Native FormData
                 const fileUri = cvFile.uri;
                 const fileName = cvFile.name || 'cv.pdf';
                 let fileType = cvFile.mimeType;
@@ -154,11 +153,11 @@ const ApplyInstructor = ({ navigation }) => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'PENDING':
-                return '#ff9800'; // Amber
+                return '#ff9800';
             case 'APPROVED':
-                return '#4caf50'; // Green
+                return theme.colors.success;
             case 'REJECTED':
-                return '#f44336'; // Red
+                return '#f44336';
             default:
                 return '#9e9e9e';
         }
@@ -180,23 +179,22 @@ const ApplyInstructor = ({ navigation }) => {
     if (loading) {
         return (
             <View style={Styles.applyLoadingContainer}>
-                <ActivityIndicator size="large" color="#1877F2" />
+                <ActivityIndicator size="large" color={theme.colors.primary} />
                 <Text style={Styles.applyLoadingText}>Đang tải thông tin hồ sơ...</Text>
             </View>
         );
     }
 
-    // Trường hợp đã là Giảng viên hoặc Admin
     if (user && user.role !== 'STUDENT') {
         return (
             <ScrollView style={[Styles.container, { padding: 20 }]}>
                 <View style={{ paddingVertical: 40, alignItems: 'center' }}>
                     <View style={Styles.illustrationWrapper}>
-                        <Ionicons name="ribbon-outline" size={60} color="#4caf50" />
+                        <Ionicons name="ribbon-outline" size={60} color={theme.colors.success} />
                     </View>
                     <Text style={[Styles.h1, { textAlign: 'center', marginTop: 20, marginBottom: 10 }]}>Tài khoản đặc quyền</Text>
                     <Text style={[Styles.body, { textAlign: 'center', marginBottom: 20, paddingHorizontal: 10 }]}>
-                        Tài khoản của bạn đang giữ vai trò là <Text style={{ fontWeight: 'bold', color: '#4caf50' }}>{user.role === 'INSTRUCTOR' ? 'Giảng viên' : 'Quản trị viên'}</Text>. Bạn có toàn bộ quyền giảng dạy trên hệ thống.
+                        Tài khoản của bạn đang giữ vai trò là <Text style={{ fontWeight: 'bold', color: theme.colors.success }}>{user.role === 'INSTRUCTOR' ? 'Giảng viên' : 'Quản trị viên'}</Text>. Bạn có toàn bộ quyền giảng dạy trên hệ thống.
                     </Text>
                     <TouchableOpacity style={Styles.btnSecondary} onPress={() => navigation.goBack()}>
                         <Text style={Styles.btnSecondaryText}>Quay lại trang cá nhân</Text>
@@ -222,7 +220,7 @@ const ApplyInstructor = ({ navigation }) => {
 
                     <View style={Styles.applyBenefitList}>
                         <View style={Styles.applyBenefitItem}>
-                            <Ionicons name="cash-outline" size={20} color="#1877F2" style={Styles.applyBenefitIcon} />
+                            <Ionicons name="cash-outline" size={20} color={theme.colors.primary} style={Styles.applyBenefitIcon} />
                             <View style={Styles.applyBenefitText}>
                                 <Text style={Styles.applyBenefitTitle}>Thu nhập hấp dẫn</Text>
                                 <Text style={Styles.applyBenefitDesc}>Nhận chia sẻ doanh thu từ các học viên đăng ký tham gia khóa học của bạn.</Text>
@@ -230,7 +228,7 @@ const ApplyInstructor = ({ navigation }) => {
                         </View>
 
                         <View style={Styles.applyBenefitItem}>
-                            <Ionicons name="people-outline" size={20} color="#1877F2" style={Styles.applyBenefitIcon} />
+                            <Ionicons name="people-outline" size={20} color={theme.colors.primary} style={Styles.applyBenefitIcon} />
                             <View style={Styles.applyBenefitText}>
                                 <Text style={Styles.applyBenefitTitle}>Xây dựng danh tiếng</Text>
                                 <Text style={Styles.applyBenefitDesc}>Tiếp cận hàng nghìn học viên và định hình thương hiệu giảng dạy cá nhân.</Text>
@@ -238,7 +236,7 @@ const ApplyInstructor = ({ navigation }) => {
                         </View>
 
                         <View style={Styles.applyBenefitItem}>
-                            <Ionicons name="easel-outline" size={20} color="#1877F2" style={Styles.applyBenefitIcon} />
+                            <Ionicons name="easel-outline" size={20} color={theme.colors.primary} style={Styles.applyBenefitIcon} />
                             <View style={Styles.applyBenefitText}>
                                 <Text style={Styles.applyBenefitTitle}>Công cụ quản lý bài bản</Text>
                                 <Text style={Styles.applyBenefitDesc}>Hệ thống đăng bài giảng, thống kê doanh thu và bài học trực quan chuyên nghiệp.</Text>
@@ -260,7 +258,7 @@ const ApplyInstructor = ({ navigation }) => {
                     >
                         {cvFile ? (
                             <View style={Styles.selectedFileWrapper}>
-                                <Ionicons name="document-text" size={40} color="#1877F2" />
+                                <Ionicons name="document-text" size={40} color={theme.colors.primary} />
                                 <View style={Styles.fileDetails}>
                                     <Text style={Styles.fileName} numberOfLines={1}>{cvFile.name}</Text>
                                     <Text style={Styles.fileSize}>{formatBytes(cvFile.size)}</Text>
@@ -285,10 +283,10 @@ const ApplyInstructor = ({ navigation }) => {
                         disabled={!cvFile || submitting}
                     >
                         {submitting ? (
-                            <ActivityIndicator size="small" color="#ffffff" />
+                            <ActivityIndicator size="small" color={theme.colors.white} />
                         ) : (
                             <>
-                                <Ionicons name="send" size={16} color="#ffffff" style={{ marginRight: 8 }} />
+                                <Ionicons name="send" size={16} color={theme.colors.white} style={{ marginRight: 8 }} />
                                 <Text style={Styles.btnPrimaryText}>Gửi hồ sơ ứng tuyển</Text>
                             </>
                         )}
@@ -300,7 +298,7 @@ const ApplyInstructor = ({ navigation }) => {
                     <View style={Styles.statusHeaderRow}>
                         <Text style={Styles.statusMainLabel}>Thông tin đơn ứng tuyển</Text>
                         <View style={[Styles.statusBadge, { backgroundColor: getStatusColor(application.status) }]}>
-                            <Ionicons name={getStatusIcon(application.status)} size={14} color="#ffffff" style={{ marginRight: 4 }} />
+                            <Ionicons name={getStatusIcon(application.status)} size={14} color={theme.colors.white} style={{ marginRight: 4 }} />
                             <Text style={Styles.statusBadgeText}>{getStatusText(application.status)}</Text>
                         </View>
                     </View>
@@ -329,11 +327,11 @@ const ApplyInstructor = ({ navigation }) => {
                             style={Styles.submittedFileRow}
                             onPress={() => application.cv_file && Linking.openURL(application.cv_file)}
                         >
-                            <Ionicons name="document-attach-outline" size={20} color="#1877F2" />
+                            <Ionicons name="document-attach-outline" size={20} color={theme.colors.primary} />
                             <Text style={Styles.submittedFileName} numberOfLines={1}>
                                 {application.cv_file ? application.cv_file.split('/').pop() : 'CV_GiangVien.pdf'}
                             </Text>
-                            <Ionicons name="open-outline" size={14} color="#1877F2" />
+                            <Ionicons name="open-outline" size={14} color={theme.colors.primary} />
                         </TouchableOpacity>
                         <Text style={Styles.submittedDateText}>
                             Nộp ngày: {new Date(application.created_date).toLocaleDateString('vi-VN')}

@@ -3,7 +3,7 @@ import GlobalStyles from "../../styles/Styles";
 import theme from "../../styles/theme";
 
 const localStyles = StyleSheet.create({
-container: {
+  container: {
     flex: 1,
     backgroundColor: '#f4f6f9',
   },
@@ -12,15 +12,15 @@ container: {
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 15,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.white,
     borderBottomWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: theme.colors.border,
   },
   backButton: {
     padding: 8,
     marginRight: 8,
     borderRadius: 8,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.secondary,
   },
   headerTextContainer: {
     flex: 1,
@@ -28,20 +28,20 @@ container: {
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#212529',
+    color: theme.colors.text,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#6c757d',
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
   filterContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.white,
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: theme.colors.border,
   },
   filterTab: {
     flex: 1,
@@ -49,18 +49,18 @@ container: {
     alignItems: 'center',
     borderRadius: 8,
     marginHorizontal: 3,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.secondary,
   },
   activeFilterTab: {
-    backgroundColor: '#1976d2',
+    backgroundColor: theme.colors.primary,
   },
   filterTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#495057',
+    color: theme.colors.textSecondary,
   },
   activeFilterTabText: {
-    color: '#fff',
+    color: theme.colors.white,
   },
   listContent: {
     padding: 16,
@@ -74,11 +74,11 @@ container: {
   },
   loadingText: {
     marginTop: 12,
-    color: '#6c757d',
+    color: theme.colors.textSecondary,
     fontSize: 14,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.white,
     borderRadius: 16,
     marginBottom: 16,
     padding: 16,
@@ -99,7 +99,7 @@ container: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#e9ecef',
+    backgroundColor: theme.colors.border,
   },
   avatarPlaceholder: {
     width: 48,
@@ -112,7 +112,7 @@ container: {
   avatarPlaceholderText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1976d2',
+    color: theme.colors.primary,
   },
   headerInfo: {
     flex: 1,
@@ -193,7 +193,7 @@ container: {
     backgroundColor: '#38a169',
   },
   actionBtnText: {
-    color: '#fff',
+    color: theme.colors.white,
     fontWeight: '600',
     fontSize: 13,
     marginLeft: 6,
@@ -207,7 +207,7 @@ container: {
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#495057',
+    color: theme.colors.textSecondary,
     marginTop: 16,
     marginBottom: 8,
   },
@@ -217,86 +217,106 @@ container: {
     textAlign: 'center',
     lineHeight: 20,
   },
-    //CategoryForm
-    formLabel: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#34495e',
-        marginBottom: 8,
-    },
-    requiredStar: {
-        color: '#e74c3c',
-    },
-    customInput: {
-        height: 50,
-        backgroundColor: '#f8f9fa',
-        borderWidth: 1,
-        borderColor: '#ced4da',
-        borderRadius: 10,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        color: '#212529',
-    },
-    //Quản lý tag
-    tagItem: {
-        backgroundColor: '#ffffff',
-        borderRadius: 10,
-        padding: 16,
-        marginBottom: 12,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    tagDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: '#1877F2',
-        marginRight: 12,
-    },
-    tagText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333333',
-    },
-    actionBtn: {
-        padding: 8,
-        marginLeft: 4,
-    },
-    btnAdd: {
-        backgroundColor: '#1877F2',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 14,
-        borderRadius: 10,
-        marginBottom: 16,
-    },
-    btnAddText: {
-        color: '#ffffff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    emptyContainer: {
-        alignItems: 'center',
-        marginTop: 60,
-    },
-    emptyText: {
-        color: '#adb5bd',
-        marginTop: 16,
-        fontSize: 16,
-    },
-    modalActions: {
-        flexDirection: 'row',
-        marginTop: 16,
-        justifyContent: 'flex-end',
-        gap: 12,
-    },
+  formLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#34495e',
+    marginBottom: 8,
+  },
+  requiredStar: {
+    color: theme.colors.danger,
+  },
+  customInput: {
+    height: 50,
+    backgroundColor: theme.colors.secondary,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: theme.colors.text,
+  },
+  tagItem: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tagDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: theme.colors.primary,
+    marginRight: 12,
+  },
+  tagText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  actionBtn: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  btnAdd: {
+    backgroundColor: theme.colors.primary,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  btnAddText: {
+    color: theme.colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  emptyText: {
+    color: '#adb5bd',
+    marginTop: 16,
+    fontSize: 16,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    marginTop: 16,
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalBtnSecondary: {
+    backgroundColor: theme.colors.white,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  modalBtnPrimary: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 4,
+  },
 });
 
 export default { ...GlobalStyles, ...localStyles };

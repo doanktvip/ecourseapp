@@ -4,22 +4,19 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
-
-// Import các Modals từ folder Modal
 import AvatarModal from './Modal/AvatarModal';
 import UpdateProfileModal from './Modal/UpdateProfileModal';
 import ChangePasswordModal from './Modal/ChangePasswordModal';
+import theme from '../../styles/theme';
 
 const ProfileMain = ({ navigation }) => {
     const [user, dispatch] = useContext(MyUserContext);
     const [token, setToken] = useState(null);
 
-    // Modal Visibility States
     const [changeAvatarVisible, setChangeAvatarVisible] = useState(false);
     const [updateProfileVisible, setUpdateProfileVisible] = useState(false);
     const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
-    // Lấy Token khi user thay đổi hoặc component được mount
     useEffect(() => {
         const fetchToken = async () => {
             const tk = await AsyncStorage.getItem('token');
@@ -89,10 +86,10 @@ const ProfileMain = ({ navigation }) => {
                             style={{ width: 80, height: 80, borderRadius: 40 }}
                         />
                     ) : (
-                        <Ionicons name="person" size={50} color="#ffffff" />
+                        <Ionicons name="person" size={50} color={theme.colors.white} />
                     )}
                     <View style={Styles.avatarEditBadge}>
-                        <Ionicons name="camera" size={14} color="#ffffff" />
+                        <Ionicons name="camera" size={14} color={theme.colors.white} />
                     </View>
                 </TouchableOpacity>
                 {user.last_name && user.first_name ? <Text style={Styles.headerName}>{user.last_name + ' ' + user.first_name}</Text> : <Text style={Styles.headerName}>{user.username}</Text>}
@@ -131,7 +128,7 @@ const ProfileMain = ({ navigation }) => {
                             style={Styles.btnApply}
                             onPress={() => navigation.navigate('ApplyInstructor')}
                         >
-                            <Ionicons name="school-outline" size={18} color="#1976d2" />
+                            <Ionicons name="school-outline" size={18} color={theme.colors.primary} />
                             <Text style={Styles.btnApplyText}>Nộp đơn xin giảng dạy</Text>
                         </TouchableOpacity>
                     </View>
@@ -143,7 +140,7 @@ const ProfileMain = ({ navigation }) => {
                         <Text style={Styles.listHeader}>Hành động giảng viên</Text>
                         <TouchableOpacity style={Styles.listItem} onPress={() => navigation.navigate('CourseForm')}>
                             <View style={Styles.listItemLeft}>
-                                <Ionicons name="add-circle-outline" size={22} color="#1976d2" />
+                                <Ionicons name="add-circle-outline" size={22} color={theme.colors.primary} />
                                 <Text style={Styles.listItemText}>Tạo khóa học mới</Text>
                             </View>
                             <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
@@ -151,7 +148,7 @@ const ProfileMain = ({ navigation }) => {
 
                         <TouchableOpacity style={[Styles.listItem, { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('ApplyInstructor')}>
                             <View style={Styles.listItemLeft}>
-                                <Ionicons name="school-outline" size={22} color="#1976d2" />
+                                <Ionicons name="school-outline" size={22} color={theme.colors.primary} />
                                 <Text style={Styles.listItemText}>Xem đơn xin giảng dạy đã nộp</Text>
                             </View>
                             <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
@@ -165,21 +162,21 @@ const ProfileMain = ({ navigation }) => {
                         <Text style={Styles.listHeader}>Hành động Quản trị viên</Text>
                         <TouchableOpacity style={Styles.listItem} onPress={() => navigation.navigate('AdminVerifyDetails')}>
                             <View style={Styles.listItemLeft}>
-                                <Ionicons name="checkbox-outline" size={22} color="#1976d2" />
+                                <Ionicons name="checkbox-outline" size={22} color={theme.colors.primary} />
                                 <Text style={Styles.listItemText}>Duyệt đơn giảng viên</Text>
                             </View>
                             <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
                         </TouchableOpacity>
                         <TouchableOpacity style={Styles.listItem} onPress={() => navigation.navigate('CategoryManage')}>
                             <View style={Styles.listItemLeft}>
-                                <Ionicons name="bookmarks-outline" size={22} color="#1976d2" />
+                                <Ionicons name="bookmarks-outline" size={22} color={theme.colors.primary} />
                                 <Text style={Styles.listItemText}>Quản lý danh mục khóa học</Text>
                             </View>
                             <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
                         </TouchableOpacity>
                         <TouchableOpacity style={Styles.listItem} onPress={() => navigation.navigate('TagManage')}>
                             <View style={Styles.listItemLeft}>
-                                <Ionicons name="pricetags-outline" size={22} color="#1976d2" />
+                                <Ionicons name="pricetags-outline" size={22} color={theme.colors.primary} />
                                 <Text style={Styles.listItemText}>Quản lý thẻ Tag</Text>
                             </View>
                             <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
@@ -195,7 +192,7 @@ const ProfileMain = ({ navigation }) => {
                 <View style={Styles.listCard}>
                     <TouchableOpacity style={Styles.listItem} onPress={() => setUpdateProfileVisible(true)}>
                         <View style={Styles.listItemLeft}>
-                            <Ionicons name="person-outline" size={20} color="#212529" />
+                            <Ionicons name="person-outline" size={20} color={theme.colors.text} />
                             <Text style={Styles.listItemText}>Cập nhật thông tin cá nhân</Text>
                         </View>
                         <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
@@ -203,7 +200,7 @@ const ProfileMain = ({ navigation }) => {
 
                     <TouchableOpacity style={Styles.listItem} onPress={() => setChangePasswordVisible(true)}>
                         <View style={Styles.listItemLeft}>
-                            <Ionicons name="key-outline" size={20} color="#212529" />
+                            <Ionicons name="key-outline" size={20} color={theme.colors.text} />
                             <Text style={Styles.listItemText}>Đổi mật khẩu</Text>
                         </View>
                         <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />
@@ -211,7 +208,7 @@ const ProfileMain = ({ navigation }) => {
 
                     <TouchableOpacity style={[Styles.listItem, { borderBottomWidth: 0 }]} onPress={() => Alert.alert("Trợ giúp", "Trung tâm hỗ trợ liên hệ email: support@ecourse.edu.vn")}>
                         <View style={Styles.listItemLeft}>
-                            <Ionicons name="help-circle-outline" size={20} color="#212529" />
+                            <Ionicons name="help-circle-outline" size={20} color={theme.colors.text} />
                             <Text style={Styles.listItemText}>Trung tâm hỗ trợ</Text>
                         </View>
                         <Ionicons name="chevron-forward-outline" size={18} color="#adb5bd" />

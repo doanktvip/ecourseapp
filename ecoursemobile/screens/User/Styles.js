@@ -3,12 +3,12 @@ import GlobalStyles from "../../styles/Styles";
 import theme from "../../styles/theme";
 
 const localStyles = StyleSheet.create({
-centerContainer: {
+    centerContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 30,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
     },
     iconWrapper: {
         marginBottom: 20,
@@ -24,14 +24,14 @@ centerContainer: {
     },
     unauthSubtitle: {
         fontSize: 14,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
         textAlign: 'center',
         paddingHorizontal: 15,
         lineHeight: 22,
         marginBottom: 35,
     },
     btnPrimary: {
-        backgroundColor: '#1976d2',
+        backgroundColor: theme.colors.primary,
         width: '100%',
         paddingVertical: 14,
         borderRadius: 8,
@@ -39,14 +39,14 @@ centerContainer: {
         justifyContent: 'center',
     },
     btnPrimaryText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 16,
         fontWeight: 'bold',
     },
     btnSecondary: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.colors.secondary,
         borderWidth: 1,
-        borderColor: '#dee2e6',
+        borderColor: theme.colors.border,
         width: '100%',
         paddingVertical: 14,
         borderRadius: 8,
@@ -55,14 +55,13 @@ centerContainer: {
         marginTop: 12,
     },
     btnSecondaryText: {
-        color: '#1976d2',
+        color: theme.colors.primary,
         fontSize: 16,
         fontWeight: 'bold',
     },
-    // Premium Login Screen Styles
     loginContainer: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.colors.secondary,
     },
     loginScrollContent: {
         flexGrow: 1,
@@ -79,11 +78,11 @@ centerContainer: {
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#1976d2',
+        backgroundColor: theme.colors.primary,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 12,
-        shadowColor: '#1976d2',
+        shadowColor: theme.colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 6,
@@ -92,15 +91,15 @@ centerContainer: {
     appName: {
         fontSize: 26,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 4,
     },
     appSubtitle: {
         fontSize: 14,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
     },
     loginCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderRadius: 16,
         padding: 20,
         shadowColor: '#000000',
@@ -114,7 +113,7 @@ centerContainer: {
     cardTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 20,
     },
     inputGroup: {
@@ -123,14 +122,14 @@ centerContainer: {
     inputLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#495057',
+        color: theme.colors.textSecondary,
         marginBottom: 6,
     },
     paperInput: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
     },
     btnLogin: {
-        backgroundColor: '#1976d2',
+        backgroundColor: theme.colors.primary,
         paddingVertical: 4,
         borderRadius: 8,
         marginTop: 10,
@@ -138,7 +137,7 @@ centerContainer: {
     btnLoginLabel: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#ffffff',
+        color: theme.colors.white,
     },
     registerLinkWrapper: {
         flexDirection: 'row',
@@ -148,12 +147,12 @@ centerContainer: {
     },
     registerText: {
         fontSize: 14,
-        color: '#495057',
+        color: theme.colors.textSecondary,
     },
     registerLink: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#1976d2',
+        color: theme.colors.primary,
     },
     hintCard: {
         backgroundColor: '#f1f3f5',
@@ -161,18 +160,18 @@ centerContainer: {
         padding: 15,
         width: '100%',
         borderWidth: 1,
-        borderColor: '#e9ecef',
+        borderColor: theme.colors.border,
     },
     hintTitle: {
         fontSize: 13,
         fontWeight: 'bold',
-        color: '#495057',
+        color: theme.colors.textSecondary,
         marginBottom: 6,
         textAlign: 'center',
     },
     hintText: {
         fontSize: 12,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
         lineHeight: 18,
         textAlign: 'center',
     },
@@ -180,7 +179,6 @@ centerContainer: {
         marginBottom: 10,
         textAlign: 'center',
     },
-    // Google Sign-in & Divider styles
     dividerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -189,20 +187,20 @@ centerContainer: {
     dividerLine: {
         flex: 1,
         height: 1,
-        backgroundColor: '#dee2e6',
+        backgroundColor: theme.colors.border,
     },
     dividerText: {
         marginHorizontal: 10,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
         fontSize: 13,
     },
     btnGoogle: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderWidth: 1,
-        borderColor: '#dee2e6',
+        borderColor: theme.colors.border,
         borderRadius: 8,
         paddingVertical: 12,
         width: '100%',
@@ -213,26 +211,25 @@ centerContainer: {
         elevation: 1,
     },
     btnGoogleText: {
-        color: '#212529',
+        color: theme.colors.text,
         fontSize: 15,
         fontWeight: 'bold',
         marginLeft: 10,
     },
-    // Profile Authenticated Dashboard Styles
     profileContainer: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.colors.secondary,
     },
     profileScroll: {
         flexGrow: 1,
         paddingBottom: 40,
     },
     headerCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         paddingVertical: 30,
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderBottomColor: '#e9ecef',
+        borderBottomColor: theme.colors.border,
         marginBottom: 20,
     },
     avatarCircle: {
@@ -246,30 +243,30 @@ centerContainer: {
     },
     headerEmail: {
         fontSize: 16,
-        color: '#495057',
+        color: theme.colors.textSecondary,
         fontWeight: '500',
         marginBottom: 12,
     },
     badgeStudent: {
-        backgroundColor: '#1976d2',
+        backgroundColor: theme.colors.primary,
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 20,
     },
     badgeInstructor: {
-        backgroundColor: '#2e7d32',
+        backgroundColor: theme.colors.success,
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 20,
     },
     badgeAdmin: {
-        backgroundColor: '#c62828',
+        backgroundColor: theme.colors.danger,
         paddingHorizontal: 16,
         paddingVertical: 6,
         borderRadius: 20,
     },
     badgeText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 11,
         fontWeight: 'bold',
         letterSpacing: 0.5,
@@ -281,15 +278,15 @@ centerContainer: {
     sectionTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 10,
     },
     cardPortal: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderRadius: 12,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#e9ecef',
+        borderColor: theme.colors.border,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.03,
@@ -299,12 +296,12 @@ centerContainer: {
     portalTitle: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 6,
     },
     portalSubtitle: {
         fontSize: 13,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
         lineHeight: 18,
         marginBottom: 16,
     },
@@ -316,19 +313,19 @@ centerContainer: {
         borderRadius: 8,
         paddingVertical: 12,
         borderWidth: 1,
-        borderColor: '#dee2e6',
+        borderColor: theme.colors.border,
     },
     btnApplyText: {
-        color: '#1976d2',
+        color: theme.colors.primary,
         fontSize: 14,
         fontWeight: 'bold',
         marginLeft: 8,
     },
     listCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#e9ecef',
+        borderColor: theme.colors.border,
         overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -339,11 +336,11 @@ centerContainer: {
     listHeader: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         paddingHorizontal: 16,
         paddingTop: 16,
         paddingBottom: 8,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
     },
     listItem: {
         flexDirection: 'row',
@@ -353,7 +350,7 @@ centerContainer: {
         paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#f1f3f5',
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
     },
     listItemLeft: {
         flexDirection: 'row',
@@ -361,7 +358,7 @@ centerContainer: {
     },
     listItemText: {
         fontSize: 14,
-        color: '#495057',
+        color: theme.colors.textSecondary,
         marginLeft: 12,
         fontWeight: '500',
     },
@@ -372,36 +369,36 @@ centerContainer: {
     },
     btnLogout: {
         borderWidth: 1,
-        borderColor: '#dc3545',
+        borderColor: theme.colors.danger,
         borderRadius: 8,
         paddingVertical: 14,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
     },
     btnLogoutText: {
-        color: '#dc3545',
+        color: theme.colors.danger,
         fontSize: 15,
         fontWeight: 'bold',
     },
     headerName: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 4,
     },
     avatarEditBadge: {
         position: 'absolute',
         bottom: 0,
         right: 0,
-        backgroundColor: '#1976d2',
+        backgroundColor: theme.colors.primary,
         width: 26,
         height: 26,
         borderRadius: 13,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
-        borderColor: '#ffffff',
+        borderColor: theme.colors.white,
     },
     modalOverlay: {
         flex: 1,
@@ -411,7 +408,7 @@ centerContainer: {
         padding: 20,
     },
     modalContainer: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         width: '100%',
         maxWidth: 400,
         borderRadius: 16,
@@ -431,7 +428,7 @@ centerContainer: {
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
     },
     modalInputGroup: {
         marginBottom: 16,
@@ -439,11 +436,11 @@ centerContainer: {
     modalLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#495057',
+        color: theme.colors.textSecondary,
         marginBottom: 6,
     },
     modalInput: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
     },
     modalBtnGroup: {
         flexDirection: 'row',
@@ -452,10 +449,10 @@ centerContainer: {
         gap: 12,
     },
     modalBtnCancel: {
-        borderColor: '#dee2e6',
+        borderColor: theme.colors.border,
     },
     modalBtnSubmit: {
-        backgroundColor: '#1976d2',
+        backgroundColor: theme.colors.primary,
     },
     avatarSelectContainer: {
         alignItems: 'center',
@@ -468,7 +465,7 @@ centerContainer: {
         borderRadius: 60,
         backgroundColor: '#f1f3f5',
         borderWidth: 2,
-        borderColor: '#1976d2',
+        borderColor: theme.colors.primary,
         borderStyle: 'dashed',
         alignItems: 'center',
         justifyContent: 'center',
@@ -485,7 +482,7 @@ centerContainer: {
     },
     avatarSelectPlaceholderText: {
         fontSize: 12,
-        color: '#1976d2',
+        color: theme.colors.primary,
         marginTop: 6,
         fontWeight: '600',
     },
@@ -506,29 +503,26 @@ centerContainer: {
     switchTitle: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
     },
     switchSubtitle: {
         fontSize: 12,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
         marginTop: 4,
         lineHeight: 16,
     },
-    // ==========================================
-    // STYLES DÀNH CHO TRANG APPLY INSTRUCTOR
-    // ==========================================
     applyHeader: {
         marginBottom: 20,
     },
     applyTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
         marginBottom: 8,
     },
     applySubtitle: {
         fontSize: 14,
-        color: '#666666',
+        color: theme.colors.textSecondary,
         lineHeight: 20,
     },
     applyBenefitList: {
@@ -549,33 +543,33 @@ centerContainer: {
     applyBenefitTitle: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
         marginBottom: 4,
     },
     applyBenefitDesc: {
         fontSize: 13,
-        color: '#666666',
+        color: theme.colors.textSecondary,
         lineHeight: 18,
     },
     divider: {
         height: 1,
-        backgroundColor: '#e0e0e0',
+        backgroundColor: theme.colors.border,
         marginVertical: 20,
     },
     filePickerBox: {
         borderWidth: 2,
-        borderColor: '#cccccc',
+        borderColor: theme.colors.border,
         borderStyle: 'dashed',
         borderRadius: 12,
         paddingVertical: 24,
         paddingHorizontal: 16,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#fafafa',
+        backgroundColor: theme.colors.background,
         marginBottom: 20,
     },
     filePickerBoxActive: {
-        borderColor: '#1877F2',
+        borderColor: theme.colors.primary,
         backgroundColor: '#f0f7ff',
         borderStyle: 'solid',
     },
@@ -585,7 +579,7 @@ centerContainer: {
     pickerTextBold: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
         marginBottom: 4,
     },
     pickerTextSubtitle: {
@@ -604,17 +598,17 @@ centerContainer: {
     fileName: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
         marginBottom: 2,
     },
     fileSize: {
         fontSize: 12,
-        color: '#666666',
+        color: theme.colors.textSecondary,
     },
     btnChangeFile: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderWidth: 1,
-        borderColor: '#1877F2',
+        borderColor: theme.colors.primary,
         borderRadius: 6,
         paddingHorizontal: 10,
         paddingVertical: 6,
@@ -622,10 +616,10 @@ centerContainer: {
     btnChangeFileText: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#1877F2',
+        color: theme.colors.primary,
     },
     btnPrimary: {
-        backgroundColor: '#1877F2',
+        backgroundColor: theme.colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -634,17 +628,17 @@ centerContainer: {
         width: '100%',
     },
     btnPrimaryDisabled: {
-        backgroundColor: '#cccccc',
+        backgroundColor: theme.colors.border,
     },
     btnPrimaryText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 16,
         fontWeight: 'bold',
     },
     btnSecondary: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderWidth: 1,
-        borderColor: '#cccccc',
+        borderColor: theme.colors.border,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -654,7 +648,7 @@ centerContainer: {
         marginTop: 12,
     },
     btnSecondaryText: {
-        color: '#333333',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -667,7 +661,7 @@ centerContainer: {
     statusMainLabel: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#333333',
+        color: theme.colors.text,
     },
     statusBadge: {
         flexDirection: 'row',
@@ -677,12 +671,12 @@ centerContainer: {
         borderRadius: 16,
     },
     statusBadgeText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 12,
         fontWeight: 'bold',
     },
     statusMessageCard: {
-        backgroundColor: '#fafafa',
+        backgroundColor: theme.colors.background,
         borderLeftWidth: 4,
         borderRadius: 6,
         padding: 16,
@@ -690,13 +684,13 @@ centerContainer: {
     },
     statusMessageText: {
         fontSize: 14,
-        color: '#555555',
+        color: theme.colors.textSecondary,
         lineHeight: 20,
     },
     submittedCvCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderWidth: 1,
-        borderColor: '#e0e0e0',
+        borderColor: theme.colors.border,
         borderRadius: 8,
         padding: 16,
         marginBottom: 16,
@@ -710,7 +704,7 @@ centerContainer: {
     submittedFileRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.colors.background,
         borderRadius: 6,
         padding: 12,
         marginBottom: 8,
@@ -719,7 +713,7 @@ centerContainer: {
         flex: 1,
         marginLeft: 10,
         fontSize: 14,
-        color: '#1877F2',
+        color: theme.colors.primary,
         fontWeight: '500',
     },
     submittedDateText: {
@@ -736,7 +730,7 @@ centerContainer: {
     applyLoadingText: {
         marginTop: 10,
         fontSize: 14,
-        color: '#666666',
+        color: theme.colors.textSecondary,
     },
     illustrationWrapper: {
         marginBottom: 20,

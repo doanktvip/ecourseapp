@@ -5,6 +5,7 @@ from courses.payments.providers.stripe import StripePayment
 from courses.payments.providers.paypal import PayPalPayment
 from courses.payments.providers.cash import CashPayment
 
+
 class PaymentFactory:
     _gateways = {
         Payment.Method.MOMO: MoMoPayment,

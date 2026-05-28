@@ -9,6 +9,7 @@ import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
 import moment from 'moment';
 import 'moment/locale/vi';
+import theme from '../../styles/theme';
 
 moment.locale('vi');
 
@@ -21,15 +22,12 @@ const PaymentHistory = () => {
     const isFocused = useIsFocused();
     const navigation = useNavigation();
 
-    // Phân trang
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(false);
 
-    // Bộ lọc và tìm kiếm từ Backend
-    const [filter, setFilter] = useState('ALL'); // ALL, SUCCESS, PENDING
+    const [filter, setFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Thống kê toàn cục nhận được từ Backend
     const [stats, setStats] = useState({
         totalAmount: 0,
         totalCount: 0,
@@ -55,7 +53,6 @@ const PaymentHistory = () => {
                 return;
             }
 
-            // Build query params: page, search, and is_successful filter
             let url = `${endpoints['payments']}?page=${pageNumber}`;
             if (searchQuery.trim() !== '') {
                 url += `&search=${encodeURIComponent(searchQuery)}`;
@@ -68,7 +65,6 @@ const PaymentHistory = () => {
 
             const res = await authApis(token).get(url);
 
-            // Django DRF paginated response
             const results = res.data.results !== undefined ? res.data.results : (Array.isArray(res.data) ? res.data : []);
             const next = res.data.next;
 
@@ -81,7 +77,6 @@ const PaymentHistory = () => {
             setPage(pageNumber);
             setHasNext(!!next);
 
-            // Lưu thống kê toàn cục
             setStats({
                 totalAmount: res.data.total_successful_amount || 0,
                 totalCount: res.data.count || 0,
@@ -99,8 +94,6 @@ const PaymentHistory = () => {
         }
     };
 
-    // Tải lại trang 1 mỗi khi thay đổi bộ lọc, tìm kiếm hoặc load lại màn hình
-    // Có chế độ trễ 500ms để tránh spam API khi đang gõ phím giống hệt màn hình Home.js
     useEffect(() => {
         if (!isFocused || !user) return;
 
@@ -127,7 +120,6 @@ const PaymentHistory = () => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
 
-    // Nếu chưa đăng nhập, hiển thị màn hình cảnh báo đồng bộ với Profile.js
     if (!user) {
         return (
             <View style={Styles.centerContainer}>
@@ -152,18 +144,16 @@ const PaymentHistory = () => {
         );
     }
 
-    // Vai trò người dùng hiện tại
     const role = user?.role?.toUpperCase() || 'STUDENT';
     const isAdmin = role === 'ADMIN';
     const isInstructor = role === 'INSTRUCTOR';
 
-    // 2. Render Header hiển thị thống kê đẹp mắt dựa trên Vai trò người dùng
     const renderHeader = () => {
         const totalOverall = stats.totalSuccessfulCount + stats.totalPendingCount;
 
         let cardTitle = "Tổng số tiền giao dịch";
         let cardIcon = "wallet-outline";
-        let cardColor = ['#0d6efd', '#0043a8']; // Xanh nước biển premium
+        let cardColor = [theme.colors.primary, '#0043a8'];
         let footerLabelLeft = "Số giao dịch";
         let footerValLeft = totalOverall;
         let footerLabelRight = "Thành công";
@@ -172,7 +162,7 @@ const PaymentHistory = () => {
         if (isAdmin) {
             cardTitle = "Tổng doanh thu hệ thống";
             cardIcon = "bar-chart-outline";
-            cardColor = ['#198754', '#0f5132']; // Xanh lá cây đậm sang trọng
+            cardColor = [theme.colors.success, '#0f5132'];
             footerLabelLeft = "Số giao dịch";
             footerValLeft = totalOverall;
             footerLabelRight = "Tỷ lệ duyệt";
@@ -182,16 +172,15 @@ const PaymentHistory = () => {
         } else if (isInstructor) {
             cardTitle = "Tổng thu nhập nhận được";
             cardIcon = "analytics-outline";
-            cardColor = ['#6f42c1', '#49108b']; // Tím hoàng gia sang trọng
+            cardColor = ['#6f42c1', '#49108b'];
             footerLabelLeft = "Học viên mua";
             footerValLeft = stats.totalSuccessfulCount;
             footerLabelRight = "Đang chờ duyệt";
             footerValRight = stats.totalPendingCount;
         } else {
-            // Học viên
             cardTitle = "Tổng học phí đã thanh toán";
             cardIcon = "receipt-outline";
-            cardColor = ['#0d6efd', '#0052cc'];
+            cardColor = [theme.colors.primary, '#0052cc'];
             footerLabelLeft = "Khóa học đã mua";
             footerValLeft = stats.totalSuccessfulCount;
             footerLabelRight = "Hóa đơn chờ";
@@ -199,7 +188,7 @@ const PaymentHistory = () => {
         }
 
         return (
-            <View style={{ backgroundColor: '#f8f9fa' }}>
+            <View style={{ backgroundColor: theme.colors.secondary }}>
                 {/* Banner Thống kê */}
                 <View style={[Styles.paymentSummaryCard, { backgroundColor: cardColor[0] }]}>
                     <View style={[Styles.row, { justifyContent: 'space-between', alignItems: 'center' }]}>
@@ -269,10 +258,9 @@ const PaymentHistory = () => {
     const renderPaymentItem = ({ item }) => {
         const isSuccess = item.is_successful;
         const iconName = isSuccess ? "checkmark-circle" : "time";
-        const iconColor = isSuccess ? "#198754" : "#f59e0b";
+        const iconColor = isSuccess ? theme.colors.success : "#f59e0b";
         const statusText = isSuccess ? "Giao dịch thành công" : "Đang chờ thanh toán / Thất bại";
 
-        // Hiển thị tên học sinh mua nếu người dùng đăng nhập là Giảng viên hoặc Admin
         const showStudentName = (isAdmin || isInstructor) && item.student_name;
 
         return (
@@ -281,23 +269,22 @@ const PaymentHistory = () => {
                 onPress={() => navigation.navigate('PaymentDetail', { paymentId: item.id })}
                 style={[Styles.card, { padding: 16, marginBottom: 12, marginHorizontal: 16 }]}
             >
-                {/* Header item: Số tiền và ngày giờ */}
                 <View style={[Styles.row, { justifyContent: 'space-between', marginBottom: 12 }]}>
                     <View style={Styles.row}>
                         <Ionicons name={iconName} size={22} color={iconColor} style={{ marginRight: 8 }} />
-                        <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#212529' }}>
+                        <Text style={{ fontWeight: 'bold', fontSize: 16, color: theme.colors.text }}>
                             {formatCurrency(item.amount)}
                         </Text>
                     </View>
-                    <Text style={[Styles.small, { color: '#6c757d' }]}>
+                    <Text style={[Styles.small, { color: theme.colors.textSecondary }]}>
                         {moment(item.created_date).format('DD/MM/YYYY HH:mm')}
                     </Text>
                 </View>
 
                 {/* Thông tin khóa học */}
                 <View style={{ marginBottom: 6 }}>
-                    <Text style={{ fontSize: 14, color: '#495057' }}>
-                        <Text style={{ fontWeight: '600', color: '#212529' }}>Khóa học: </Text>
+                    <Text style={{ fontSize: 14, color: theme.colors.textSecondary }}>
+                        <Text style={{ fontWeight: '600', color: theme.colors.text }}>Khóa học: </Text>
                         {item.course_subject || 'Đang cập nhật...'}
                     </Text>
                 </View>
@@ -305,8 +292,8 @@ const PaymentHistory = () => {
                 {/* Thông tin người mua (chỉ hiển thị cho Giảng viên / Admin xem) */}
                 {showStudentName && (
                     <View style={{ marginBottom: 6 }}>
-                        <Text style={{ fontSize: 14, color: '#495057' }}>
-                            <Text style={{ fontWeight: '600', color: '#212529' }}>Học viên mua: </Text>
+                        <Text style={{ fontSize: 14, color: theme.colors.textSecondary }}>
+                            <Text style={{ fontWeight: '600', color: theme.colors.text }}>Học viên mua: </Text>
                             {item.student_name}
                         </Text>
                     </View>
@@ -314,8 +301,8 @@ const PaymentHistory = () => {
 
                 {/* Phương thức thanh toán */}
                 <View style={{ marginBottom: 6 }}>
-                    <Text style={{ fontSize: 14, color: '#495057' }}>
-                        <Text style={{ fontWeight: '600', color: '#212529' }}>Phương thức: </Text>
+                    <Text style={{ fontSize: 14, color: theme.colors.textSecondary }}>
+                        <Text style={{ fontWeight: '600', color: theme.colors.text }}>Phương thức: </Text>
                         {item.payment_method || 'Chưa xác định'}
                     </Text>
                 </View>
@@ -323,16 +310,15 @@ const PaymentHistory = () => {
                 {/* Mã giao dịch */}
                 {item.transaction_id && (
                     <View style={{ marginBottom: 6 }}>
-                        <Text style={{ fontSize: 13, color: '#6c757d' }}>
-                            <Text style={{ fontWeight: '600', color: '#495057' }}>Mã GD: </Text>
+                        <Text style={{ fontSize: 13, color: theme.colors.textSecondary }}>
+                            <Text style={{ fontWeight: '600', color: theme.colors.textSecondary }}>Mã GD: </Text>
                             {item.transaction_id}
                         </Text>
                     </View>
                 )}
 
-                {/* Trạng thái giao dịch */}
                 <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f1f3f5', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 12, color: '#6c757d', fontStyle: 'italic' }}>Bấm để xem chi tiết</Text>
+                    <Text style={{ fontSize: 12, color: theme.colors.textSecondary, fontStyle: 'italic' }}>Bấm để xem chi tiết</Text>
                     <Text style={{ fontSize: 13, color: iconColor, fontWeight: 'bold' }}>
                         {statusText}
                     </Text>
@@ -342,11 +328,11 @@ const PaymentHistory = () => {
     };
 
     return (
-        <View style={[Styles.container, { backgroundColor: '#f8f9fa', marginTop: 0 }]}>
+        <View style={[Styles.container, { backgroundColor: theme.colors.secondary, marginTop: 0 }]}>
             {loading && payments.length === 0 ? (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#0d6efd" />
-                    <Text style={{ marginTop: 10, color: '#6c757d' }}>Đang tải danh sách giao dịch...</Text>
+                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <Text style={{ marginTop: 10, color: theme.colors.textSecondary }}>Đang tải danh sách giao dịch...</Text>
                 </View>
             ) : (
                 <FlatList
@@ -361,13 +347,13 @@ const PaymentHistory = () => {
                     refreshing={refreshing}
                     ListFooterComponent={() =>
                         loadingMore ? (
-                            <ActivityIndicator style={{ marginVertical: 16 }} size="small" color="#0d6efd" />
+                            <ActivityIndicator style={{ marginVertical: 16 }} size="small" color={theme.colors.primary} />
                         ) : null
                     }
                     ListEmptyComponent={
                         <View style={{ alignItems: 'center', justifyContent: 'center', padding: 40, marginTop: 30 }}>
-                            <Ionicons name="receipt-outline" size={64} color="#dee2e6" />
-                            <Text style={{ marginTop: 16, color: '#6c757d', textAlign: 'center', fontSize: 15 }}>
+                            <Ionicons name="receipt-outline" size={64} color={theme.colors.border} />
+                            <Text style={{ marginTop: 16, color: theme.colors.textSecondary, textAlign: 'center', fontSize: 15 }}>
                                 Không tìm thấy lịch sử giao dịch nào phù hợp.
                             </Text>
                         </View>

@@ -9,7 +9,6 @@ from ecourse import settings
 logger = logging.getLogger(__name__)
 
 
-# Khai báo lớp MoMoPayment kế thừa từ PaymentGateway, đóng vai trò là một implementation cụ thể cho cổng thanh toán MoMo
 class MoMoPayment(PaymentGateway):
 
     def create_payment(self, enrollment, amount: float) -> dict:
@@ -21,7 +20,6 @@ class MoMoPayment(PaymentGateway):
         extra_data = ""
         request_type = "captureWallet"
 
-        # Bước 1: Xây dựng chuỗi dữ liệu gốc (raw_signature) bằng cách nối các tham số theo đúng thứ tự từ điển (alphabet) mà MoMo yêu cầu
         raw_signature = (
             f"accessKey={config['ACCESS_KEY']}"
             f"&amount={int(amount)}"
@@ -35,14 +33,12 @@ class MoMoPayment(PaymentGateway):
             f"&requestType={request_type}"
         )
 
-        # Bước 2: Dùng thuật toán HMAC kết hợp với hàm băm SHA256 để tạo ra chữ ký từ chuỗi dữ liệu gốc và khóa bí mật (secretKey)
         signature = hmac.new(
             config['SECRET_KEY'].encode('utf-8'),
             raw_signature.encode('utf-8'),
             hashlib.sha256
         ).hexdigest()
 
-        # Đóng gói toàn bộ các thông số cùng với chữ ký vừa tạo thành một dictionary để chuẩn bị gửi đi trong phần body (dạng JSON) của HTTP Request
         payload = {
             "partnerCode": config['PARTNER_CODE'],
             "partnerName": "Hệ thống E-Course",
@@ -64,7 +60,6 @@ class MoMoPayment(PaymentGateway):
             response.raise_for_status()
             res_data = response.json()
 
-            # Trả về một dictionary chứa các thông tin quan trọng cần thiết cho việc xử lý tiếp theo của hệ thống
             return {
                 "payment_url": res_data.get("payUrl"),
                 "transaction_id": order_id,
@@ -75,7 +70,6 @@ class MoMoPayment(PaymentGateway):
             logger.error(f"Lỗi khi gọi API MoMo: {e}")
             raise ValueError("Không thể kết nối đến cổng thanh toán MoMo lúc này. Vui lòng thử lại sau.")
 
-    # Ghi đè phương thức verify_payment từ lớp cha để xác minh tính toàn vẹn của dữ liệu IPN (Webhook) do MoMo gửi về
     def verify_payment(self, request_data: dict) -> bool:
         if request_data.get('resultCode') != 0:
             return False
@@ -95,10 +89,8 @@ class MoMoPayment(PaymentGateway):
         response_time = request_data.get('responseTime', '')
         extra_data = request_data.get('extraData', '')
 
-        # Trích xuất chữ ký điện tử (signature) do MoMo tính toán và đính kèm theo để ta sử dụng đối chiếu
         momo_signature = request_data.get('signature', '')
 
-        # Bước 1: Ghép các tham số nhận được thành một chuỗi dữ liệu gốc (raw_data) tuân thủ nghiêm ngặt thứ tự từ điển alphabet
         raw_data = (
             f"accessKey={config['ACCESS_KEY']}"
             f"&amount={amount}"
@@ -115,14 +107,12 @@ class MoMoPayment(PaymentGateway):
             f"&transId={trans_id}"
         )
 
-        # Bước 2: Thực hiện tính toán chữ ký mới bằng thuật toán HMAC-SHA256 trên chuỗi raw_data vừa tạo và SECRET_KEY của ứng dụng
         my_signature = hmac.new(
             config['SECRET_KEY'].encode('utf-8'),
             raw_data.encode('utf-8'),
             hashlib.sha256
         ).hexdigest()
 
-        # Bước 3: So sánh chữ ký do hệ thống tự tính (my_signature) với chữ ký do MoMo cung cấp (momo_signature)
         if my_signature == momo_signature:
             return True
         else:

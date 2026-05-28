@@ -1,16 +1,5 @@
 import React, { useContext, useEffect, useState, useRef, useMemo } from 'react';
-import {
-  Text,
-  View,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  Image,
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform
-} from 'react-native';
+import { Text, View, FlatList, TouchableOpacity, TextInput, Image, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,17 +11,14 @@ import TagsModal from './Modal/TagsModal';
 import { useIsFocused } from '@react-navigation/native';
 import moment from 'moment';
 import 'moment/locale/vi';
+import theme from '../../styles/theme';
 
-// Cấu hình ngôn ngữ tiếng Việt toàn cục cho moment
 moment.locale('vi');
 
-// Helper thông minh để định dạng thời gian bình luận chuẩn xác cho cả USE_TZ=True và USE_TZ=False
 const formatCommentDate = (dateStr) => {
   if (!dateStr) return 'Vừa xong';
-  // Kiểm tra nếu kết thúc bằng Z hoặc có dạng timezone offset ở cuối (+HH:MM hoặc -HH:MM)
   const tzRegex = /(Z|[+-]\d{2}:\d{2}|[+-]\d{4})$/;
   if (!tzRegex.test(dateStr)) {
-    // Không có múi giờ (định dạng naive), ta xem như giờ Việt Nam (+07:00)
     return moment(dateStr + '+07:00').fromNow();
   }
   return moment(dateStr).fromNow();
@@ -50,7 +36,6 @@ const LessonDetail = ({ route, navigation }) => {
   const [lessonDetail, setLessonDetail] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // States cho Bình luận
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [nextCommentsUrl, setNextCommentsUrl] = useState(null);
@@ -60,20 +45,16 @@ const LessonDetail = ({ route, navigation }) => {
   const [replyTo, setReplyTo] = useState(null);
   const commentInputRef = useRef(null);
 
-  // Bình luận gốc (Backend đã lọc parent__isnull=True và sắp xếp mới nhất lên đầu)
   const rootComments = comments;
 
-  // States Tương tác & Tiến độ
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
 
-  // State hiển thị Modal gán nhãn (logic nằm trong TagsModal.js)
   const [tagsModalVisible, setTagsModalVisible] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
 
-  // Cấu hình video và lưu trữ tiến độ
   const lastSyncedTime = useRef(0);
   const currentSecondsRef = useRef(0);
   const hasSought = useRef(false);
@@ -96,7 +77,7 @@ const LessonDetail = ({ route, navigation }) => {
   const imageUrl = getAbsoluteUrl(rawImage) || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600';
 
   const player = useVideoPlayer(videoUrl || '', (playerInstance) => {
-    playerInstance.timeUpdateEventInterval = 1; // Nhận sự kiện cập nhật mỗi 1 giây
+    playerInstance.timeUpdateEventInterval = 1;
     playerInstance.loop = false;
   });
 
@@ -138,13 +119,11 @@ const LessonDetail = ({ route, navigation }) => {
     };
   }, [player, lessonDetail, user]);
 
-  // Hàm làm sạch văn bản HTML
   const stripHtmlTags = (str) => {
     if (!str) return '';
     return str.replace(/<[^>]*>/g, '').trim();
   };
 
-  // 1. Tải thông tin chi tiết bài học
   const loadLessonDetail = async () => {
     try {
       setLoading(true);
@@ -169,7 +148,6 @@ const LessonDetail = ({ route, navigation }) => {
     }
   };
 
-  // 2. Tải danh sách bình luận
   const loadComments = async () => {
     try {
       setLoadingComments(true);
@@ -206,7 +184,6 @@ const LessonDetail = ({ route, navigation }) => {
       setLoadingComments(true);
       const token = await AsyncStorage.getItem('token');
       let url = nextCommentsUrl;
-      // Trích xuất path tương đối để luôn gọi đúng BASE_URL
       if (url.includes('/lessons/')) {
         url = url.substring(url.indexOf('/lessons/'));
       }
@@ -235,7 +212,6 @@ const LessonDetail = ({ route, navigation }) => {
     }
   };
 
-  // Đồng bộ tiến độ xem video lên Server
   const syncProgress = async (seconds, isFinished = false) => {
     if (!user || user.role === 'ADMIN' || user.role === 'INSTRUCTOR') return;
     try {
@@ -253,7 +229,6 @@ const LessonDetail = ({ route, navigation }) => {
     }
   };
 
-  // Thích / Bỏ thích bài học
   const handleLike = async () => {
     if (!user) {
       Alert.alert("Đăng nhập", "Vui lòng đăng nhập để thích bài học.");
@@ -272,7 +247,6 @@ const LessonDetail = ({ route, navigation }) => {
   };
 
 
-  // Đánh dấu hoàn thành bài học một cách chủ động (Nhấn nút)
   const handleComplete = async () => {
     if (!user) {
       Alert.alert("Yêu cầu đăng nhập", "Vui lòng đăng nhập để đánh dấu hoàn thành bài học.");
@@ -294,7 +268,6 @@ const LessonDetail = ({ route, navigation }) => {
     }
   };
 
-  // Xóa bài học
   const handleDeleteLesson = () => {
     Alert.alert(
       'Xác nhận xóa bài học',
@@ -326,7 +299,6 @@ const LessonDetail = ({ route, navigation }) => {
     );
   };
 
-  // Đăng bình luận mới
   const handleSendComment = async () => {
     if (!commentText.trim()) return;
     if (!user) {
@@ -343,7 +315,6 @@ const LessonDetail = ({ route, navigation }) => {
         }
         const res = await authApis(token).post(endpoints['lesson-comments'](lesson.id), payload);
         if (replyTo) {
-          // Gửi phản hồi (reply): Tìm bình luận gốc tương ứng và thêm phản hồi mới vào đầu danh sách replies
           setComments(prev => prev.map(c => {
             if (c.id === replyTo.id) {
               const combinedReplies = [res.data, ...(c.replies || [])];
@@ -358,7 +329,6 @@ const LessonDetail = ({ route, navigation }) => {
             return c;
           }));
         } else {
-          // Gửi bình luận gốc mới: Đẩy lên đầu danh sách bình luận gốc
           setComments(prev => {
             const combined = [res.data, ...prev];
             return combined.filter((item, index, self) =>
@@ -381,7 +351,6 @@ const LessonDetail = ({ route, navigation }) => {
   useEffect(() => {
     navigation.setOptions({ title: lesson.subject || 'Chi tiết bài học' });
 
-    // Cleanup: Tự động lưu tiến độ hiện tại khi người dùng thoát khỏi màn hình
     return () => {
       if (currentSecondsRef.current > 0 && user && user.role !== 'ADMIN' && user.role !== 'INSTRUCTOR') {
         AsyncStorage.getItem('token').then(token => {
@@ -408,7 +377,6 @@ const LessonDetail = ({ route, navigation }) => {
     }
   }, [lessonDetail, navigation]);
 
-  // Định nghĩa các hàm phục vụ cho FlatList bình luận
   const renderCommentItem = ({ item: comment }) => {
     const avatarUrl = comment.user?.avatar || 'https://via.placeholder.com/150';
     const commentUserFullName = comment.user
@@ -438,7 +406,7 @@ const LessonDetail = ({ route, navigation }) => {
                   }
                 }}
               >
-                <Ionicons name="arrow-undo-outline" size={14} color="#1877F2" />
+                <Ionicons name="arrow-undo-outline" size={14} color={theme.colors.primary} />
                 <Text style={Styles.commentReplyBtnText}> Trả lời</Text>
               </TouchableOpacity>
             )}
@@ -483,13 +451,13 @@ const LessonDetail = ({ route, navigation }) => {
                 allowsPictureInPicture
               />
             ) : (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e9ecef' }}>
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.border }}>
                 <Image
                   source={{ uri: imageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600' }}
                   style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0.6 }}
                 />
-                <Ionicons name="play-circle" size={64} color="#1877F2" style={{ zIndex: 1 }} />
-                <Text style={[Styles.title, { color: '#ffffff', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginTop: 8, zIndex: 1 }]}>
+                <Ionicons name="play-circle" size={64} color={theme.colors.primary} style={{ zIndex: 1 }} />
+                <Text style={[Styles.title, { color: theme.colors.white, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginTop: 8, zIndex: 1 }]}>
                   Bài học lý thuyết / Không có video
                 </Text>
               </View>
@@ -516,8 +484,8 @@ const LessonDetail = ({ route, navigation }) => {
                   })}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="create-outline" size={16} color="#1877F2" />
-                  <Text style={{ color: '#1877F2', fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Sửa</Text>
+                  <Ionicons name="create-outline" size={16} color={theme.colors.primary} />
+                  <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Sửa</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -527,11 +495,11 @@ const LessonDetail = ({ route, navigation }) => {
                   disabled={deleteLoading}
                 >
                   {deleteLoading ? (
-                    <ActivityIndicator size="small" color="#dc3545" />
+                    <ActivityIndicator size="small" color={theme.colors.danger} />
                   ) : (
                     <>
-                      <Ionicons name="trash-outline" size={16} color="#dc3545" />
-                      <Text style={{ color: '#dc3545', fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Xóa</Text>
+                      <Ionicons name="trash-outline" size={16} color={theme.colors.danger} />
+                      <Text style={{ color: theme.colors.danger, fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Xóa</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -565,8 +533,8 @@ const LessonDetail = ({ route, navigation }) => {
                   onPress={() => setTagsModalVisible(true)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="pricetag-outline" size={13} color="#1877F2" />
-                  <Text style={{ color: '#1877F2', fontSize: 12, fontWeight: '600', marginLeft: 3 }}>
+                  <Ionicons name="pricetag-outline" size={13} color={theme.colors.primary} />
+                  <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '600', marginLeft: 3 }}>
                     Gán nhãn
                   </Text>
                 </TouchableOpacity>
@@ -582,7 +550,7 @@ const LessonDetail = ({ route, navigation }) => {
               <Ionicons
                 name={isLiked ? "heart" : "heart-outline"}
                 size={20}
-                color={isLiked ? "#e81c4f" : "#65676b"}
+                color={isLiked ? theme.colors.danger : "#65676b"}
               />
               <Text style={[Styles.lessonLikeText, isLiked && Styles.lessonLikeTextActive]}>
                 {isLiked ? 'Đã thích' : 'Thích'} ({likesCount})
@@ -605,7 +573,7 @@ const LessonDetail = ({ route, navigation }) => {
             <View style={{ marginBottom: 16 }}>
               {isCompleted ? (
                 <View style={[Styles.btnCompleteLesson, Styles.btnCompleteLessonActive]}>
-                  <Ionicons name="checkmark-circle" size={24} color="#28a745" />
+                  <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
                   <Text style={[Styles.btnCompleteLessonText, Styles.btnCompleteLessonTextActive]}>
                     Đã hoàn thành bài học
                   </Text>
@@ -618,10 +586,10 @@ const LessonDetail = ({ route, navigation }) => {
                   activeOpacity={0.8}
                 >
                   {loadingComplete ? (
-                    <ActivityIndicator size="small" color="#ffffff" />
+                    <ActivityIndicator size="small" color={theme.colors.white} />
                   ) : (
                     <>
-                      <Ionicons name="checkmark-circle-outline" size={24} color="#ffffff" />
+                      <Ionicons name="checkmark-circle-outline" size={24} color={theme.colors.white} />
                       <Text style={Styles.btnCompleteLessonText}>Đánh dấu hoàn thành</Text>
                     </>
                   )}
@@ -639,14 +607,14 @@ const LessonDetail = ({ route, navigation }) => {
 
   const renderFooter = () => {
     if (loadingComments && comments.length > 0) {
-      return <ActivityIndicator size="small" color="#1877F2" style={{ marginVertical: 15 }} />;
+      return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 15 }} />;
     }
     return <View style={{ height: 20 }} />;
   };
 
   const renderEmpty = () => {
     if (loadingComments) {
-      return <ActivityIndicator size="small" color="#1877F2" style={{ marginVertical: 20 }} />;
+      return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 20 }} />;
     }
     return (
       <View style={{ paddingVertical: 20, alignItems: 'center', paddingHorizontal: 16 }}>
@@ -658,15 +626,15 @@ const LessonDetail = ({ route, navigation }) => {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-        <ActivityIndicator size="large" color="#1877F2" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.white }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={[Styles.small, { marginTop: 10 }]}>Đang tải bài học...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.white }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior='padding'
@@ -687,14 +655,14 @@ const LessonDetail = ({ route, navigation }) => {
         />
 
         {/* Thanh viết bình luận cố định ở cuối màn hình */}
-        <View style={{ backgroundColor: '#ffffff' }}>
+        <View style={{ backgroundColor: theme.colors.white }}>
           {replyTo && (
             <View style={Styles.replyingBar}>
               <Text style={Styles.replyingText}>
                 Đang trả lời {replyTo.user ? `${replyTo.user.last_name || ''} ${replyTo.user.first_name || ''}`.trim() : 'Học viên'}
               </Text>
               <TouchableOpacity onPress={() => setReplyTo(null)}>
-                <Ionicons name="close-circle" size={18} color="#e81c4f" />
+                <Ionicons name="close-circle" size={18} color={theme.colors.danger} />
               </TouchableOpacity>
             </View>
           )}
@@ -716,9 +684,9 @@ const LessonDetail = ({ route, navigation }) => {
               activeOpacity={0.8}
             >
               {sendingComment ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color={theme.colors.white} />
               ) : (
-                <Ionicons name="send" size={16} color="#ffffff" />
+                <Ionicons name="send" size={16} color={theme.colors.white} />
               )}
             </TouchableOpacity>
           </View>
@@ -726,7 +694,6 @@ const LessonDetail = ({ route, navigation }) => {
 
       </KeyboardAvoidingView>
 
-      {/* Modal gán nhãn (Tags) - toàn bộ logic nằm trong TagsModal.js */}
       <TagsModal
         visible={tagsModalVisible}
         onClose={() => setTagsModalVisible(false)}

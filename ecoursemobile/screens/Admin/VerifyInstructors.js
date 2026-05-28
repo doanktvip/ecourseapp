@@ -5,15 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
+import theme from '../../styles/theme';
 
 const VerifyInstructors = ({ navigation }) => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'PENDING', 'APPROVED', 'REJECTED'
+  const [filterStatus, setFilterStatus] = useState('ALL');
   const [token, setToken] = useState(null);
 
-  // Lấy Access Token từ AsyncStorage
   useEffect(() => {
     const fetchToken = async () => {
       try {
@@ -31,7 +31,6 @@ const VerifyInstructors = ({ navigation }) => {
     fetchToken();
   }, [navigation]);
 
-  // Load danh sách đơn đăng ký
   const loadApplications = useCallback(async (tk = token, status = filterStatus) => {
     if (!tk) return;
     try {
@@ -44,7 +43,6 @@ const VerifyInstructors = ({ navigation }) => {
       const api = authApis(tk);
       const response = await api.get(endpoints['applications'], { params });
 
-      // Response từ API list view có thể trả về array trực tiếp hoặc kết quả phân trang
       let data = [];
       if (Array.isArray(response.data)) {
         data = response.data;
@@ -63,14 +61,12 @@ const VerifyInstructors = ({ navigation }) => {
     }
   }, [token, filterStatus]);
 
-  // Gọi tải khi token hoặc bộ lọc thay đổi
   useEffect(() => {
     if (token) {
       loadApplications(token, filterStatus);
     }
   }, [token, filterStatus, loadApplications]);
 
-  // Xử lý kéo xuống để làm mới
   const handleRefresh = async () => {
     setRefreshing(true);
     if (token) {
@@ -79,7 +75,6 @@ const VerifyInstructors = ({ navigation }) => {
     setRefreshing(false);
   };
 
-  // Mở CV bằng trình duyệt
   const handleOpenCV = async (url) => {
     if (!url) {
       Alert.alert('Thông báo', 'Đơn này chưa đính kèm tệp CV.');
@@ -99,7 +94,6 @@ const VerifyInstructors = ({ navigation }) => {
     }
   };
 
-  // Cập nhật trạng thái đơn (Duyệt/Từ chối)
   const handleUpdateStatus = async (id, newStatus, candidateName) => {
     const actionText = newStatus === 'APPROVED' ? 'DUYỆT' : 'TỪ CHỐI';
 
@@ -118,7 +112,6 @@ const VerifyInstructors = ({ navigation }) => {
               await api.patch(endpoints['application-details'](id), { status: newStatus });
 
               Alert.alert('Thành công', `Đã ${newStatus === 'APPROVED' ? 'duyệt' : 'từ chối'} đơn đăng ký thành công.`);
-              // Reload lại danh sách
               loadApplications(token, filterStatus);
             } catch (err) {
               console.error('Error updating application status:', err);
@@ -133,7 +126,6 @@ const VerifyInstructors = ({ navigation }) => {
     );
   };
 
-  // Format ngày tháng hiển thị
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -146,21 +138,19 @@ const VerifyInstructors = ({ navigation }) => {
     });
   };
 
-  // Lấy chi tiết trạng thái
   const getStatusBadge = (status) => {
     switch (status) {
       case 'PENDING':
         return { text: 'Chờ duyệt', bg: '#fff3e0', color: '#ff9800', icon: 'hourglass-outline' };
       case 'APPROVED':
-        return { text: 'Đã duyệt', bg: '#e8f5e9', color: '#4caf50', icon: 'checkmark-circle-outline' };
+        return { text: 'Đã duyệt', bg: '#e8f5e9', color: theme.colors.success, icon: 'checkmark-circle-outline' };
       case 'REJECTED':
         return { text: 'Bị từ chối', bg: '#ffebee', color: '#f44336', icon: 'close-circle-outline' };
       default:
-        return { text: 'Không rõ', bg: '#f5f5f5', color: '#757575', icon: 'help-circle-outline' };
+        return { text: 'Không rõ', bg: theme.colors.background, color: '#757575', icon: 'help-circle-outline' };
     }
   };
 
-  // Render từng thẻ đơn
   const renderItem = ({ item }) => {
     const candidateName = item.user
       ? `${item.user.last_name} ${item.user.first_name}`.trim()
@@ -202,9 +192,9 @@ const VerifyInstructors = ({ navigation }) => {
               style={Styles.cvButton}
               onPress={() => handleOpenCV(item.cv_file)}
             >
-              <Ionicons name="document-text-outline" size={18} color="#1976d2" />
+              <Ionicons name="document-text-outline" size={18} color={theme.colors.primary} />
               <Text style={Styles.cvButtonText}>Xem / Tải file hồ sơ CV</Text>
-              <Ionicons name="chevron-forward" size={16} color="#1976d2" style={{ marginLeft: 'auto' }} />
+              <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} style={{ marginLeft: 'auto' }} />
             </TouchableOpacity>
           ) : (
             <View style={[Styles.cvButton, { opacity: 0.5 }]}>
@@ -220,7 +210,7 @@ const VerifyInstructors = ({ navigation }) => {
               style={[Styles.actionButton, Styles.rejectBtn]}
               onPress={() => handleUpdateStatus(item.id, 'REJECTED', candidateName)}
             >
-              <Ionicons name="close-circle-outline" size={20} color="#fff" />
+              <Ionicons name="close-circle-outline" size={20} color={theme.colors.white} />
               <Text style={Styles.actionBtnText}>Từ chối</Text>
             </TouchableOpacity>
 
@@ -228,7 +218,7 @@ const VerifyInstructors = ({ navigation }) => {
               style={[Styles.actionButton, Styles.approveBtn]}
               onPress={() => handleUpdateStatus(item.id, 'APPROVED', candidateName)}
             >
-              <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+              <Ionicons name="checkmark-circle-outline" size={20} color={theme.colors.white} />
               <Text style={Styles.actionBtnText}>Duyệt làm giảng viên</Text>
             </TouchableOpacity>
           </View>
@@ -239,7 +229,7 @@ const VerifyInstructors = ({ navigation }) => {
 
   return (
     <SafeAreaView style={Styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.secondary} />
       {/* Segmented Filter Control */}
       <View style={Styles.filterContainer}>
         {[
@@ -271,7 +261,7 @@ const VerifyInstructors = ({ navigation }) => {
       {/* List content */}
       {loading && !refreshing ? (
         <View style={Styles.center}>
-          <ActivityIndicator size="large" color="#1976d2" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={Styles.loadingText}>Đang tải dữ liệu hồ sơ...</Text>
         </View>
       ) : (
@@ -284,7 +274,7 @@ const VerifyInstructors = ({ navigation }) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={['#1976d2']}
+              colors={[theme.colors.primary]}
             />
           }
           ListEmptyComponent={
