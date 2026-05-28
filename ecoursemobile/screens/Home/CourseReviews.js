@@ -7,6 +7,7 @@ import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình xem và viết đánh giá (review) cho khóa học
 const CourseReviews = ({ route, navigation }) => {
     const { courseId, courseSubject } = route.params;
     const [reviews, setReviews] = useState([]);

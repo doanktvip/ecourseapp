@@ -7,6 +7,7 @@ import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình theo dõi tiến độ học tập của học viên trong khóa học
 const StudentProgress = ({ route, navigation }) => {
   const { courseId, courseSubject } = route.params || {};
   const [enrollments, setEnrollments] = useState([]);

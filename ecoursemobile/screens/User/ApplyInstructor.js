@@ -8,6 +8,7 @@ import { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình gửi đơn đăng ký trở thành Giảng viên
 const ApplyInstructor = ({ navigation }) => {
     const [user] = useContext(MyUserContext);
     const [application, setApplication] = useState(null);
@@ -48,6 +49,7 @@ const ApplyInstructor = ({ navigation }) => {
         loadApplication();
     }, [user]);
 
+    // Hàm mở trình chọn tệp (Document Picker) để người dùng tải lên file CV (hỗ trợ PDF/Word)
     const handlePickDocument = async () => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
@@ -73,6 +75,7 @@ const ApplyInstructor = ({ navigation }) => {
         }
     };
 
+    // Hàm xử lý đóng gói file CV và gửi yêu cầu ứng tuyển giảng viên lên server
     const handleUploadCV = async () => {
         if (!cvFile) {
             Alert.alert("Lỗi", "Vui lòng chọn tệp CV trước khi nộp đơn.");

@@ -10,28 +10,26 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 import cloudinary
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Đường dẫn gốc của project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Cấu hình lưu trữ file tĩnh cho ckeditor
 MEDIA_ROOT = '%s/courses/static/' % BASE_DIR
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# Khóa bảo mật của Django
 SECRET_KEY = 'django-insecure-knk8f1uc392i*ty3y(hox-)&47tn-6lo-s58=#1he$-1lpgm$+'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# Chế độ Debug (True cho dev, False cho production)
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# Application definition
-
+# Danh sách các app đã cài đặt
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,25 +38,29 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'courses.apps.CoursesConfig',
-    'drf_yasg',
-    'rest_framework',
-    'oauth2_provider',
-    'django_filters',
+    'drf_yasg',            # App tạo tài liệu API (Swagger)
+    'rest_framework',      # Django REST Framework
+    'oauth2_provider',     # Thư viện cấp quyền OAuth2
+    'django_filters',      # Thư viện lọc dữ liệu cho API
 ]
 
+# Cấu hình REST Framework
 REST_FRAMEWORK = {
+    # Mặc định sử dụng xác thực OAuth2
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ],
+    # Mặc định sử dụng bộ lọc DjangoFilter
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
 }
 
+# Các middleware của hệ thống
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'ecourse.middlewares.OAuth2InjectCredentialsMiddleware',
+    'ecourse.middlewares.OAuth2InjectCredentialsMiddleware', # Custom middleware tự động chèn OAuth2 credentials
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -68,6 +70,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'ecourse.urls'
 
+# Model User tùy chỉnh thay vì mặc định
 AUTH_USER_MODEL = 'courses.User'
 
 TEMPLATES = [
@@ -87,62 +90,43 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ecourse.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
+# Cấu hình kết nối Cơ sở dữ liệu (Database)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ecoursedb',
         'USER': 'root',
-        'PASSWORD': 'hod2t123',
+        'PASSWORD': 'root',
         'HOST': ''  # mặc định localhost
     }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
+# Cấu hình kiểm tra tính hợp lệ của mật khẩu
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'courses.validators.PasswordLengthValidator',
-    },
-    {
-        'NAME': 'courses.validators.PasswordWhitespaceValidator',
-    },
-    {
-        'NAME': 'courses.validators.PasswordAsciiValidator',
-    },
+    {'NAME': 'courses.validators.PasswordLengthValidator'},
+    {'NAME': 'courses.validators.PasswordWhitespaceValidator'},
+    {'NAME': 'courses.validators.PasswordAsciiValidator'},
 ]
 
+# Cấu hình kiểm tra tính hợp lệ của username
 CUSTOM_USERNAME_VALIDATORS = [
-    {
-        'NAME': 'courses.validators.UsernameLengthValidator',
-    },
-    {
-        'NAME': 'courses.validators.UsernameWhitespaceValidator',
-    },
-    {
-        'NAME': 'courses.validators.UsernameAsciiValidator',
-    },
+    {'NAME': 'courses.validators.UsernameLengthValidator'},
+    {'NAME': 'courses.validators.UsernameWhitespaceValidator'},
+    {'NAME': 'courses.validators.UsernameAsciiValidator'},
 ]
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
 
+# Ngôn ngữ và Múi giờ
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
-# TIME_ZONE = 'UTC'
 USE_I18N = True
-
 USE_TZ = False
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
 STATIC_URL = 'static/'
+
+# Load các biến môi trường từ file .env
 load_dotenv(BASE_DIR / '.env')
-# Cloudinary
+
+# Cấu hình Cloudinary (Lưu trữ ảnh/video)
 cloudinary.config(
     cloud_name=os.getenv('CLOUD_NAME'),
     api_key=os.getenv('API_KEY'),
@@ -151,6 +135,7 @@ cloudinary.config(
 
 BASE_DOMAIN = os.getenv('BASE_DOMAIN', 'http://localhost:8000')
 
+# Cấu hình thanh toán tiền mặt/chuyển khoản
 CASH_CONFIG = {
     'BANK_ACCOUNT': os.getenv('ACCOUNT_NUMBER', ''),
     'BANK_NAME': os.getenv('BANK_NAME', ''),

@@ -13,6 +13,7 @@ import theme from '../../styles/theme';
 
 moment.locale('vi');
 
+// Màn hình xem lịch sử giao dịch và thanh toán
 const PaymentHistory = () => {
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);

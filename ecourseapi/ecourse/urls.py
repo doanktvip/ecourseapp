@@ -1,19 +1,3 @@
-"""
-URL configuration for ecourse project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include, re_path
 from drf_yasg import openapi
@@ -22,21 +6,30 @@ from rest_framework import permissions
 
 from courses.admin import admin_site
 
+# Cấu hình giao diện Swagger/ReDoc để xem tài liệu API
 schema_view = get_schema_view(
     openapi.Info(
         title="Course API",
         default_version='v1',
         description="APIs for CourseApp",
-        contact=openapi.Contact(email="2351050031doan@ou.ed.vn"),
+        contact=openapi.Contact(email="2351050031doan@ou.edu.vn"),
         license=openapi.License(name="Nguyễn Văn Đoàn"),
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
 )
+
 urlpatterns = [
+    # Gọi các URL của app courses (chứa logic chính)
     path('', include('courses.urls')),
+    
+    # Giao diện Admin tuỳ chỉnh
     path('admin/', admin_site.urls),
+    
+    # URL cho ứng dụng tải ảnh lên CKEditor
     re_path(r'^ckeditor/', include('ckeditor_uploader.urls')),
+    
+    # Các đường dẫn tới tài liệu API (Swagger & Redoc)
     re_path(r'^swagger(?P<format>\.json|\.yaml)$',
             schema_view.without_ui(cache_timeout=0),
             name='schema-json'),
@@ -46,6 +39,8 @@ urlpatterns = [
     re_path(r'^redoc/$',
             schema_view.with_ui('redoc', cache_timeout=0),
             name='schema-redoc'),
+            
+    # Các API liên quan tới việc cấp quyền OAuth2 (lấy token, làm mới token)
     path('o/', include('oauth2_provider.urls',
                        namespace='oauth2_provider'))
 ]

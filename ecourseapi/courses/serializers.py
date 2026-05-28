@@ -5,12 +5,14 @@ from courses.validators import validate_custom_username
 from django.contrib.auth.password_validation import validate_password
 
 
+# Serializer cho danh mục khóa học
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name']
 
 
+# Serializer cơ bản cho User (chỉ trả về các thông tin công khai)
 class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -19,6 +21,7 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        # Xử lý đường dẫn ảnh đại diện
         if instance.avatar:
             try:
                 data['avatar'] = instance.avatar.url
@@ -27,6 +30,7 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         return data
 
 
+# Serializer chung cho các Item có hình ảnh
 class ItemSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -35,6 +39,7 @@ class ItemSerializer(serializers.ModelSerializer):
         return data
 
 
+# Serializer cho Khóa học (bao gồm số lượng bài học và đánh giá)
 class CourseSerializer(ItemSerializer):
     category = CategorySerializer(read_only=True)
     instructor = SimpleUserSerializer(read_only=True)
@@ -58,17 +63,20 @@ class CourseSerializer(ItemSerializer):
         return obj.reviews.count()
 
 
+# Serializer chi tiết khóa học
 class CourseDetailSerializer(CourseSerializer):
     class Meta(CourseSerializer.Meta):
         fields = CourseSerializer.Meta.fields
 
 
+# Serializer cho Tag
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ['id', 'name']
 
 
+# Serializer hỗ trợ thêm Tag vào bài học
 class AddTagsSerializer(serializers.Serializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True, allow_empty=False,
@@ -80,6 +88,7 @@ class AddTagsSerializer(serializers.Serializer):
     )
 
 
+# Serializer chi tiết cho User (có bao gồm username và chức năng đổi mật khẩu)
 class UserSerializer(SimpleUserSerializer):
     username = serializers.CharField(validators=[validate_custom_username])
 
@@ -93,6 +102,7 @@ class UserSerializer(SimpleUserSerializer):
             }
         }
 
+    # Hàm tạo user và mã hóa mật khẩu
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = User(**validated_data)
@@ -101,6 +111,7 @@ class UserSerializer(SimpleUserSerializer):
         return user
 
 
+# Serializer xử lý đổi mật khẩu
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)
     new_password = serializers.CharField(
@@ -120,10 +131,10 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "new_password": "Mật khẩu mới không được trùng với mật khẩu cũ."
             })
-
         return data
 
 
+# Serializer cho đơn đăng ký giảng viên
 class ApplySerializer(serializers.ModelSerializer):
     cv_file = serializers.FileField(required=False, allow_null=True)
     user = SimpleUserSerializer(read_only=True)
@@ -140,6 +151,7 @@ class ApplySerializer(serializers.ModelSerializer):
         return data
 
 
+# Serializer cho Bài học
 class LessonSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
     video = serializers.FileField(required=False, allow_null=True)
@@ -154,17 +166,21 @@ class LessonSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        # Xử lý đường dẫn file
         if instance.image:
             if hasattr(instance.image, 'url'):
                 data['image'] = instance.image.url
         if instance.video:
             if hasattr(instance.video, 'url'):
                 data['video'] = instance.video.url
+                
+        # Trả về số lượng like
         data['likes_count'] = instance.likes.filter(active=True).count()
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
             data['liked'] = instance.likes.filter(user=request.user, active=True).exists()
 
+            # Trả về trạng thái học của bài học này
             progress = LessonProgress.objects.filter(enrollment__student=request.user, lesson=instance).first()
             if progress:
                 data['completed'] = progress.status == LessonProgress.Status.COMPLETED
@@ -176,6 +192,7 @@ class LessonSerializer(serializers.ModelSerializer):
         return data
 
 
+# Serializer chi tiết Thanh toán
 class PaymentSerializer(serializers.ModelSerializer):
     course_subject = serializers.SerializerMethodField()
     student_name = serializers.SerializerMethodField()
@@ -223,6 +240,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         return None
 
 
+# Serializer chi tiết khóa học đã đăng ký (Enrollment)
 class EnrollmentDetailSerializer(serializers.ModelSerializer):
     payment = PaymentSerializer(read_only=True)
     student = SimpleUserSerializer(read_only=True)
@@ -233,13 +251,14 @@ class EnrollmentDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'student', 'course', 'progress', 'payment', 'created_date']
 
 
+# Serializer tạo mới Enrollment
 class EnrollmentSerializer(serializers.Serializer):
     payment_method = serializers.ChoiceField(choices=Payment.Method.choices)
 
 
+# Serializer cho Bình luận (có hỗ trợ phản hồi - replies)
 class CommentSerializer(serializers.ModelSerializer):
     user = SimpleUserSerializer(read_only=True)
-    # hàm tự định nghĩa, tùy chỉnh thuộc tính
     replies = serializers.SerializerMethodField()
 
     class Meta:
@@ -250,11 +269,12 @@ class CommentSerializer(serializers.ModelSerializer):
     def get_replies(self, obj):
         if obj.parent is not None:
             return []
-        #Lọc ra danh sách phản hồi của cmt đó
+        # Lọc ra danh sách phản hồi của comment gốc
         active_replies = obj.replies.filter(active=True).order_by('-created_date')
         return CommentSerializer(active_replies, many=True, context=self.context).data
 
 
+# Serializer đánh giá khóa học
 class CourseReviewSerializer(serializers.ModelSerializer):
     user = SimpleUserSerializer(read_only=True)
 

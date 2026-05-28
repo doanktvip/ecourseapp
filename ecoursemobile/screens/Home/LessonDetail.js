@@ -24,6 +24,7 @@ const formatCommentDate = (dateStr) => {
   return moment(dateStr).fromNow();
 };
 
+// Màn hình chi tiết bài học (Xem video, đọc nội dung và bình luận)
 const LessonDetail = ({ route, navigation }) => {
   const { lesson, courseTitle, courseInstructorEmail } = route.params || {};
   const [user] = useContext(MyUserContext);
@@ -50,6 +51,7 @@ const LessonDetail = ({ route, navigation }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [canComplete, setCanComplete] = useState(false);
 
   const [tagsModalVisible, setTagsModalVisible] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -76,6 +78,7 @@ const LessonDetail = ({ route, navigation }) => {
   const videoUrl = getAbsoluteUrl(rawVideo);
   const imageUrl = getAbsoluteUrl(rawImage) || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600';
 
+  // Khởi tạo trình phát video (expo-video)
   const player = useVideoPlayer(videoUrl || '', (playerInstance) => {
     playerInstance.timeUpdateEventInterval = 1;
     playerInstance.loop = false;
@@ -93,6 +96,13 @@ const LessonDetail = ({ route, navigation }) => {
     const timeUpdateSub = player.addListener('timeUpdate', (payload) => {
       const currentSeconds = Math.floor(payload.currentTime);
       currentSecondsRef.current = currentSeconds;
+
+      const totalSeconds = lessonDetail?.video_seconds || lesson?.video_seconds || 0;
+      if (totalSeconds > 0) {
+        if (currentSeconds / totalSeconds >= 0.7) {
+          setCanComplete(true);
+        }
+      }
 
       if (!hasSought.current && lessonDetail && lessonDetail.watched_seconds > 0) {
         hasSought.current = true;
@@ -124,6 +134,7 @@ const LessonDetail = ({ route, navigation }) => {
     return str.replace(/<[^>]*>/g, '').trim();
   };
 
+  // Tải chi tiết nội dung bài học
   const loadLessonDetail = async () => {
     try {
       setLoading(true);
@@ -140,6 +151,11 @@ const LessonDetail = ({ route, navigation }) => {
       setIsLiked(!!data.liked);
       setLikesCount(data.likes_count || 0);
       setIsCompleted(!!data.completed);
+
+      const totalSec = data.video_seconds || lesson?.video_seconds || 0;
+      if (totalSec === 0 || (data.watched_seconds && (data.watched_seconds / totalSec >= 0.7))) {
+        setCanComplete(true);
+      }
     } catch (err) {
       console.error("Lỗi tải chi tiết bài học:", err);
       Alert.alert("Lỗi tải dữ liệu", "Không thể tải chi tiết bài học lúc này.");
@@ -148,6 +164,7 @@ const LessonDetail = ({ route, navigation }) => {
     }
   };
 
+  // Tải danh sách bình luận của bài học
   const loadComments = async () => {
     try {
       setLoadingComments(true);
@@ -299,6 +316,7 @@ const LessonDetail = ({ route, navigation }) => {
     );
   };
 
+  // Xử lý gửi bình luận hoặc trả lời bình luận
   const handleSendComment = async () => {
     if (!commentText.trim()) return;
     if (!user) {
@@ -578,7 +596,7 @@ const LessonDetail = ({ route, navigation }) => {
                     Đã hoàn thành bài học
                   </Text>
                 </View>
-              ) : (
+              ) : canComplete ? (
                 <TouchableOpacity
                   style={Styles.btnCompleteLesson}
                   onPress={handleComplete}
@@ -594,6 +612,11 @@ const LessonDetail = ({ route, navigation }) => {
                     </>
                   )}
                 </TouchableOpacity>
+              ) : (
+                <View style={[Styles.btnCompleteLesson, { backgroundColor: '#e4e6eb' }]}>
+                  <Ionicons name="time-outline" size={24} color="#888" />
+                  <Text style={[Styles.btnCompleteLessonText, { color: '#888' }]}>Cần xem 70% video để hoàn thành</Text>
+                </View>
               )}
             </View>
           )}

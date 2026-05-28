@@ -33,9 +33,11 @@ import CategoryManage from '../screens/Admin/CategoryManage';
 import TagManage from '../screens/Admin/TagManage';
 import theme from '../styles/theme';
 
+// Khởi tạo các bộ điều hướng (Stack dùng cho chuyển trang xếp chồng, Tab dùng cho thanh điều hướng dưới đáy)
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Các Stack riêng biệt cho từng Tab để quản lý lịch sử chuyển trang độc lập
 const HomeStack = createNativeStackNavigator();
 const MyCoursesStack = createNativeStackNavigator();
 const ChatStack = createNativeStackNavigator();
@@ -57,6 +59,7 @@ const useHeaderOptions = () => {
   };
 }
 
+// Bộ điều hướng cho Tab Trang chủ
 const HomeStackNavigator = () => {
   const headerOptions = useHeaderOptions();
 
@@ -258,6 +261,7 @@ const AccountStackNavigator = () => {
   );
 }
 
+// Thanh điều hướng chính (Bottom Tab Bar) chứa các Tab của ứng dụng
 const MainTabNavigator = () => {
   const { user } = useUser();
   const insets = useSafeAreaInsets();
@@ -344,6 +348,7 @@ const MainTabNavigator = () => {
   );
 }
 
+// Bộ điều hướng gốc bao bọc toàn bộ ứng dụng (chứa Tab bar và các trang không nằm trong Tab bar như Login, Register)
 const AppNavigator = () => {
   const headerOptions = useHeaderOptions();
 
