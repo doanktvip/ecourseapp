@@ -2,7 +2,6 @@ from courses.payments.base import PaymentGateway
 from ecourse import settings
 
 
-# Định nghĩa lớp CashPayment đóng vai trò là một hình thức thanh toán đại diện cho việc đóng tiền mặt hoặc chuyển khoản thủ công
 class CashPayment(PaymentGateway):
     def create_payment(self, enrollment, amount: float) -> dict:
         config = settings.CASH_CONFIG

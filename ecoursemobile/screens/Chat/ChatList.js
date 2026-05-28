@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import UserStyles from '../User/Styles';
 import MyStyles from './Styles';
 import moment from 'moment';
+import theme from '../../styles/theme';
 
 const ChatListMain = ({ navigation }) => {
   const { user } = useUser();
@@ -28,7 +29,6 @@ const ChatListMain = ({ navigation }) => {
       const data = snapshot.val();
       if (data) {
         const roomList = Object.values(data)
-          // SỬA LỖI: Đồng bộ kiểu dữ liệu bằng String()
           .filter(room => String(room.studentId) === String(user.id) || String(room.instructorId) === String(user.id))
           .sort((a, b) => b.updatedAt - a.updatedAt);
         setRooms(roomList);
@@ -138,7 +138,6 @@ const ChatListMain = ({ navigation }) => {
   };
 
   const filteredRooms = rooms.filter(room => {
-    // SỬA LỖI: So sánh bằng String()
     const isStudent = String(user.id) === String(room.studentId);
     const partnerName = isStudent ? room.instructorName : room.studentName;
     return partnerName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -150,7 +149,6 @@ const ChatListMain = ({ navigation }) => {
   });
 
   const renderRoomItem = ({ item }) => {
-    // SỬA LỖI: So sánh bằng String()
     const isStudent = String(user.id) === String(item.studentId);
     const partnerName = isStudent ? item.instructorName : item.studentName;
     const partnerAvatar = isStudent ? item.instructorAvatar : item.studentAvatar;
@@ -214,7 +212,7 @@ const ChatListMain = ({ navigation }) => {
       />
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 20 }} color="#0d6efd" size="large" />
+        <ActivityIndicator style={{ marginTop: 20 }} color={theme.colors.primary} size="large" />
       ) : (
         <FlatList
           data={activeTab === 'chats' ? filteredRooms : filteredContacts}

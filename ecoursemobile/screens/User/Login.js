@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from "../../configs/Contexts";
 import { Ionicons } from '@expo/vector-icons';
+import theme from '../../styles/theme';
 
 const Login = ({ route }) => {
 
@@ -118,7 +119,7 @@ const Login = ({ route }) => {
         <ScrollView ref={scrollViewRef} style={Styles.loginContainer} contentContainerStyle={Styles.loginScrollContent} keyboardShouldPersistTaps="handled">
             <View style={Styles.logoWrapper}>
                 <View style={Styles.logoCircle}>
-                    <Ionicons name="school" size={44} color="#ffffff" />
+                    <Ionicons name="school" size={44} color={theme.colors.white} />
                 </View>
                 <Text style={Styles.appName}>eCourse App</Text>
                 <Text style={Styles.appSubtitle}>Cổng tri thức trực tuyến hàng đầu</Text>
@@ -128,8 +129,8 @@ const Login = ({ route }) => {
                 <Text style={Styles.cardTitle}>Đăng nhập</Text>
 
                 {userInfo.map(u => (
-                    <View 
-                        key={u.field} 
+                    <View
+                        key={u.field}
                         style={Styles.inputGroup}
                         onLayout={(event) => {
                             inputPositions.current[u.field] = event.nativeEvent.layout.y;
@@ -141,9 +142,9 @@ const Login = ({ route }) => {
                             onChangeText={(t) => setUser({ ...user, [u.field]: t })}
                             onFocus={() => {
                                 setTimeout(() => {
-                                    scrollViewRef.current?.scrollTo({ 
+                                    scrollViewRef.current?.scrollTo({
                                         y: inputPositions.current[u.field] || 0,
-                                        animated: true 
+                                        animated: true
                                     });
                                 }, 200);
                             }}
@@ -152,8 +153,8 @@ const Login = ({ route }) => {
                             placeholder={u.placeholder}
                             placeholderTextColor="#adb5bd"
                             secureTextEntry={u.secureTextEntry && !showPassword}
-                            outlineColor="#dee2e6"
-                            activeOutlineColor="#1976d2"
+                            outlineColor={theme.colors.border}
+                            activeOutlineColor={theme.colors.primary}
                             left={<TextInput.Icon icon={u.field === 'username' ? 'account-outline' : 'lock-outline'} />}
                             right={u.secureTextEntry ? (
                                 <TextInput.Icon
@@ -187,7 +188,7 @@ const Login = ({ route }) => {
                     <Text style={Styles.btnGoogleText}>Đăng nhập bằng Google</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[Styles.btnGoogle, { marginTop: 12 }]} onPress={loginWithFacebook}>
-                    <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                    <Ionicons name="logo-facebook" size={20} color={theme.colors.primary} />
                     <Text style={Styles.btnGoogleText}>Đăng nhập bằng Facebook</Text>
                 </TouchableOpacity>
             </View>

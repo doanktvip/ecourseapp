@@ -159,10 +159,8 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
     @action(methods=['get', 'post'], detail=True, url_path='reviews')
     def reviews(self, request, pk):
         if request.method.__eq__('GET'):
-            # Lấy khóa học hiện tại
             course = self.get_object()
             reviews = course.reviews.filter(active=True).order_by('-created_date')
-            # Phân trang
             p = paginators.CourseReviewPaginator()
             page = p.paginate_queryset(reviews, request)
 
@@ -175,22 +173,18 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
         if request.method.__eq__('POST'):
             course = self.get_object()
 
-            # thuộc tính course chỉ cho phép đọc nên phải gán dl qua biến khác
             data = request.data.copy()
             data['course'] = course.id
 
             serializer = serializers.CourseReviewSerializer(data=data)
             if serializer.is_valid():
                 try:
-                    # Lưu review
-                    review = serializer.save(user=request.user,course=course)
+                    review = serializer.save(user=request.user, course=course)
                     return Response(serializers.CourseReviewSerializer(review).data, status=status.HTTP_201_CREATED)
 
-                # Không đủ tiến độ để review
                 except DjangoValidationError as e:
                     return Response({"detail": e.messages}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Lỗi sai định dạng dữ liệu (vd:rating > 5)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -327,7 +321,7 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
 
         if self.action in ['complete', 'update_progress']:
             return [perms.IsEnrolled()]
-            
+
         if self.action in ['partial_update', 'destroy', 'add_tags']:
             return [perms.IsCourseOwner()]
 
@@ -428,7 +422,8 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
         lesson = self.get_object()
 
         if request.method == 'GET':
-            comments = lesson.comments.select_related('user').filter(active=True, parent__isnull=True).order_by('-created_date')
+            comments = lesson.comments.select_related('user').filter(active=True, parent__isnull=True).order_by(
+                '-created_date')
 
             p = paginators.CommentPaginator()
             page = p.paginate_queryset(comments, request)
@@ -493,7 +488,8 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
     serializer_class = serializers.PaymentSerializer
     pagination_class = paginators.PaymentPaginator
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ['enrollment__course__subject', 'enrollment__student__first_name', 'enrollment__student__last_name', 'transaction_id']
+    search_fields = ['enrollment__course__subject', 'enrollment__student__first_name', 'enrollment__student__last_name',
+                     'transaction_id']
     filterset_fields = ['is_successful']
 
     def get_permissions(self):
@@ -520,10 +516,8 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
         return Payment.objects.filter(enrollment__student=user).order_by('-created_date')
 
     def list(self, request, *args, **kwargs):
-        # 1. Lấy queryset gốc theo vai trò
         queryset = self.get_queryset()
 
-        # 2. Chỉ áp dụng SearchFilter để tính toán thống kê chính xác trước khi lọc trạng thái (is_successful)
         search_backend = filters.SearchFilter()
         searched_queryset = search_backend.filter_queryset(request, queryset, self)
 
@@ -534,7 +528,6 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
         total_successful_count = successful_qs.count()
         total_pending_count = pending_qs.count()
 
-        # 3. Áp dụng tất cả bộ lọc (bao gồm cả is_successful từ DjangoFilterBackend)
         final_queryset = self.filter_queryset(searched_queryset)
 
         page = self.paginate_queryset(final_queryset)
@@ -616,33 +609,26 @@ class StatsViewSet(viewsets.ViewSet):
 
     def list(self, request):
         user = request.user
-        # Lấy hóa đơn liên quan đến giáo viên đó
         payments = Payment.objects.filter(is_successful=True, enrollment__course__instructor=user)
 
-        # Thống kê theo khóa học
-        # payments.value gom nhóm
-        # annotate tính toán từng nhóm
         stat_course = payments.values('enrollment__course__subject').annotate(
             total_students=Count('enrollment__student', distinct=True),
             total_revenue=Sum('amount')
         ).order_by('-total_revenue')
 
         def get_time_stats(trunc_class):
-            # Nhóm và tính toán
             data = payments.annotate(period=trunc_class('created_date')).values('period').annotate(
                 total_students=Count('enrollment__student', distinct=True),
                 total_revenue=Sum('amount')
             ).order_by('period')
 
-            # Format chuỗi thời gian cho đẹp tùy theo loại thống kê
             def format_period(p):
                 if not p: return "N/A"
-                if trunc_class == TruncMonth: return p.strftime('%Y-%m')  # Vd: 2026-05
-                if trunc_class == TruncYear: return p.strftime('%Y')  # Vd: 2026
-                if trunc_class == TruncQuarter: return f"{p.year}-Q{(p.month - 1) // 3 + 1}"  # Vd: 2026-Q2
+                if trunc_class == TruncMonth: return p.strftime('%Y-%m')
+                if trunc_class == TruncYear: return p.strftime('%Y')
+                if trunc_class == TruncQuarter: return f"{p.year}-Q{(p.month - 1) // 3 + 1}"
                 return str(p)
 
-            # Đóng gói ra mảng JSON
             return [
                 {
                     "period": format_period(item['period']),
@@ -651,7 +637,6 @@ class StatsViewSet(viewsets.ViewSet):
                 } for item in data
             ]
 
-        # 4. GỌI HÀM VÀ TRẢ VỀ KẾT QUẢ
         return Response({
             "stat_course": stat_course,
             "by_month": get_time_stats(TruncMonth),

@@ -93,7 +93,7 @@ class ZaloPayWebhookView(views.APIView):
         return Response({"return_code": -1, "return_message": "mac not equal"}, status=status.HTTP_200_OK)
 
     def get(self, request):
-        status_code = request.query_params.get('status') # 1 là thành công
+        status_code = request.query_params.get('status')
 
         if str(status_code) == '1':
             return Response({

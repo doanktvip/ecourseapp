@@ -5,12 +5,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
+import theme from '../../styles/theme';
 
 const CourseReviews = ({ route, navigation }) => {
     const { courseId, courseSubject } = route.params;
     const [reviews, setReviews] = useState([]);
     const [loadingReviews, setLoadingReviews] = useState(false);
-    const [user] = useContext(MyUserContext); // Lấy thông tin user từ Context toàn cục
+    const [user] = useContext(MyUserContext);
     const [page, setPage] = useState(1);
     const [totalReviews, setTotalReviews] = useState(0);
 
@@ -18,17 +19,13 @@ const CourseReviews = ({ route, navigation }) => {
     const [comment, setComment] = useState("");
     const [submittingReview, setSubmittingReview] = useState(false);
 
-    // =========================================================================
-    // HÀM KIỂM TRA ĐIỀU KIỆN & GỬI ĐÁNH GIÁ (CHỈ CHẠY KHI BẤM NÚT)
-    // =========================================================================
+
     const handleSubmitReview = async () => {
-        // BƯỚC 1: Kiểm tra nội dung nhập trống công thức cơ bản
         if (!comment.trim()) {
             Alert.alert("Thông báo", "Vui lòng nhập nội dung đánh giá của bạn.");
             return;
         }
 
-        // BƯỚC 2: Kiểm tra trạng thái Đăng nhập
         if (!user) {
             Alert.alert(
                 "Yêu cầu đăng nhập",
@@ -41,7 +38,6 @@ const CourseReviews = ({ route, navigation }) => {
             return;
         }
 
-        // BƯỚC 3: Kiểm tra phân quyền tài khoản (Phải là STUDENT)
         if (user.role !== 'STUDENT') {
             Alert.alert("Quyền truy cập bị từ chối", "Hệ thống chỉ cho phép tài khoản thuộc vai trò Sinh viên viết đánh giá khóa học.");
             return;
@@ -56,11 +52,9 @@ const CourseReviews = ({ route, navigation }) => {
                 return;
             }
 
-            // BƯỚC 4: Kiểm tra Tiến độ trực tiếp bằng API danh sách khóa học của tôi
             let enrollRes = await authApis(token).get(endpoints['my-courses']);
             const myCoursesList = enrollRes.data || [];
 
-            // Tìm bản ghi chứa thông tin khóa học hiện tại
             const currentCourseData = myCoursesList.find(c => c.id === courseId);
 
             if (!currentCourseData || !currentCourseData.enrollment) {
@@ -69,7 +63,6 @@ const CourseReviews = ({ route, navigation }) => {
                 return;
             }
 
-            // Kiểm tra chỉ số phần trăm tiến độ học tập (Lấy từ dữ liệu Backend đồng bộ)
             const currentProgress = currentCourseData.enrollment.progress || 0;
             if (currentProgress < 20) {
                 Alert.alert(
@@ -80,19 +73,16 @@ const CourseReviews = ({ route, navigation }) => {
                 return;
             }
 
-            // BƯỚC 5: Gửi dữ liệu Review lên Backend sau khi vượt qua tất cả các chốt chặn
             let reviewRes = await authApis(token).post(endpoints['course-reviews'](courseId), {
                 'rating': rating,
                 'comment': comment
             });
 
-            // Nếu Backend trả về thành công, thêm ngay vào danh sách hiển thị
             if (reviewRes.status === 201 || reviewRes.status === 200) {
                 Alert.alert("Thành công", "Cảm ơn bạn đã gửi đánh giá đóng góp cho khóa học!");
                 setComment("");
                 setRating(5);
 
-                // Tải lại trang 1 từ Backend để cập nhật danh sách đánh giá mới và tổng số lượng chính xác nhất
                 if (page === 1) {
                     loadReviews();
                 } else {
@@ -101,7 +91,6 @@ const CourseReviews = ({ route, navigation }) => {
             }
         } catch (ex) {
             console.error("Lỗi xử lý gửi đánh giá:", ex);
-            // Bắt thông điệp lỗi chi tiết từ tầng Model Clean của Django nếu có
             if (ex.response && ex.response.data && ex.response.data.non_field_errors) {
                 Alert.alert("Thất bại", ex.response.data.non_field_errors[0]);
             } else {
@@ -112,9 +101,6 @@ const CourseReviews = ({ route, navigation }) => {
         }
     };
 
-    // =========================================================================
-    // LẤY DANH SÁCH BÌNH LUẬN CŨ CỦA KHÓA HỌC (PHÂN TRANG MƯỢT MÀ)
-    // =========================================================================
     const loadReviews = async () => {
         if (page === 0) return;
         try {
@@ -130,7 +116,6 @@ const CourseReviews = ({ route, navigation }) => {
                 setReviews(prev => [...prev, ...newReviews]);
             }
 
-            // Lưu tổng số lượng đánh giá thực tế từ thuộc tính count của API phân trang
             if (res.data.count !== undefined) {
                 setTotalReviews(res.data.count);
             } else {
@@ -185,21 +170,18 @@ const CourseReviews = ({ route, navigation }) => {
     );
 
     return (
-        // Điều chỉnh offset để tránh bị bàn phím che khuất 
         <KeyboardAvoidingView
-            style={{ flex: 1, backgroundColor: '#ffffff' }}
+            style={{ flex: 1, backgroundColor: theme.colors.white }}
             behavior='padding'
             keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80} >
-            {/* 1. FLATLIST: DANH SÁCH BÌNH LUẬN (Sẽ tự động chiếm không gian trống phía trên) */}
             <FlatList
-                style={{ flex: 1 }} // <--- flex: 1 ở đây sẽ đẩy khối View phía dưới xuống tận cùng
+                style={{ flex: 1 }}
                 contentContainerStyle={{ paddingBottom: 20 }}
                 data={reviews}
                 renderItem={renderReviewItem}
                 keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
                 showsVerticalScrollIndicator={false}
 
-                // Tiêu đề danh sách
                 ListHeaderComponent={() => (
                     <Text style={[Styles.reviewSectionTitle, { marginTop: 16, paddingHorizontal: 16 }]}>
                         Tất cả đánh giá về khóa học ({totalReviews})
@@ -209,11 +191,11 @@ const CourseReviews = ({ route, navigation }) => {
                 ListEmptyComponent={!loadingReviews && <Text style={[Styles.noReviewsText, { textAlign: 'center', marginTop: 20 }]}>Khóa học này chưa có lượt đánh giá nào.</Text>}
                 onEndReached={loadMoreReviews}
                 onEndReachedThreshold={0.2}
-                ListFooterComponent={loadingReviews ? <ActivityIndicator size="small" color="#1877F2" style={{ marginVertical: 15 }} /> : null}
+                ListFooterComponent={loadingReviews ? <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 15 }} /> : null}
             />
 
             {/* 2. VIEW: FORM ĐÁNH GIÁ (Nằm ngoài FlatList để cố định dưới đáy) */}
-            <View style={{ backgroundColor: '#ffffff', borderTopWidth: 1, borderColor: '#eee' }}>
+            <View style={{ backgroundColor: theme.colors.white, borderTopWidth: 1, borderColor: theme.colors.border }}>
                 {/* Chọn số sao */}
                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
                     {[1, 2, 3, 4, 5].map(s => (
@@ -240,9 +222,9 @@ const CourseReviews = ({ route, navigation }) => {
                         activeOpacity={0.8}
                     >
                         {submittingReview ? (
-                            <ActivityIndicator size="small" color="#ffffff" />
+                            <ActivityIndicator size="small" color={theme.colors.white} />
                         ) : (
-                            <Ionicons name="send" size={16} color="#ffffff" />
+                            <Ionicons name="send" size={16} color={theme.colors.white} />
                         )}
                     </TouchableOpacity>
                 </View>

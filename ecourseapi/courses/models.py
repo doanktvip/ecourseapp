@@ -10,10 +10,6 @@ from django.db.models import Max
 from django.db.models.aggregates import Sum, Avg
 
 
-# ==========================================
-# MODEL NGƯỜI DÙNG VÀ CƠ SỞ
-# ==========================================
-
 class User(AbstractUser):
     class Role(models.TextChoices):
         ADMIN = 'ADMIN', 'Quản trị viên'
@@ -40,7 +36,6 @@ class BaseModel(models.Model):
         abstract = True
 
 
-# Bảng quản lý đơn xin làm giảng viên
 class InstructorApplication(BaseModel):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Đang chờ duyệt'
@@ -52,10 +47,6 @@ class InstructorApplication(BaseModel):
                               validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])])
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
 
-
-# ==========================================
-# MODEL QUẢN LÝ KHÓA HỌC VÀ NỘI DUNG
-# ==========================================
 
 class Category(BaseModel):
     name = models.CharField(max_length=100)
@@ -127,10 +118,12 @@ class Lesson(BaseModel):
         ordering = ['order']
 
     def save(self, *args, **kwargs):
-        if self.video and isinstance(self.video, str) and not self.video.startswith('http') and 'upload/' not in self.video:
+        if self.video and isinstance(self.video, str) and not self.video.startswith(
+                'http') and 'upload/' not in self.video:
             self.video = None
 
-        if self.image and isinstance(self.image, str) and not self.image.startswith('http') and 'upload/' not in self.image:
+        if self.image and isinstance(self.image, str) and not self.image.startswith(
+                'http') and 'upload/' not in self.image:
             self.image = None
 
         if not self.pk:
@@ -161,10 +154,6 @@ class Lesson(BaseModel):
         super().delete(*args, **kwargs)
         course.update_duration()
 
-
-# ==========================================
-# MODEL NGHIỆP VỤ (ĐĂNG KÝ, THANH TOÁN VÀ TIẾN ĐỘ)
-# ==========================================
 
 class Enrollment(BaseModel):
     student = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='enrollments')
@@ -226,10 +215,6 @@ class Payment(BaseModel):
         if self.is_successful:
             self.enrollment.course.update_stats()
 
-
-# ==========================================
-# MODEL TƯƠNG TÁC (ĐÁNH GIÁ, BÌNH LUẬN)
-# ==========================================
 
 class Interaction(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

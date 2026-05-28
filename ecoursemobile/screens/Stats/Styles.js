@@ -3,12 +3,9 @@ import GlobalStyles from "../../styles/Styles";
 import theme from "../../styles/theme";
 
 const localStyles = StyleSheet.create({
-    // ==========================================
-    // STYLES DÀNH CHO TRANG STATS DASHBOARD (THỐNG KÊ)
-    // ==========================================
     statsContainer: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.colors.background,
     },
     statsScrollContent: {
         padding: 16,
@@ -22,20 +19,19 @@ const localStyles = StyleSheet.create({
     },
     statsEmptyText: {
         textAlign: 'center',
-        color: '#666666',
+        color: theme.colors.textSecondary,
         marginTop: 12,
         fontSize: 15,
         lineHeight: 22,
     },
-    // Khối chứa 2 thẻ KPI
     statsKpiWrapper: {
         flexDirection: 'row',
-        gap: 12, // Tạo khoảng cách giữa 2 thẻ (Nếu lỗi trên máy cũ có thể đổi thành justifyContent: 'space-between')
+        gap: 12,
         marginBottom: 16,
     },
     statsKpiCard: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderRadius: 12,
         padding: 15,
         shadowColor: '#000',
@@ -50,7 +46,7 @@ const localStyles = StyleSheet.create({
     statsKpiValueTotal: {
         fontSize: 24,
         marginVertical: 4,
-        color: '#333333',
+        color: theme.colors.text,
         fontWeight: 'bold',
     },
     statsKpiValueMoney: {
@@ -59,10 +55,9 @@ const localStyles = StyleSheet.create({
         color: '#137333',
         fontWeight: 'bold',
     },
-    // Bộ lọc Tab (Tháng/Quý/Năm)
     statsTabContainer: {
         flexDirection: 'row',
-        backgroundColor: '#e9ecef',
+        backgroundColor: theme.colors.border,
         borderRadius: 8,
         padding: 4,
         marginBottom: 12,
@@ -75,7 +70,7 @@ const localStyles = StyleSheet.create({
         borderRadius: 6,
     },
     statsTabButtonActive: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
@@ -83,24 +78,23 @@ const localStyles = StyleSheet.create({
     },
     statsTabText: {
         fontWeight: 'normal',
-        color: '#666666',
+        color: theme.colors.textSecondary,
         fontSize: 13,
     },
     statsTabTextActive: {
         fontWeight: 'bold',
-        color: '#1877F2',
+        color: theme.colors.primary,
         fontSize: 13,
     },
-    // Danh sách dòng dữ liệu (List item)
     statsListRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#eeeeee',
+        borderBottomColor: theme.colors.border,
     },
     statsListRowLast: {
-        borderBottomWidth: 0, // Dòng cuối cùng không có viền
+        borderBottomWidth: 0,
     },
     statsListLeft: {
         flex: 1,
@@ -119,7 +113,7 @@ const localStyles = StyleSheet.create({
     statsListValueBlue: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#1877F2',
+        color: theme.colors.primary,
     },
 });
 

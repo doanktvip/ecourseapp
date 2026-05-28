@@ -3,14 +3,13 @@ import GlobalStyles from "../../styles/Styles";
 import theme from "../../styles/theme";
 
 const localStyles = StyleSheet.create({
-    // === CHAT STYLES ===
     chatContainer: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.colors.secondary,
     },
     chatSearchBar: {
         margin: 12,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         elevation: 1,
     },
     chatSegmentedButtons: {
@@ -20,7 +19,7 @@ const localStyles = StyleSheet.create({
     chatItem: {
         flexDirection: 'row',
         padding: 12,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderBottomWidth: 1,
         borderBottomColor: '#f1f3f5',
         alignItems: 'center',
@@ -38,7 +37,7 @@ const localStyles = StyleSheet.create({
     chatPartnerName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#212529',
+        color: theme.colors.text,
     },
     chatTime: {
         fontSize: 12,
@@ -46,12 +45,12 @@ const localStyles = StyleSheet.create({
     },
     chatLastMessage: {
         fontSize: 14,
-        color: '#495057',
+        color: theme.colors.textSecondary,
         marginTop: 4,
     },
     chatRoleLabel: {
         fontSize: 12,
-        color: '#0d6efd',
+        color: theme.colors.primary,
         marginTop: 4,
         fontWeight: '500',
     },
@@ -71,18 +70,17 @@ const localStyles = StyleSheet.create({
     },
     chatWarningText: {
         fontSize: 15,
-        color: '#495057',
+        color: theme.colors.textSecondary,
         fontWeight: '500',
     },
-    // --- ChatRoom Specific Styles ---
     chatRoomHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 12,
         paddingVertical: 10,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderBottomWidth: 1,
-        borderBottomColor: '#e9ecef',
+        borderBottomColor: theme.colors.border,
         elevation: 2,
     },
     chatRoomBackButton: {
@@ -96,11 +94,11 @@ const localStyles = StyleSheet.create({
     chatRoomHeaderTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#212529',
+        color: theme.colors.text,
     },
     chatRoomHeaderSubtitle: {
         fontSize: 12,
-        color: '#198754',
+        color: theme.colors.success,
         fontWeight: '500',
     },
     chatMessageList: {
@@ -134,24 +132,24 @@ const localStyles = StyleSheet.create({
         elevation: 1,
     },
     chatMyBubble: {
-        backgroundColor: '#0d6efd',
+        backgroundColor: theme.colors.primary,
         borderBottomRightRadius: 2,
     },
     chatPartnerBubble: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderBottomLeftRadius: 2,
         borderWidth: 1,
-        borderColor: '#e9ecef',
+        borderColor: theme.colors.border,
     },
     chatMessageText: {
         fontSize: 15,
         lineHeight: 20,
     },
     chatMyMessageText: {
-        color: '#ffffff',
+        color: theme.colors.white,
     },
     chatPartnerMessageText: {
-        color: '#212529',
+        color: theme.colors.text,
     },
     chatTimestamp: {
         fontSize: 9,
@@ -159,7 +157,7 @@ const localStyles = StyleSheet.create({
         alignSelf: 'flex-end',
     },
     chatMyTimestamp: {
-        color: '#e9ecef',
+        color: theme.colors.border,
     },
     chatPartnerTimestamp: {
         color: '#868e96',
@@ -167,9 +165,9 @@ const localStyles = StyleSheet.create({
     chatInputContainer: {
         flexDirection: 'row',
         padding: 12,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderTopWidth: 1,
-        borderTopColor: '#e9ecef',
+        borderTopColor: theme.colors.border,
         alignItems: 'center',
     },
     chatInput: {
@@ -180,13 +178,13 @@ const localStyles = StyleSheet.create({
         paddingVertical: 8,
         fontSize: 15,
         maxHeight: 100,
-        color: '#212529',
+        color: theme.colors.text,
     },
     chatSendButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#0d6efd',
+        backgroundColor: theme.colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 12,

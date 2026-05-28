@@ -1,36 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    Modal,
-    ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, Text, Modal, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../../configs/Apis';
 import Styles from '../Styles';
+import theme from '../../../styles/theme';
 
-/**
- * TagsModal - Modal tự quản lý toàn bộ logic gán nhãn cho bài học
- *
- * Props:
- *  - visible: boolean         - Hiển thị/ẩn Modal
- *  - onClose: () => void      - Callback đóng Modal
- *  - lessonId: number         - ID bài học cần gán nhãn
- *  - currentTags: Tag[]       - Danh sách nhãn hiện tại của bài học (để tích chọn sẵn)
- *  - user: User | null        - Thông tin người dùng đang đăng nhập (để kiểm tra quyền)
- *  - onSaved: () => void      - Callback gọi sau khi lưu thành công (để LessonDetail reload)
- */
 const TagsModal = ({ visible, onClose, lessonId, currentTags = [], user, onSaved }) => {
     const [allTags, setAllTags] = useState([]);
     const [selectedTagIds, setSelectedTagIds] = useState([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    // Khi Modal được mở: tải danh sách nhãn và tích chọn sẵn các nhãn hiện tại
     useEffect(() => {
         if (visible) {
             const currentTagIds = currentTags.map(t => t.id);
@@ -39,7 +20,6 @@ const TagsModal = ({ visible, onClose, lessonId, currentTags = [], user, onSaved
         }
     }, [visible]);
 
-    // Tải toàn bộ danh sách nhãn từ Backend
     const loadAllTags = async () => {
         try {
             setLoading(true);
@@ -56,14 +36,12 @@ const TagsModal = ({ visible, onClose, lessonId, currentTags = [], user, onSaved
         }
     };
 
-    // Chọn / Bỏ chọn một nhãn
     const handleToggleTag = (tagId) => {
         setSelectedTagIds(prev =>
             prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
         );
     };
 
-    // Lưu danh sách nhãn lên Backend qua POST /lessons/{lessonId}/tags/
     const handleSave = async () => {
         if (selectedTagIds.length === 0) {
             Alert.alert("Lưu ý", "Vui lòng chọn ít nhất một nhãn.");
@@ -77,7 +55,7 @@ const TagsModal = ({ visible, onClose, lessonId, currentTags = [], user, onSaved
                     tags: selectedTagIds,
                 });
                 onClose();
-                onSaved?.(); // Gọi callback để LessonDetail reload lại dữ liệu
+                onSaved?.();
                 Alert.alert("Đã cập nhật", "Gán nhãn cho bài học thành công!");
             }
         } catch (err) {
@@ -102,19 +80,19 @@ const TagsModal = ({ visible, onClose, lessonId, currentTags = [], user, onSaved
                     <View style={Styles.modalHeader}>
                         <Text style={Styles.modalTitle}>Gán nhãn bài học</Text>
                         <TouchableOpacity onPress={onClose} disabled={saving}>
-                            <Ionicons name="close" size={24} color="#6c757d" />
+                            <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
 
                     {/* Nội dung */}
                     {loading ? (
-                        <ActivityIndicator size="large" color="#1877F2" style={{ paddingVertical: 30 }} />
+                        <ActivityIndicator size="large" color={theme.colors.primary} style={{ paddingVertical: 30 }} />
                     ) : (
                         <ScrollView
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={{ paddingBottom: 10 }}
                         >
-                            <Text style={[Styles.small, { color: '#6c757d', marginBottom: 12 }]}>
+                            <Text style={[Styles.small, { color: theme.colors.textSecondary, marginBottom: 12 }]}>
                                 Chọn các nhãn phù hợp cho bài học. Nhấp để chọn/bỏ chọn.
                             </Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -127,8 +105,8 @@ const TagsModal = ({ visible, onClose, lessonId, currentTags = [], user, onSaved
                                                 paddingHorizontal: 14,
                                                 paddingVertical: 7,
                                                 borderRadius: 20,
-                                                backgroundColor: isSelected ? '#e8f0fe' : '#f8f9fa',
-                                                borderColor: isSelected ? '#1877F2' : '#dee2e6',
+                                                backgroundColor: isSelected ? '#e8f0fe' : theme.colors.secondary,
+                                                borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                                                 borderWidth: 1.5,
                                                 marginBottom: 10,
                                                 marginRight: 8,
@@ -137,7 +115,7 @@ const TagsModal = ({ visible, onClose, lessonId, currentTags = [], user, onSaved
                                             activeOpacity={0.7}
                                         >
                                             <Text style={{
-                                                color: isSelected ? '#1877F2' : '#495057',
+                                                color: isSelected ? theme.colors.primary : theme.colors.textSecondary,
                                                 fontWeight: isSelected ? 'bold' : 'normal',
                                                 fontSize: 13,
                                             }}>
@@ -168,7 +146,7 @@ const TagsModal = ({ visible, onClose, lessonId, currentTags = [], user, onSaved
                             activeOpacity={0.8}
                         >
                             {saving ? (
-                                <ActivityIndicator size="small" color="#ffffff" />
+                                <ActivityIndicator size="small" color={theme.colors.white} />
                             ) : (
                                 <Text style={Styles.btnPrimaryText}>
                                     Lưu nhãn ({selectedTagIds.length})
