@@ -239,6 +239,7 @@ class EnrollmentSerializer(serializers.Serializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = SimpleUserSerializer(read_only=True)
+    # hàm tự định nghĩa, tùy chỉnh thuộc tính
     replies = serializers.SerializerMethodField()
 
     class Meta:
@@ -249,6 +250,7 @@ class CommentSerializer(serializers.ModelSerializer):
     def get_replies(self, obj):
         if obj.parent is not None:
             return []
+        #Lọc ra danh sách phản hồi của cmt đó
         active_replies = obj.replies.filter(active=True).order_by('-created_date')
         return CommentSerializer(active_replies, many=True, context=self.context).data
 

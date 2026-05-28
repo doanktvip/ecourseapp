@@ -36,6 +36,7 @@ const CourseCompare = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [loadingCompare, setLoadingCompare] = useState(false);
 
+  // Hàm xử lý khi chọn khóa học B để so sánh
   const selectCourseB = (course) => {
     setCourseB(course);
     if (course?.id) {
@@ -74,6 +75,7 @@ const CourseCompare = ({ route, navigation }) => {
         students_count: c.total_students || 0,
         video_duration: formatVideoDuration(c.total_duration_video)
       }));
+      // Cập nhật danh sách khóa học để lựa chọn
       setCourseOptions(formattedOptions);
 
       if (formattedOptions.length > 0) {

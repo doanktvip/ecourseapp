@@ -21,6 +21,7 @@ const CourseReviews = ({ route, navigation }) => {
 
 
     const handleSubmitReview = async () => {
+        // BƯỚC 1: Kiểm tra nội dung nhập trống 
         if (!comment.trim()) {
             Alert.alert("Thông báo", "Vui lòng nhập nội dung đánh giá của bạn.");
             return;
@@ -78,6 +79,7 @@ const CourseReviews = ({ route, navigation }) => {
                 'comment': comment
             });
 
+            // Nếu Backend trả về thành công, làm mới lại form đánh giá
             if (reviewRes.status === 201 || reviewRes.status === 200) {
                 Alert.alert("Thành công", "Cảm ơn bạn đã gửi đánh giá đóng góp cho khóa học!");
                 setComment("");
@@ -113,6 +115,7 @@ const CourseReviews = ({ route, navigation }) => {
             if (page === 1) {
                 setReviews(newReviews);
             } else if (page > 1) {
+                // cơ chế callback để cập nhật reviews tránh mất dữ liệu khi bất đồng bộ
                 setReviews(prev => [...prev, ...newReviews]);
             }
 
