@@ -12,10 +12,8 @@ from courses.payments.base import PaymentGateway
 logger = logging.getLogger(__name__)
 
 
-# Khai báo lớp mô hình hóa luồng xử lý riêng cho cổng thanh toán điện tử ZaloPay, tuân thủ theo hợp đồng của lớp nền tảng PaymentGateway
 class ZaloPayPayment(PaymentGateway):
 
-    # Phương thức thực hiện giao tiếp với máy chủ ZaloPay để đăng ký khởi tạo một phiên giao dịch mới và trích xuất đường dẫn thanh toán
     def create_payment(self, enrollment, amount: float) -> dict:
         config = settings.ZALOPAY_CONFIG
 
@@ -77,7 +75,6 @@ class ZaloPayPayment(PaymentGateway):
             logger.error(f"Loi ket noi ZaloPay: {e}")
             raise ValueError("Khong the ket noi ZaloPay.")
 
-    # Xây dựng phương thức xác nhận và thẩm định an ninh cho tập gói tin (Callback/Webhook) mà hệ thống tự động của ZaloPay đệ trình khi một giao dịch đã tiến hành xong
     def verify_payment(self, request_data: dict) -> bool:
         config = settings.ZALOPAY_CONFIG
 

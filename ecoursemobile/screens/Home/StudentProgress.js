@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
+import theme from '../../styles/theme';
 
 const StudentProgress = ({ route, navigation }) => {
   const { courseId, courseSubject } = route.params || {};
@@ -24,7 +25,7 @@ const StudentProgress = ({ route, navigation }) => {
 
       let url = `${endpoints['courses']}${courseId}/students/`;
       let res = await authApis(token).get(url);
-      
+
       setEnrollments(res.data);
     } catch (ex) {
       console.error("Lỗi khi tải danh sách học viên:", ex);
@@ -36,7 +37,7 @@ const StudentProgress = ({ route, navigation }) => {
 
   useEffect(() => {
     loadProgress();
-  } , [courseId]);
+  }, [courseId]);
 
   const handleChatWithStudent = (student) => {
     if (!user) {
@@ -63,31 +64,31 @@ const StudentProgress = ({ route, navigation }) => {
   };
 
   return (
-    <ScrollView 
-      style={{ flex: 1, backgroundColor: '#f5f5f5' }}
+    <ScrollView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[Styles.h1, {  marginBottom: 8 }]}>
+      <Text style={[Styles.h1, { marginBottom: 8 }]}>
         Danh sách học viên và tiến độ
       </Text>
       <Text style={[Styles.small, { marginBottom: 8 }]}>
-        Khóa học: <Text style={{ fontWeight: 'bold', color: '#1877F2' }}>{courseSubject}</Text>
+        Khóa học: <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>{courseSubject}</Text>
       </Text>
 
       {loading ? (
         <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#1877F2" />
-          <Text style={{ marginTop: 10, color: '#666' }}>Đang tải danh sách học viên...</Text>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={{ marginTop: 10, color: theme.colors.textSecondary }}>Đang tải danh sách học viên...</Text>
         </View>
       ) : enrollments.length === 0 ? (
         <View style={{ paddingVertical: 40, alignItems: 'center' }}>
           <Ionicons name="people-outline" size={60} color="#ccc" />
-          <Text style={{ marginTop: 12, color: '#666' }}>Chưa có học viên nào đăng ký khóa học này.</Text>
+          <Text style={{ marginTop: 12, color: theme.colors.textSecondary }}>Chưa có học viên nào đăng ký khóa học này.</Text>
         </View>
       ) : (
         enrollments.map((enrollment, index) => {
-         
+
           const student = enrollment.student;
           const progress = enrollment.progress || 0;
           const totalLessons = enrollment.course?.lesson_count || 0;
@@ -96,9 +97,9 @@ const StudentProgress = ({ route, navigation }) => {
           return (
             <View key={enrollment.id || index} style={Styles.card}>
               <View style={[Styles.row, { marginBottom: 12 }]}>
-                <Image 
-                  source={{ uri: student?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250' }} 
-                  style={[Styles.avatar, { marginRight: 12 }]} 
+                <Image
+                  source={{ uri: student?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250' }}
+                  style={[Styles.avatar, { marginRight: 12 }]}
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={[Styles.title, { fontSize: 16 }]}>
@@ -107,18 +108,18 @@ const StudentProgress = ({ route, navigation }) => {
                   <Text style={Styles.small}>{student?.email}</Text>
                 </View>
                 {/* Nút chat với học viên */}
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={{ padding: 8, backgroundColor: '#e8f0fe', borderRadius: 8 }}
                   onPress={() => handleChatWithStudent(student)}
                 >
-                  <Ionicons name="chatbubble-ellipses-outline" size={22} color="#1877F2" />
+                  <Ionicons name="chatbubble-ellipses-outline" size={22} color={theme.colors.primary} />
                 </TouchableOpacity>
               </View>
 
               <View>
                 <View style={[Styles.row, { justifyContent: 'space-between', marginBottom: 6 }]}>
                   <Text style={Styles.small}>Đã học: {completedLessons}/{totalLessons} bài</Text>
-                  <Text style={[Styles.small, { fontWeight: 'bold', color: '#1877F2' }]}>{Math.round(progress)}%</Text>
+                  <Text style={[Styles.small, { fontWeight: 'bold', color: theme.colors.primary }]}>{Math.round(progress)}%</Text>
                 </View>
                 <View style={Styles.progressBarTrack}>
                   <View style={[Styles.progressBarFill, { width: `${progress}%` }]} />

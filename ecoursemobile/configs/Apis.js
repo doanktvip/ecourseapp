@@ -1,54 +1,45 @@
 import axios from 'axios';
 
-// Lấy thông tin cấu hình từ file môi trường (.env) hoặc dùng giá trị mặc định
 export const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
 
-// Định nghĩa toàn bộ danh sách các endpoints từ hệ thống ecourseapi
 export const endpoints = {
-    // === Danh mục & Khóa học ===
-    'categories': '/categories/',                                      // Danh sách/Tạo danh mục
-    'courses': '/courses/',                                            // Danh sách/Tạo khóa học
-    'course-details': (courseId) => `/courses/${courseId}/`,          // Chi tiết/Cập nhật/Xóa khóa học
-    'course-compare': '/courses/compare/',                              // So sánh các khóa học bằng danh sách ids
-    'course-lessons': (courseId) => `/courses/${courseId}/lessons/`,    // Danh sách bài học của khóa học/Thêm bài học mới
-    'course-enrolls': (courseId) => `/courses/${courseId}/enrolls/`,    // Đăng ký học (Được phép học thử / Tạo hóa đơn chờ)
-    'course-students': (courseId) => `/courses/${courseId}/students/`,  // Danh sách học viên của khóa học (đã đóng tiền)
-    'course-reviews': (courseId) => `/courses/${courseId}/reviews/`,    // Lấy/Viết đánh giá của khóa học
+    'categories': '/categories/',
+    'courses': '/courses/',
+    'course-details': (courseId) => `/courses/${courseId}/`,
+    'course-compare': '/courses/compare/',
+    'course-lessons': (courseId) => `/courses/${courseId}/lessons/`,
+    'course-enrolls': (courseId) => `/courses/${courseId}/enrolls/`,
+    'course-students': (courseId) => `/courses/${courseId}/students/`,
+    'course-reviews': (courseId) => `/courses/${courseId}/reviews/`,
 
-    // === Người dùng & Xác thực ===
-    'register': '/users/',                                              // Đăng ký tài khoản (POST)
-    'login': '/o/token/',                                               // Đăng nhập lấy OAuth2 Access Token (POST)
-    'current-user': '/users/me/',                                       // Xem/Cập nhật thông tin tài khoản hiện tại (GET, PATCH)
-    'change-password': '/users/me/change-password/',                    // Đổi mật khẩu (POST)
-    'apply-instructor': '/users/me/apply/',                             // Nộp đơn/Xem đơn đăng ký làm giáo viên (GET, POST)
-    'my-courses': '/users/me/courses/',                                 // Danh sách khóa học của Giảng viên & Admin (GET)
-    'my-enrolls': '/users/me/enrolls/',                                 // Danh sách các khóa học đã đăng ký học (GET)
+    'register': '/users/',
+    'login': '/o/token/',
+    'current-user': '/users/me/',
+    'change-password': '/users/me/change-password/',
+    'apply-instructor': '/users/me/apply/',
+    'my-courses': '/users/me/courses/',
+    'my-enrolls': '/users/me/enrolls/',
 
-    // === Quản lý Đơn đăng ký giảng dạy (Admin) ===
-    'applications': '/applies/',                                        // Danh sách đơn xin giảng dạy (GET)
-    'application-details': (applyId) => `/applies/${applyId}/`,        // Duyệt đơn xin giảng dạy (PATCH)
+    'applications': '/applies/',
+    'application-details': (applyId) => `/applies/${applyId}/`,
 
-    // === Bài học & Tương tác ===
-    'lessons': '/lessons/',                                             // Danh sách bài học chung (Admin)
-    'lesson-details': (lessonId) => `/lessons/${lessonId}/`,            // Chi tiết bài học
-    'lesson-tags': (lessonId) => `/lessons/${lessonId}/tags/`,          // Gán nhãn tags cho bài học (POST)
-    'lesson-complete': (lessonId) => `/lessons/${lessonId}/complete/`,  // Đánh dấu đã hoàn thành bài học (POST)
-    'lesson-update-progress': (lessonId) => `/lessons/${lessonId}/update-progress/`, // Cập nhật số giây đã xem (POST)
-    'lesson-comments': (lessonId) => `/lessons/${lessonId}/comments/`,  // Lấy danh sách/Viết bình luận bài học (GET, POST)
-    'lesson-like': (lessonId) => `/lessons/${lessonId}/like/`,          // Thích/Bỏ thích bài học (POST)
+    'lessons': '/lessons/',
+    'lesson-details': (lessonId) => `/lessons/${lessonId}/`,
+    'lesson-tags': (lessonId) => `/lessons/${lessonId}/tags/`,
+    'lesson-complete': (lessonId) => `/lessons/${lessonId}/complete/`,
+    'lesson-update-progress': (lessonId) => `/lessons/${lessonId}/update-progress/`,
+    'lesson-comments': (lessonId) => `/lessons/${lessonId}/comments/`,
+    'lesson-like': (lessonId) => `/lessons/${lessonId}/like/`,
 
-    // === Quản lý nhãn (Tags) ===
-    'tags': '/tags/',                                                   // Danh sách nhãn (GET, POST)
-    'tag-details': (tagId) => `/tags/${tagId}/`,                        // Xem/Cập nhật/Xóa nhãn
+    'tags': '/tags/',
+    'tag-details': (tagId) => `/tags/${tagId}/`,
 
-    // === Thanh toán ===
-    'payments': '/payments/',                                           // Danh sách lịch sử thanh toán (GET)
-    'payment-details': (paymentId) => `/payments/${paymentId}/`,        // Chi tiết thanh toán (GET)
-    'payment-process': (paymentId) => `/payments/${paymentId}/process/`, // Tiến hành thanh toán qua Gateway (Momo, ZaloPay, ...)
-    'payment-confirm-cash': (paymentId) => `/payments/${paymentId}/confirm-cash/`, // Xác nhận đóng tiền mặt (POST - Instructor)
+    'payments': '/payments/',
+    'payment-details': (paymentId) => `/payments/${paymentId}/`,
+    'payment-process': (paymentId) => `/payments/${paymentId}/process/`,
+    'payment-confirm-cash': (paymentId) => `/payments/${paymentId}/confirm-cash/`,
 
-    // === Thống kê ===
-    'stats': '/stats/',                                                 // Thống kê doanh thu, học viên (GET - Instructor)
+    'stats': '/stats/',
 };
 
 export const authApi = (token) => {

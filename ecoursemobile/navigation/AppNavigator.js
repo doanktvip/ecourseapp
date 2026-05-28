@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../configs/Contexts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// === Import các màn hình chính (Screens) ===
 import Home from '../screens/Home/Home';
 import CourseDetail from '../screens/Home/CourseDetail';
 import LessonDetail from '../screens/Home/LessonDetail';
@@ -32,8 +31,8 @@ import PaymentDetail from '../screens/Payment/PaymentDetail';
 
 import CategoryManage from '../screens/Admin/CategoryManage';
 import TagManage from '../screens/Admin/TagManage';
+import theme from '../styles/theme';
 
-// Khởi tạo Stack và Tab Navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -44,13 +43,12 @@ const StatsStack = createNativeStackNavigator();
 const PaymentStack = createNativeStackNavigator();
 const AccountStack = createNativeStackNavigator();
 
-// Helper hook to get unified header options with clean premium look
 const useHeaderOptions = () => {
   return {
     headerStyle: {
-      backgroundColor: '#ffffff',
+      backgroundColor: theme.colors.white,
     },
-    headerTintColor: '#212529',
+    headerTintColor: theme.colors.text,
     headerTitleStyle: {
       fontWeight: 'bold',
       fontSize: 18,
@@ -59,9 +57,6 @@ const useHeaderOptions = () => {
   };
 }
 
-// =========================================================================
-// 1. HOME STACK: Luồng màn hình Trang chủ (Tìm kiếm, Chi tiết, So sánh)
-// =========================================================================
 const HomeStackNavigator = () => {
   const headerOptions = useHeaderOptions();
 
@@ -111,9 +106,6 @@ const HomeStackNavigator = () => {
   );
 }
 
-// =========================================================================
-// 2. MY COURSES STACK: Tiến độ học tập & Giảng dạy
-// =========================================================================
 const MyCoursesStackNavigator = () => {
   const headerOptions = useHeaderOptions();
 
@@ -163,9 +155,6 @@ const MyCoursesStackNavigator = () => {
   );
 }
 
-// =========================================================================
-// 3. CHAT STACK: Trao đổi trực tuyến qua Firebase Realtime Database
-// =========================================================================
 const ChatStackNavigator = () => {
   const headerOptions = useHeaderOptions();
 
@@ -179,15 +168,13 @@ const ChatStackNavigator = () => {
       <ChatStack.Screen
         name="ChatRoom"
         component={ChatRoom}
-        options={{ headerShown: false }} // Ẩn header mặc định để dùng Custom Header trong ChatRoom
+        options={{ headerShown: false }}
       />
     </ChatStack.Navigator>
   );
 }
 
-// =========================================================================
-// 4. STATS STACK: Thống kê và Báo cáo (Giảng viên & Admin)
-// =========================================================================
+
 const StatsStackNavigator = () => {
   const headerOptions = useHeaderOptions();
 
@@ -202,9 +189,6 @@ const StatsStackNavigator = () => {
   );
 }
 
-// =========================================================================
-// 5. PAYMENT STACK: Lịch sử giao dịch (Giảng viên & Sinh viên)
-// =========================================================================
 const PaymentStackNavigator = () => {
   const headerOptions = useHeaderOptions();
 
@@ -224,9 +208,6 @@ const PaymentStackNavigator = () => {
   );
 }
 
-// =========================================================================
-// 6. ACCOUNT STACK: Thông tin cá nhân, cài đặt & Duyệt của Admin
-// =========================================================================
 const AccountStackNavigator = () => {
   const headerOptions = useHeaderOptions();
 
@@ -277,9 +258,6 @@ const AccountStackNavigator = () => {
   );
 }
 
-// =========================================================================
-// 7. MAIN BOTTOM TAB: Thanh điều hướng chính ở đáy màn hình
-// =========================================================================
 const MainTabNavigator = () => {
   const { user } = useUser();
   const insets = useSafeAreaInsets();
@@ -306,11 +284,11 @@ const MainTabNavigator = () => {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#0d6efd',
+        tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: '#adb5bd',
         tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: '#dee2e6',
+          backgroundColor: theme.colors.white,
+          borderTopColor: theme.colors.border,
           borderTopWidth: 1,
           paddingBottom: insets.bottom > 0 ? insets.bottom + 4 : 8,
           paddingTop: 8,
@@ -323,28 +301,24 @@ const MainTabNavigator = () => {
         headerShown: false,
       })}
     >
-      {/* 1. Tab Trang chủ (Mọi người dùng) */}
       <Tab.Screen
         name="HomeTab"
         component={HomeStackNavigator}
-        options={{ tabBarLabel: 'Trang chủ' }}
+        options={{ tabBarLabel: 'Trang chủ', unmountOnBlur: true }}
       />
 
-      {/* 2. Tab Khóa học của tôi */}
       <Tab.Screen
         name="MyCoursesTab"
         component={MyCoursesStackNavigator}
         options={{ tabBarLabel: 'Khóa học' }}
       />
 
-      {/* 3. Tab Nhắn tin */}
       <Tab.Screen
         name="ChatTab"
         component={ChatStackNavigator}
         options={{ tabBarLabel: 'Nhắn tin' }}
       />
 
-      {/* 4. Tab Thống kê (Chỉ giảng viên) */}
       {user?.role?.toUpperCase() === 'INSTRUCTOR' && (
         <Tab.Screen
           name="StatsTab"
@@ -353,7 +327,6 @@ const MainTabNavigator = () => {
         />
       )}
 
-      {/* 5. Tab Giao dịch (Chỉ hiển thị khi đã đăng nhập) */}
       {user && (
         <Tab.Screen
           name="PaymentTab"
@@ -362,7 +335,6 @@ const MainTabNavigator = () => {
         />
       )}
 
-      {/* 6. Tab Tài khoản */}
       <Tab.Screen
         name="AccountTab"
         component={AccountStackNavigator}
@@ -372,22 +344,17 @@ const MainTabNavigator = () => {
   );
 }
 
-// =========================================================================
-// 8. ROOT NATIVE STACK: Navigator gốc bao quát toàn bộ ứng dụng
-// =========================================================================
 const AppNavigator = () => {
   const headerOptions = useHeaderOptions();
 
   return (
     <Stack.Navigator screenOptions={headerOptions}>
-      {/* Luồng chính chứa thanh Bottom Tabs */}
       <Stack.Screen
         name="Main"
         component={MainTabNavigator}
         options={{ headerShown: false }}
       />
 
-      {/* Luồng xác thực đăng nhập (Khi đẩy lên dạng Modals hoặc đè lên Bottom Tabs) */}
       <Stack.Screen
         name="Login"
         component={Login}
@@ -399,7 +366,6 @@ const AppNavigator = () => {
         options={{ title: 'Đăng ký tài khoản' }}
       />
 
-      {/* Luồng thanh toán học phí (Đẩy đè toàn màn hình để học viên thao tác tập trung) */}
       <Stack.Screen
         name="PaymentProcess"
         component={PaymentProcess}

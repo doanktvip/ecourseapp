@@ -6,9 +6,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import Apis, { endpoints } from '../../configs/Apis';
 import Styles from './Styles';
+import theme from '../../styles/theme';
 
 const Register = () => {
-  // 1. Mảng cấu hình các trường nhập liệu tương tự như Login
   const registerFields = [
     {
       field: 'lastName',
@@ -51,7 +51,6 @@ const Register = () => {
     }
   ];
 
-  // 2. Khai báo các State cần thiết
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -71,7 +70,6 @@ const Register = () => {
 
   const nav = useNavigation();
 
-  // 3. Hàm chọn ảnh đại diện (Tùy chọn)
   const handlePickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -91,7 +89,6 @@ const Register = () => {
     }
   };
 
-  // 4. Kiểm tra dữ liệu trước khi đăng ký
   const validate = () => {
     const { firstName, lastName, email, username, password, confirmPassword } = formData;
     if (!firstName || !lastName || !email || !username || !password || !confirmPassword) {
@@ -106,7 +103,6 @@ const Register = () => {
     return true;
   };
 
-  // 5. Hàm đăng ký tài khoản
   const handleRegister = async () => {
     if (!validate()) return;
 
@@ -114,7 +110,6 @@ const Register = () => {
       setLoading(true);
       setErr(null);
 
-      // Sử dụng FormData để hỗ trợ upload ảnh đại diện lên server
       const body = new FormData();
       body.append('first_name', formData.firstName);
       body.append('last_name', formData.lastName);
@@ -191,7 +186,7 @@ const Register = () => {
                 <Image source={{ uri: avatar }} style={Styles.avatarSelectImage} />
               ) : (
                 <View style={Styles.avatarSelectPlaceholder}>
-                  <Ionicons name="camera-outline" size={32} color="#1976d2" />
+                  <Ionicons name="camera-outline" size={32} color={theme.colors.primary} />
                   <Text style={Styles.avatarSelectPlaceholderText}>Chọn ảnh</Text>
                 </View>
               )}
@@ -224,8 +219,8 @@ const Register = () => {
                 placeholder={field.placeholder}
                 placeholderTextColor="#adb5bd"
                 secureTextEntry={field.secureTextEntry && !showPassword}
-                outlineColor="#dee2e6"
-                activeOutlineColor="#1976d2"
+                outlineColor={theme.colors.border}
+                activeOutlineColor={theme.colors.primary}
                 disabled={loading}
                 left={<TextInput.Icon icon={field.icon} />}
                 right={field.secureTextEntry ? (

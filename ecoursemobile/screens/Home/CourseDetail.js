@@ -6,6 +6,7 @@ import Styles from './Styles';
 import { MyUserContext } from '../../configs/Contexts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
+import theme from '../../styles/theme';
 
 const CourseDetail = ({ route, navigation }) => {
   const { course } = route.params || {};
@@ -79,7 +80,6 @@ const CourseDetail = ({ route, navigation }) => {
     try {
       setLoadingLessons(true);
       let url = nextLessonsUrl;
-      // Trích xuất path nếu có chứa domain để luôn dùng đúng BASE_URL
       if (url.includes('/courses/')) {
         url = url.substring(url.indexOf('/courses/'));
       }
@@ -248,7 +248,7 @@ const CourseDetail = ({ route, navigation }) => {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#ffffff' }} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+    <ScrollView style={{ flex: 1, backgroundColor: theme.colors.white }} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
       <Image source={{ uri: currentCourse.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250' }} style={Styles.detailBannerImage} />
       <View style={{ padding: 16 }}>
         {/* Tổng quan */}
@@ -263,8 +263,8 @@ const CourseDetail = ({ route, navigation }) => {
                 onPress={() => navigation.navigate('CourseForm', { course: currentCourse })}
                 activeOpacity={0.8}
               >
-                <Ionicons name="create-outline" size={16} color="#1877F2" />
-                <Text style={{ color: '#1877F2', fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Sửa</Text>
+                <Ionicons name="create-outline" size={16} color={theme.colors.primary} />
+                <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Sửa</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -279,13 +279,13 @@ const CourseDetail = ({ route, navigation }) => {
               {totalLessons} Bài học
             </Text>
             <Text style={[Styles.small, { marginHorizontal: 8 }]}>•</Text>
-            <Ionicons name="time-outline" size={16} color="#666" style={{ marginRight: 4 }} />
+            <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} style={{ marginRight: 4 }} />
             <Text style={[Styles.small, { fontSize: 14 }]}>
               {formatVideoDuration(currentCourse.total_duration_video)}
             </Text>
           </View>
 
-          <Text style={[Styles.h1, { color: '#1877F2', fontSize: 24, marginVertical: 4 }]}>
+          <Text style={[Styles.h1, { color: theme.colors.primary, fontSize: 24, marginVertical: 4 }]}>
             {currentCourse.fee && parseFloat(currentCourse.fee) > 0
               ? `${parseFloat(currentCourse.fee).toLocaleString()} VNĐ`
               : 'Miễn phí'}
@@ -308,7 +308,7 @@ const CourseDetail = ({ route, navigation }) => {
               onPress={handleChatWithInstructor}
               activeOpacity={0.7}
             >
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#1877F2" />
+              <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme.colors.primary} />
             </TouchableOpacity>
           )}
         </View>
@@ -320,12 +320,12 @@ const CourseDetail = ({ route, navigation }) => {
               Styles.btnPrimary,
               {
                 marginVertical: 8,
-                backgroundColor: user ? '#1877F2' : '#65676b',
+                backgroundColor: user ? theme.colors.primary : '#65676b',
                 borderRadius: 10,
                 height: 50,
                 alignItems: 'center',
                 justifyContent: 'center',
-                shadowColor: user ? '#1877F2' : '#65676b',
+                shadowColor: user ? theme.colors.primary : '#65676b',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.3,
                 shadowRadius: 6,
@@ -337,9 +337,9 @@ const CourseDetail = ({ route, navigation }) => {
             activeOpacity={0.8}
           >
             {enrolling ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ActivityIndicator size="small" color={theme.colors.white} />
             ) : (
-              <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: 'bold' }}>
+              <Text style={{ color: theme.colors.white, fontSize: 16, fontWeight: 'bold' }}>
                 {user
                   ? (enrollmentRecord ? "THANH TOÁN KHÓA HỌC" : "ĐĂNG KÝ & THANH TOÁN KHÓA HỌC")
                   : "ĐĂNG NHẬP ĐỂ ĐĂNG KÝ HỌC"}
@@ -350,17 +350,16 @@ const CourseDetail = ({ route, navigation }) => {
       </View>
       {/* Tiến độ học của sinh viên  */}
       {user && user.role === ('INSTRUCTOR' || 'ADMIN') && currentCourse?.instructor && user.email === currentCourse.instructor.email && (
-        <View style={[Styles.card, { marginLeft: 20, marginRight: 20, borderColor: '#1877F2', borderWidth: 1 }]}>
+        <View style={[Styles.card, { marginLeft: 20, marginRight: 20, borderColor: theme.colors.primary, borderWidth: 1 }]}>
           <TouchableOpacity
             style={[Styles.infoBox, Styles.row, { justifyContent: 'center' }]}
             onPress={() => {
-              // Điều hướng sang trang xem Tiến độ học viên (bạn cần tạo trang này trong Stack Navigator)
               if (navigation) navigation.navigate('StudentProgress', {
                 courseId: currentCourse.id,
                 courseSubject: currentCourse.subject
               });
             }}
-          ><Text style={[Styles.body, { color: '#1877F2', fontWeight: 'bold' }]}>Xem tiến độ học viên</Text></TouchableOpacity>
+          ><Text style={[Styles.body, { color: theme.colors.primary, fontWeight: 'bold' }]}>Xem tiến độ học viên</Text></TouchableOpacity>
         </View>
       )}
 
@@ -382,14 +381,13 @@ const CourseDetail = ({ route, navigation }) => {
             onPress={() => navigation.navigate('LessonForm', { courseId: currentCourse.id })}
             activeOpacity={0.8}
           >
-            <Ionicons name="add-circle-outline" size={16} color="#1877F2" />
-            <Text style={{ color: '#1877F2', fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Thêm bài học</Text>
+            <Ionicons name="add-circle-outline" size={16} color={theme.colors.primary} />
+            <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 13, marginLeft: 4 }}>Thêm bài học</Text>
           </TouchableOpacity>
         )}
       </View>
       <View style={[Styles.card, { marginLeft: 20, marginRight: 20 }]} >
         {lessons.map((lesson, idx) => {
-          // Kiểm tra xem bài học có được mở khóa hay không
           const isUnlocked = !!lesson.is_preview ||
             (!!user && (
               user.role === 'ADMIN' ||
@@ -400,7 +398,7 @@ const CourseDetail = ({ route, navigation }) => {
           return (
             <TouchableOpacity
               key={lesson.id}
-              style={[Styles.row, { paddingVertical: 12, borderBottomWidth: (idx === lessons.length - 1 && !nextLessonsUrl) ? 0 : 1, borderBottomColor: '#eee' }]}
+              style={[Styles.row, { paddingVertical: 12, borderBottomWidth: (idx === lessons.length - 1 && !nextLessonsUrl) ? 0 : 1, borderBottomColor: theme.colors.border }]}
               onPress={() => {
                 if (isUnlocked) {
                   navigation.navigate('LessonDetail', {
@@ -420,7 +418,7 @@ const CourseDetail = ({ route, navigation }) => {
               <Ionicons
                 name={lesson.completed ? "checkmark-circle" : (isUnlocked ? "play-circle" : "lock-closed")}
                 size={24}
-                color={lesson.completed ? "#2e7d32" : (isUnlocked ? "#28a745" : "#999")}
+                color={lesson.completed ? theme.colors.success : (isUnlocked ? theme.colors.success : "#999")}
                 style={{ marginRight: 12 }}
               />
               <View style={{ flex: 1 }}>
@@ -452,11 +450,11 @@ const CourseDetail = ({ route, navigation }) => {
             activeOpacity={0.7}
           >
             {loadingLessons ? (
-              <ActivityIndicator size="small" color="#1877F2" />
+              <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
               <>
-                <Text style={{ color: '#1877F2', fontWeight: 'bold', fontSize: 14 }}>Xem thêm bài học</Text>
-                <Ionicons name="chevron-down" size={16} color="#1877F2" style={{ marginLeft: 4 }} />
+                <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 14 }}>Xem thêm bài học</Text>
+                <Ionicons name="chevron-down" size={16} color={theme.colors.primary} style={{ marginLeft: 4 }} />
               </>
             )}
           </TouchableOpacity>
@@ -474,7 +472,7 @@ const CourseDetail = ({ route, navigation }) => {
               courseSubject: currentCourse.subject
             })}>
             {/* Bổ sung marginRight: 20 để đối xứng với marginLeft 20 của Tiêu đề bên trái */}
-            <Text style={{ color: '#1877F2', fontWeight: 'bold', marginRight: 20 }}>
+            <Text style={{ color: theme.colors.primary, fontWeight: 'bold', marginRight: 20 }}>
               Xem tất cả
             </Text>
           </TouchableOpacity>
@@ -499,12 +497,10 @@ const CourseDetail = ({ route, navigation }) => {
           <Ionicons name="chevron-forward" size={24} color="#999" />
         </TouchableOpacity>
       </View>
-      {/*So sánh khóa học */}
       <View style={[Styles.card, { marginLeft: 20, marginRight: 20 }]}>
         <TouchableOpacity
           style={[Styles.infoBox, Styles.row,]}
           onPress={() => {
-            // Điều hướng sang trang So sánh (nếu bạn đã tạo)
             if (navigation) navigation.navigate('CourseCompare', { courseA: currentCourse });
           }}
         >

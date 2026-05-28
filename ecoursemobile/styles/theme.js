@@ -8,7 +8,14 @@ export default {
         textSecondary: '#666666',
         border: '#eeeeee',
         danger: '#e74c3c',
-        success: '#28a745'
+        success: '#28a745',
+        shadow: '#000000',
+        brand: {
+            momo: '#A50064',
+            zalopay: '#1184F5',
+            stripe: '#635BFF',
+            paypal: '#003087'
+        }
     },
     spacing: {
         sm: 8,

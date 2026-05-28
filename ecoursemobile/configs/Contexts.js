@@ -21,7 +21,7 @@ export const UserProvider = ({ children }) => {
 export const useUser = () => {
   const context = useContext(UserContext);
   if (!context) {
-    return { user: null, dispatch: () => {} };
+    return { user: null, dispatch: () => { } };
   }
   return context;
 };

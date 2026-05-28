@@ -1,74 +1,72 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Text, View, TouchableOpacity, ScrollView, ActivityIndicator, Alert} from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApis, endpoints } from '../../configs/Apis';
 import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
+import theme from '../../styles/theme';
 
 const StatsTab = () => {
-    const [user] = useContext(MyUserContext);
-    const [loading, setLoading] = useState(true);
-    const [statsData, setStatsData] = useState(null);
-    const [period, setPeriod] = useState('month');
+  const [user] = useContext(MyUserContext);
+  const [loading, setLoading] = useState(true);
+  const [statsData, setStatsData] = useState(null);
+  const [period, setPeriod] = useState('month');
 
-    // Gọi API lấy dữ liệu thống kê
-    useEffect(() => {
-        const fetchStats = async () => {
-        try {
-            setLoading(true);
-            const token = await AsyncStorage.getItem("token");
-            if (!token) {
-                Alert.alert("Lỗi", "Vui lòng đăng nhập lại để xem thống kê.");
-                return;
-            }
-
-            // Gọi API /stats/ (Chỉ cho phép Instructor)
-            let res = await authApis(token).get(endpoints['stats']);
-            setStatsData(res.data.results || res.data);
-        } catch (ex) {
-            console.error("Lỗi khi tải thống kê:", ex);
-            Alert.alert("Lỗi", "Không thể tải dữ liệu thống kê lúc này.");
-        } finally {
-            setLoading(false);
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const token = await AsyncStorage.getItem("token");
+        if (!token) {
+          Alert.alert("Lỗi", "Vui lòng đăng nhập lại để xem thống kê.");
+          return;
         }
-        };
 
-        if (user && user.role === 'INSTRUCTOR') {
-        fetchStats();
-        } else {
+        let res = await authApis(token).get(endpoints['stats']);
+        setStatsData(res.data.results || res.data);
+      } catch (ex) {
+        console.error("Lỗi khi tải thống kê:", ex);
+        Alert.alert("Lỗi", "Không thể tải dữ liệu thống kê lúc này.");
+      } finally {
         setLoading(false);
-        }
-    }, [user]);
-    // reduce cộng dồn các phần tử trong mảng để tính tổng doanh thu và tổng học viên
-    const totalRevenue = statsData?.stat_course?.reduce((sum, item) => sum + Number(item.total_revenue || 0), 0) || 0;
-    const totalStudents = statsData?.stat_course?.reduce((sum, item) => sum + Number(item.total_students || 0), 0) || 0;
+      }
+    };
 
-    const timeSeriesData = period === 'month' ? statsData?.by_month : period === 'quarter' ? statsData?.by_quarter  : statsData?.by_year;
+    if (user && user.role === 'INSTRUCTOR') {
+      fetchStats();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+  const totalRevenue = statsData?.stat_course?.reduce((sum, item) => sum + Number(item.total_revenue || 0), 0) || 0;
+  const totalStudents = statsData?.stat_course?.reduce((sum, item) => sum + Number(item.total_students || 0), 0) || 0;
 
-    return (
+  const timeSeriesData = period === 'month' ? statsData?.by_month : period === 'quarter' ? statsData?.by_quarter : statsData?.by_year;
+
+  return (
     <View style={Styles.statsContainer}>
       {loading ? (
         <View style={Styles.statsCenterContainer}>
-          <ActivityIndicator size="large" color="#1877F2" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={Styles.statsEmptyText}>Đang tải dữ liệu thống kê...</Text>
         </View>
       ) : (
-        <ScrollView 
+        <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={Styles.statsScrollContent}
           showsVerticalScrollIndicator={false}>
 
-            {/* --- THỐNG KÊ THEO THỜI GIAN --- */}
-          <Text style={[Styles.h2, { marginBottom: 8}]}>Thống kê theo thời gian</Text>
-          
+          {/* --- THỐNG KÊ THEO THỜI GIAN --- */}
+          <Text style={[Styles.h2, { marginBottom: 8 }]}>Thống kê theo thời gian</Text>
+
           <View style={Styles.statsTabContainer}>
             {['month', 'quarter', 'year'].map((p) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 key={p}
                 style={[
-                    Styles.statsTabButton, 
-                    period === p && Styles.statsTabButtonActive
+                  Styles.statsTabButton,
+                  period === p && Styles.statsTabButtonActive
                 ]}
                 onPress={() => setPeriod(p)}
               >
@@ -83,11 +81,11 @@ const StatsTab = () => {
             {/* Hiển thị danh sách dữ liệu dựa theo loại thời gian */}
             {timeSeriesData?.length > 0 ? (
               timeSeriesData.map((item, idx) => (
-                <View 
-                  key={idx} 
+                <View
+                  key={idx}
                   style={[
-                    Styles.statsListRow, 
-                    idx === timeSeriesData.length - 1 && Styles.statsListRowLast 
+                    Styles.statsListRow,
+                    idx === timeSeriesData.length - 1 && Styles.statsListRowLast
                   ]}
                 >
                   <View style={Styles.statsListLeft}>
@@ -107,7 +105,7 @@ const StatsTab = () => {
           <View style={Styles.statsKpiWrapper}>
             <View style={Styles.statsKpiCard}>
               <View style={Styles.statsKpiIconWrapper}>
-                <Ionicons name="people" size={24} color="#1877F2" />
+                <Ionicons name="people" size={24} color={theme.colors.primary} />
               </View>
               <Text style={Styles.small}>Tổng học viên</Text>
               <Text style={Styles.statsKpiValueTotal}>
@@ -117,7 +115,7 @@ const StatsTab = () => {
 
             <View style={Styles.statsKpiCard}>
               <View style={Styles.statsKpiIconWrapper}>
-                <Ionicons name="cash" size={24} color="#137333" />
+                <Ionicons name="cash" size={24} color={theme.colors.success} />
               </View>
               <Text style={Styles.small}>Tổng doanh thu</Text>
               <Text style={Styles.statsKpiValueMoney}>
@@ -131,10 +129,10 @@ const StatsTab = () => {
           <View style={Styles.card}>
             {statsData?.stat_course?.length > 0 ? (
               statsData.stat_course.map((course, idx) => (
-                <View 
-                  key={idx} 
+                <View
+                  key={idx}
                   style={[
-                    Styles.statsListRow,  idx === statsData.stat_course.length - 1 && Styles.statsListRowLast ]} >
+                    Styles.statsListRow, idx === statsData.stat_course.length - 1 && Styles.statsListRowLast]} >
                   <View style={Styles.statsListLeft}>
                     <Text style={[Styles.title, { fontSize: 15 }]} numberOfLines={2}>
                       {course.enrollment__course__subject}
@@ -150,12 +148,12 @@ const StatsTab = () => {
               ))
             ) : (
               <Text style={[Styles.statsEmptyText, { paddingVertical: 10 }]}>
-                  Bạn hiện chưa có khóa học nào đang giảng dạy hoặc chưa phát sinh doanh thu.
+                Bạn hiện chưa có khóa học nào đang giảng dạy hoặc chưa phát sinh doanh thu.
               </Text>
             )}
           </View>
 
-          
+
         </ScrollView>
       )}
     </View>
