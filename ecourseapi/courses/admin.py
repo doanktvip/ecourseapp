@@ -181,7 +181,7 @@ class MyAdminSite(admin.AdminSite):
             total_rev=Sum('enrollments__payment__amount', filter=Q(enrollments__payment__is_successful=True))
         ).values('subject', 'total_rev').order_by('-total_rev')[:5]
 
-        # 3. Tần suất đăng ký theo tháng (6 tháng gần nhất)
+        # 3. Tần suất đăng ký theo tháng
         enrollment_trend = Enrollment.objects.annotate(month=TruncMonth('created_date')).values('month').annotate(
             count=Count('id')
         ).order_by('month')

@@ -22,7 +22,7 @@ const CourseReviews = ({ route, navigation }) => {
     // HÀM KIỂM TRA ĐIỀU KIỆN & GỬI ĐÁNH GIÁ (CHỈ CHẠY KHI BẤM NÚT)
     // =========================================================================
     const handleSubmitReview = async () => {
-        // BƯỚC 1: Kiểm tra nội dung nhập trống công thức cơ bản
+        // BƯỚC 1: Kiểm tra nội dung nhập trống 
         if (!comment.trim()) {
             Alert.alert("Thông báo", "Vui lòng nhập nội dung đánh giá của bạn.");
             return;
@@ -86,7 +86,7 @@ const CourseReviews = ({ route, navigation }) => {
                 'comment': comment
             });
 
-            // Nếu Backend trả về thành công, thêm ngay vào danh sách hiển thị
+            // Nếu Backend trả về thành công, làm mới lại form đánh giá
             if (reviewRes.status === 201 || reviewRes.status === 200) {
                 Alert.alert("Thành công", "Cảm ơn bạn đã gửi đánh giá đóng góp cho khóa học!");
                 setComment("");
@@ -112,9 +112,6 @@ const CourseReviews = ({ route, navigation }) => {
         }
     };
 
-    // =========================================================================
-    // LẤY DANH SÁCH BÌNH LUẬN CŨ CỦA KHÓA HỌC (PHÂN TRANG MƯỢT MÀ)
-    // =========================================================================
     const loadReviews = async () => {
         if (page === 0) return;
         try {
@@ -127,6 +124,7 @@ const CourseReviews = ({ route, navigation }) => {
             if (page === 1) {
                 setReviews(newReviews);
             } else if (page > 1) {
+                // cơ chế callback để cập nhật reviews tránh mất dữ liệu khi bất đồng bộ
                 setReviews(prev => [...prev, ...newReviews]);
             }
 

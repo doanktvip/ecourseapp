@@ -89,6 +89,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
             return Response({"error": "Vui lòng cung cấp danh sách ids cần so sánh"},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        #lọc danh sách khóa học theo truy vấn
         courses = self.filter_queryset(self.get_queryset())
 
         if not courses.exists():

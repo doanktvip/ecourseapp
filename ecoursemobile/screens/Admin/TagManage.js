@@ -78,12 +78,12 @@ const TagManage = ({ navigation }) => {
                     name: tagName.trim() 
                 });
                 Alert.alert('Thành công', 'Đã cập nhật tên Tag.');
-        } else {
-            await authApis(token).post(endpoints['tags'], { 
-                name: tagName.trim() 
-            });
-            Alert.alert('Thành công', 'Đã thêm Tag mới.');
-        }
+            } else {
+                await authApis(token).post(endpoints['tags'], { 
+                    name: tagName.trim() 
+                });
+                Alert.alert('Thành công', 'Đã thêm Tag mới.');
+            }
         
         closeModal();
         loadTags(); 
