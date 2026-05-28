@@ -3,13 +3,12 @@ import GlobalStyles from "../../styles/Styles";
 import theme from "../../styles/theme";
 
 const localStyles = StyleSheet.create({
-    // === Styles for Payment Screen ===
     paymentContainer: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: theme.colors.secondary,
     },
     paymentBillingCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderRadius: 16,
         padding: 20,
         marginHorizontal: 16,
@@ -43,17 +42,17 @@ const localStyles = StyleSheet.create({
     paymentCourseSubject: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         lineHeight: 22,
         marginBottom: 4,
     },
     paymentCourseInstructor: {
         fontSize: 13,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
     },
     paymentDivider: {
         height: 1,
-        backgroundColor: '#e9ecef',
+        backgroundColor: theme.colors.border,
         marginVertical: 16,
     },
     paymentPriceRow: {
@@ -63,12 +62,12 @@ const localStyles = StyleSheet.create({
     },
     paymentPriceLabel: {
         fontSize: 14,
-        color: '#495057',
+        color: theme.colors.textSecondary,
     },
     paymentPriceValue: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#1877F2',
+        color: theme.colors.primary,
     },
     paymentSectionContainer: {
         paddingHorizontal: 16,
@@ -84,8 +83,8 @@ const localStyles = StyleSheet.create({
     paymentMethodItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#ffffff',
-        borderColor: '#e9ecef',
+        backgroundColor: theme.colors.white,
+        borderColor: theme.colors.border,
         borderWidth: 1,
         borderRadius: 14,
         padding: 14,
@@ -110,12 +109,12 @@ const localStyles = StyleSheet.create({
     paymentMethodName: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 2,
     },
     paymentMethodDesc: {
         fontSize: 12,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
     },
     paymentRadioOuter: {
         width: 20,
@@ -148,7 +147,7 @@ const localStyles = StyleSheet.create({
         elevation: 4,
     },
     paymentBtnConfirmText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 15,
         fontWeight: 'bold',
         letterSpacing: 0.5,
@@ -159,21 +158,17 @@ const localStyles = StyleSheet.create({
         borderRadius: 6,
         resizeMode: 'contain',
     },
-    // Tiến độ Student Progress
     progressBarTrack: {
         width: 80,
         height: 8,
-        backgroundColor: '#e9ecef',
+        backgroundColor: theme.colors.border,
         borderRadius: 4,
         overflow: 'hidden',
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: '#1877F2',
+        backgroundColor: theme.colors.primary,
     },
-    // ==========================================
-    // STYLES DÀNH CHO TRANG LỊCH SỬ GIAO DỊCH (PAYMENT HISTORY)
-    // ==========================================
     paymentSummaryCard: {
         borderRadius: 16,
         padding: 20,
@@ -194,7 +189,7 @@ const localStyles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     paymentSummaryValue: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 26,
         fontWeight: '800',
         marginTop: 4,
@@ -217,7 +212,7 @@ const localStyles = StyleSheet.create({
         marginBottom: 2,
     },
     paymentSummaryFooterValue: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 15,
         fontWeight: 'bold',
     },
@@ -230,27 +225,27 @@ const localStyles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 14,
         borderRadius: 20,
-        backgroundColor: '#e9ecef',
+        backgroundColor: theme.colors.border,
         marginRight: 8,
     },
     paymentFilterButtonActive: {
-        backgroundColor: '#0d6efd',
+        backgroundColor: theme.colors.primary,
     },
     paymentFilterText: {
         fontSize: 12,
-        color: '#495057',
+        color: theme.colors.textSecondary,
         fontWeight: '600',
     },
     paymentFilterTextActive: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontWeight: 'bold',
     },
     paymentSearchBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderWidth: 1,
-        borderColor: '#dee2e6',
+        borderColor: theme.colors.border,
         borderRadius: 12,
         paddingHorizontal: 12,
         marginHorizontal: 16,
@@ -261,7 +256,7 @@ const localStyles = StyleSheet.create({
         flex: 1,
         marginLeft: 8,
         fontSize: 14,
-        color: '#212529',
+        color: theme.colors.text,
     },
 });
 

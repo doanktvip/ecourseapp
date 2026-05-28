@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MyStyles from './Styles';
 import moment from 'moment';
+import theme from '../../styles/theme';
 
 const ChatRoom = ({ route, navigation }) => {
   const { roomId, receiverId, receiverName, receiverAvatar, studentId, instructorId } = route.params;
@@ -49,7 +50,6 @@ const ChatRoom = ({ route, navigation }) => {
     const messagesRef = ref(database, `messages/${roomId}`);
     push(messagesRef, messageData);
 
-    // SỬA LỖI TẠI ĐÂY: Xác định quyền chính xác dựa vào ID thay vì role
     const isStudent = String(user.id) === String(studentId);
 
     const roomRef = ref(database, `rooms/${roomId}`);
@@ -70,7 +70,6 @@ const ChatRoom = ({ route, navigation }) => {
   };
 
   const renderMessageItem = ({ item }) => {
-    // SỬA LỖI: Đồng bộ kiểu dữ liệu bằng String()
     const isMe = user && String(item.senderId) === String(user.id);
     return (
       <View style={[MyStyles.chatMessageContainer, isMe ? MyStyles.chatMyMessageContainer : MyStyles.chatPartnerMessageContainer]}>
@@ -97,7 +96,7 @@ const ChatRoom = ({ route, navigation }) => {
     <SafeAreaView style={MyStyles.chatContainer}>
       <View style={MyStyles.chatRoomHeader}>
         <TouchableOpacity style={MyStyles.chatRoomBackButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#212529" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Avatar.Image size={40} source={{ uri: receiverAvatar || 'https://res.cloudinary.com/db4bjqp4f/image/upload/v1765436438/shtnr60mecp057e2uctk.jpg' }} />
         <View style={MyStyles.chatRoomHeaderTitleContainer}>
@@ -122,7 +121,7 @@ const ChatRoom = ({ route, navigation }) => {
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
 
-        <View style={{ backgroundColor: '#ffffff' }}>
+        <View style={{ backgroundColor: theme.colors.white }}>
           <View style={MyStyles.chatInputContainer}>
             <TextInput
               placeholder="Nhập tin nhắn..."
@@ -137,7 +136,7 @@ const ChatRoom = ({ route, navigation }) => {
               disabled={!inputText.trim()}
               activeOpacity={0.8}
             >
-              <Ionicons name="send" size={16} color="#ffffff" />
+              <Ionicons name="send" size={16} color={theme.colors.white} />
             </TouchableOpacity>
           </View>
         </View>

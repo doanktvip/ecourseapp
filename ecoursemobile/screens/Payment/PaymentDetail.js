@@ -8,6 +8,7 @@ import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
 import moment from 'moment';
 import 'moment/locale/vi';
+import theme from '../../styles/theme';
 
 moment.locale('vi');
 
@@ -63,10 +64,10 @@ const PaymentDetail = () => {
                                 Alert.alert("Lỗi", "Vui lòng đăng nhập lại.");
                                 return;
                             }
-                            
+
                             await authApis(token).post(endpoints['payment-confirm-cash'](paymentId));
                             Alert.alert("Thành công", "Đã xác nhận thanh toán tiền mặt thành công. Học viên hiện có thể truy cập khóa học.");
-                            loadPaymentDetail(); // Reload lại dữ liệu mới nhất
+                            loadPaymentDetail();
                         } catch (ex) {
                             console.error("Lỗi xác nhận tiền mặt:", ex);
                             Alert.alert("Thất bại", ex.response?.data?.detail || "Không thể xác nhận đóng tiền mặt lúc này.");
@@ -81,19 +82,19 @@ const PaymentDetail = () => {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8f9fa' }}>
-                <ActivityIndicator size="large" color="#0d6efd" />
-                <Text style={{ marginTop: 10, color: '#6c757d' }}>Đang tải hóa đơn chi tiết...</Text>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.secondary }}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={{ marginTop: 10, color: theme.colors.textSecondary }}>Đang tải hóa đơn chi tiết...</Text>
             </View>
         );
     }
 
     if (!payment) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8f9fa', padding: 20 }}>
-                <Ionicons name="alert-circle-outline" size={64} color="#dc3545" />
-                <Text style={{ marginTop: 16, color: '#212529', fontSize: 16, fontWeight: 'bold' }}>Không tìm thấy hóa đơn</Text>
-                <Text style={{ color: '#6c757d', textAlign: 'center', marginTop: 8 }}>Hóa đơn này hoàn toàn không tồn tại hoặc bạn không có quyền xem.</Text>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.secondary, padding: 20 }}>
+                <Ionicons name="alert-circle-outline" size={64} color={theme.colors.danger} />
+                <Text style={{ marginTop: 16, color: theme.colors.text, fontSize: 16, fontWeight: 'bold' }}>Không tìm thấy hóa đơn</Text>
+                <Text style={{ color: theme.colors.textSecondary, textAlign: 'center', marginTop: 8 }}>Hóa đơn này hoàn toàn không tồn tại hoặc bạn không có quyền xem.</Text>
                 <TouchableOpacity style={[Styles.btnPrimary, { marginTop: 20, width: '60%' }]} onPress={() => navigation.goBack()}>
                     <Text style={Styles.btnPrimaryText}>Quay lại</Text>
                 </TouchableOpacity>
@@ -102,7 +103,7 @@ const PaymentDetail = () => {
     }
 
     const isSuccess = payment.is_successful;
-    const statusColor = isSuccess ? '#198754' : '#f59e0b';
+    const statusColor = isSuccess ? theme.colors.success : '#f59e0b';
     const statusText = isSuccess ? 'Thành công' : 'Đang chờ thanh toán / Thất bại';
     const iconName = isSuccess ? 'checkmark-circle' : 'time';
 
@@ -110,12 +111,10 @@ const PaymentDetail = () => {
     const isAdmin = role === 'ADMIN';
     const isInstructor = role === 'INSTRUCTOR';
 
-    // Điều kiện hiển thị nút xác nhận tiền mặt (Chỉ dành cho Giảng viên/Admin và Giao dịch chưa thành công)
     const canConfirmPayment = (isAdmin || isInstructor) && !isSuccess;
 
     return (
-        <ScrollView style={{ flex: 1, backgroundColor: '#f8f9fa' }} contentContainerStyle={{ paddingBottom: 40 }}>
-            {/* Header Hóa đơn (Status) */}
+        <ScrollView style={{ flex: 1, backgroundColor: theme.colors.secondary }} contentContainerStyle={{ paddingBottom: 40 }}>
             <View style={localStyles.headerSection}>
                 <Ionicons name={iconName} size={64} color={statusColor} />
                 <Text style={[localStyles.statusLabel, { color: statusColor }]}>{statusText}</Text>
@@ -132,16 +131,16 @@ const PaymentDetail = () => {
                     {payment.course_image ? (
                         <Image source={{ uri: payment.course_image }} style={localStyles.courseImage} />
                     ) : (
-                        <View style={[localStyles.courseImage, { backgroundColor: '#e9ecef', justifyContent: 'center', alignItems: 'center' }]}>
+                        <View style={[localStyles.courseImage, { backgroundColor: theme.colors.border, justifyContent: 'center', alignItems: 'center' }]}>
                             <Ionicons name="book-outline" size={24} color="#adb5bd" />
                         </View>
                     )}
                     <View style={{ flex: 1 }}>
                         <Text style={localStyles.courseSubject}>{payment.course_subject || 'Đang cập nhật...'}</Text>
-                        <Text style={{ fontSize: 13, color: '#6c757d', marginTop: 2 }}>
+                        <Text style={{ fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 }}>
                             Giảng viên: {payment.instructor_name || 'Đang cập nhật...'}
                         </Text>
-                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#0d6efd', marginTop: 4 }}>
+                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.colors.primary, marginTop: 4 }}>
                             Học phí gốc: {formatCurrency(payment.course_fee || payment.amount)}
                         </Text>
                     </View>
@@ -172,7 +171,7 @@ const PaymentDetail = () => {
                 </View>
                 <View style={localStyles.infoRow}>
                     <Text style={localStyles.infoLabel}>Mã giao dịch</Text>
-                    <Text style={[localStyles.infoValue, { color: '#6c757d' }]}>{payment.transaction_id || 'Chưa phát sinh'}</Text>
+                    <Text style={[localStyles.infoValue, { color: theme.colors.textSecondary }]}>{payment.transaction_id || 'Chưa phát sinh'}</Text>
                 </View>
                 <View style={[localStyles.infoRow, { borderBottomWidth: 0 }]}>
                     <Text style={localStyles.infoLabel}>Mã hóa đơn</Text>
@@ -180,18 +179,17 @@ const PaymentDetail = () => {
                 </View>
             </View>
 
-            {/* Nút hành động xác nhận Tiền mặt */}
             {canConfirmPayment && (
                 <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
-                    <TouchableOpacity 
-                        style={[Styles.btnPrimary, { backgroundColor: '#198754', flexDirection: 'row', justifyContent: 'center' }, submitting && { opacity: 0.7 }]}
+                    <TouchableOpacity
+                        style={[Styles.btnPrimary, { backgroundColor: theme.colors.success, flexDirection: 'row', justifyContent: 'center' }, submitting && { opacity: 0.7 }]}
                         onPress={handleConfirmCash}
                         disabled={submitting}
                     >
                         {submitting ? (
-                            <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
+                            <ActivityIndicator size="small" color={theme.colors.white} style={{ marginRight: 8 }} />
                         ) : (
-                            <Ionicons name="cash-outline" size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                            <Ionicons name="cash-outline" size={20} color={theme.colors.white} style={{ marginRight: 8 }} />
                         )}
                         <Text style={Styles.btnPrimaryText}>Xác nhận đóng tiền mặt</Text>
                     </TouchableOpacity>
@@ -206,9 +204,9 @@ const localStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 30,
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         borderBottomWidth: 1,
-        borderColor: '#dee2e6',
+        borderColor: theme.colors.border,
         marginBottom: 20,
     },
     statusLabel: {
@@ -219,7 +217,7 @@ const localStyles = StyleSheet.create({
     amountText: {
         fontSize: 32,
         fontWeight: '800',
-        color: '#212529',
+        color: theme.colors.text,
         marginTop: 6,
     },
     sectionTitle: {
@@ -242,7 +240,7 @@ const localStyles = StyleSheet.create({
     courseSubject: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         lineHeight: 20,
     },
     infoRow: {
@@ -255,12 +253,12 @@ const localStyles = StyleSheet.create({
     },
     infoLabel: {
         fontSize: 14,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
     },
     infoValue: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#212529',
+        color: theme.colors.text,
     },
 });
 

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button, TextInput } from 'react-native-paper';
 import { authApis, endpoints } from '../../../configs/Apis';
 import Styles from '../Styles';
+import theme from '../../../styles/theme';
 
 const UpdateProfileModal = ({ visible, onClose, user, token, onUpdate }) => {
     const profileFields = [
@@ -98,15 +99,15 @@ const UpdateProfileModal = ({ visible, onClose, user, token, onUpdate }) => {
                         <Text style={Styles.modalTitle}>Cập nhật thông tin</Text>
                         {!loading && (
                             <TouchableOpacity onPress={onClose}>
-                                <Ionicons name="close" size={24} color="#6c757d" />
+                                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
                             </TouchableOpacity>
                         )}
                     </View>
 
                     <ScrollView ref={scrollViewRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                         {profileFields.map((field) => (
-                            <View 
-                                key={field.field} 
+                            <View
+                                key={field.field}
                                 style={Styles.modalInputGroup}
                                 onLayout={(e) => inputPositions.current[field.field] = e.nativeEvent.layout.y}
                             >
@@ -116,23 +117,23 @@ const UpdateProfileModal = ({ visible, onClose, user, token, onUpdate }) => {
                                     onChangeText={(t) => setProfileData({ ...profileData, [field.field]: t })}
                                     onFocus={() => {
                                         setTimeout(() => {
-                                            scrollViewRef.current?.scrollTo({ 
+                                            scrollViewRef.current?.scrollTo({
                                                 y: inputPositions.current[field.field] || 0,
-                                                animated: true 
+                                                animated: true
                                             });
                                         }, 200);
                                     }}
                                     mode="outlined"
-                                style={Styles.modalInput}
-                                placeholder={field.placeholder}
-                                keyboardType={field.keyboardType || 'default'}
-                                outlineColor="#dee2e6"
-                                activeOutlineColor="#1976d2"
-                                disabled={loading}
-                                left={<TextInput.Icon icon={field.icon} />}
-                            />
-                        </View>
-                    ))}
+                                    style={Styles.modalInput}
+                                    placeholder={field.placeholder}
+                                    keyboardType={field.keyboardType || 'default'}
+                                    outlineColor={theme.colors.border}
+                                    activeOutlineColor={theme.colors.primary}
+                                    disabled={loading}
+                                    left={<TextInput.Icon icon={field.icon} />}
+                                />
+                            </View>
+                        ))}
                     </ScrollView>
 
                     <View style={Styles.modalBtnGroup}>

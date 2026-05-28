@@ -4,11 +4,11 @@ import theme from "./theme";
 export default StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.colors.background,
         marginTop: 20,
     },
     header: {
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.white,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
         padding: 20,
@@ -16,7 +16,7 @@ export default StyleSheet.create({
     content_header: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#333',
+        color: theme.colors.text,
     },
     profile_home: {
         flexDirection: 'row',
@@ -34,7 +34,7 @@ export default StyleSheet.create({
         marginLeft: 5,
     },
     searchContainer: {
-        flexDirection: 'row',     // Xếp kính lúp và chỗ nhập chữ nằm ngang
+        flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#f0f0f0',
         margin: 15,
@@ -47,9 +47,8 @@ export default StyleSheet.create({
         borderRadius: 10
     },
     searchIcon: {
-        marginRight: 10, // Cách ô nhập chữ ra một chút
+        marginRight: 10,
     },
-    // === Shared Modal Styles ===
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -58,7 +57,7 @@ export default StyleSheet.create({
         padding: 20,
     },
     modalContainer: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         width: '100%',
         maxWidth: 400,
         borderRadius: 16,
@@ -76,13 +75,13 @@ export default StyleSheet.create({
         alignItems: 'center',
         marginBottom: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: theme.colors.border,
         paddingBottom: 10,
     },
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
     },
     modalItem: {
         paddingVertical: 14,
@@ -91,15 +90,14 @@ export default StyleSheet.create({
     },
     modalItemText: {
         fontSize: 15,
-        color: '#495057',
+        color: theme.colors.textSecondary,
     },
     modalItemTextActive: {
-        color: '#1877F2',
+        color: theme.colors.primary,
         fontWeight: 'bold',
     },
-    // === Generic Utilities ===
     card: {
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.white,
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
@@ -131,18 +129,18 @@ export default StyleSheet.create({
     unauthTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#212529',
+        color: theme.colors.text,
         marginBottom: 10,
     },
     unauthSubtitle: {
         fontSize: 14,
-        color: '#6c757d',
+        color: theme.colors.textSecondary,
         textAlign: 'center',
         marginBottom: 30,
         paddingHorizontal: 20,
     },
     btnPrimary: {
-        backgroundColor: '#0d6efd',
+        backgroundColor: theme.colors.primary,
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 8,
@@ -151,22 +149,22 @@ export default StyleSheet.create({
         marginBottom: 12,
     },
     btnPrimaryText: {
-        color: '#ffffff',
+        color: theme.colors.white,
         fontSize: 16,
         fontWeight: 'bold',
     },
     btnSecondary: {
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.colors.white,
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 8,
         width: '100%',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#0d6efd',
+        borderColor: theme.colors.primary,
     },
     btnSecondaryText: {
-        color: '#0d6efd',
+        color: theme.colors.primary,
         fontSize: 16,
         fontWeight: 'bold',
     }

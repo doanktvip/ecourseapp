@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
+import theme from '../../styles/theme';
 
 const PaymentProcess = ({ route, navigation }) => {
   const { course, payment } = route.params || {};
@@ -18,7 +19,7 @@ const PaymentProcess = ({ route, navigation }) => {
       id: 'MOMO',
       name: 'Ví MoMo',
       logo: 'https://res.cloudinary.com/db4bjqp4f/image/upload/v1779680333/MOMO_aovm96.png',
-      color: '#A50064',
+      color: theme.colors.brand.momo,
       bgTint: '#FAF0F6',
       desc: 'Thanh toán nhanh qua ứng dụng MoMo'
     },
@@ -26,7 +27,7 @@ const PaymentProcess = ({ route, navigation }) => {
       id: 'ZALOPAY',
       name: 'Ví ZaloPay',
       logo: 'https://res.cloudinary.com/db4bjqp4f/image/upload/v1779680333/Logo-ZaloPay_vfltc8.webp',
-      color: '#1184F5',
+      color: theme.colors.brand.zalopay,
       bgTint: '#F0F8FF',
       desc: 'Thanh toán qua ví điện tử ZaloPay'
     },
@@ -34,7 +35,7 @@ const PaymentProcess = ({ route, navigation }) => {
       id: 'STRIPE',
       name: 'Ví Stripe (Thẻ Quốc Tế)',
       logo: 'https://res.cloudinary.com/db4bjqp4f/image/upload/v1779680332/stripe_zyju45.png',
-      color: '#635BFF',
+      color: theme.colors.brand.stripe,
       bgTint: '#F5F4FF',
       desc: 'Hỗ trợ thẻ Visa, Mastercard, JCB'
     },
@@ -42,7 +43,7 @@ const PaymentProcess = ({ route, navigation }) => {
       id: 'PAYPAL',
       name: 'Ví PayPal',
       logo: 'https://res.cloudinary.com/db4bjqp4f/image/upload/v1779680332/paypal_n8nmmw.png',
-      color: '#003087',
+      color: theme.colors.brand.paypal,
       bgTint: '#F0F4FA',
       desc: 'Thanh toán quốc tế bảo mật cao'
     },
@@ -50,7 +51,7 @@ const PaymentProcess = ({ route, navigation }) => {
       id: 'CASH',
       name: 'Tiền mặt & Chuyển khoản',
       logo: 'https://res.cloudinary.com/db4bjqp4f/image/upload/v1779680302/cash_drrmg6.png',
-      color: '#28a745',
+      color: theme.colors.success,
       bgTint: '#F0F9F4',
       desc: 'Chuyển khoản ngân hàng hoặc nộp trực tiếp'
     },
@@ -75,7 +76,6 @@ const PaymentProcess = ({ route, navigation }) => {
         return;
       }
 
-      // Gọi API process thanh toán từ backend
       const url = endpoints['payment-process'](currentPayment.id);
       const res = await authApis(token).post(url, {
         payment_method: selectedMethod
@@ -84,7 +84,6 @@ const PaymentProcess = ({ route, navigation }) => {
       const paymentInfo = res.data || {};
 
       if (selectedMethod === 'CASH') {
-        // Với tiền mặt/chuyển khoản ngân hàng
         Alert.alert(
           "Đăng ký thanh toán tiền mặt",
           paymentInfo.message || `Đăng ký thanh toán tiền mặt thành công.\n\nHọc phí: ${parseFloat(currentPayment.amount || currentCourse.fee).toLocaleString()} VNĐ.\n\nMã giao dịch: ${paymentInfo.transaction_id || 'CASH_TEMP'}.\n\nVui lòng liên hệ giảng viên hoặc ban quản trị để hoàn tất xác nhận thanh toán.`,
@@ -94,7 +93,6 @@ const PaymentProcess = ({ route, navigation }) => {
           }]
         );
       } else {
-        // Với cổng thanh toán trực tuyến
         const payUrl = paymentInfo.payment_url;
         if (payUrl) {
           Alert.alert(
@@ -111,7 +109,6 @@ const PaymentProcess = ({ route, navigation }) => {
                   const supported = await Linking.canOpenURL(payUrl);
                   if (supported) {
                     await Linking.openURL(payUrl);
-                    // Quay về chi tiết để load lại trạng thái mới nhất
                     navigation.goBack();
                   } else {
                     Alert.alert("Lỗi", "Không thể mở trang liên kết thanh toán: " + payUrl);
@@ -141,7 +138,6 @@ const PaymentProcess = ({ route, navigation }) => {
 
   return (
     <ScrollView style={Styles.paymentContainer} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-      {/* 1. Thẻ Hóa Đơn Tóm Tắt (Billing Summary Card) */}
       <View style={Styles.paymentBillingCard}>
         <Text style={Styles.paymentCardTitle}>CHI TIẾT HÓA ĐƠN</Text>
 
@@ -186,7 +182,7 @@ const PaymentProcess = ({ route, navigation }) => {
               ]}
               onPress={() => setSelectedMethod(method.id)}
             >
-              <View style={[Styles.paymentIconContainer, { backgroundColor: isSelected ? '#ffffff' : '#f1f3f5' }]}>
+              <View style={[Styles.paymentIconContainer, { backgroundColor: isSelected ? theme.colors.white : '#f1f3f5' }]}>
                 <Image source={{ uri: method.logo }} style={Styles.paymentMethodLogo} />
               </View>
 
@@ -221,11 +217,11 @@ const PaymentProcess = ({ route, navigation }) => {
           onPress={handleProcessPayment}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#ffffff" />
+            <ActivityIndicator size="small" color={theme.colors.white} />
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={Styles.paymentBtnConfirmText}>XÁC NHẬN THANH TOÁN</Text>
-              <Ionicons name="arrow-forward" size={20} color="#ffffff" style={{ marginLeft: 8 }} />
+              <Ionicons name="arrow-forward" size={20} color={theme.colors.white} style={{ marginLeft: 8 }} />
             </View>
           )}
         </TouchableOpacity>

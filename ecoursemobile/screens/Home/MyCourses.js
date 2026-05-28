@@ -7,12 +7,13 @@ import { MyUserContext } from '../../configs/Contexts';
 import UserStyles from '../User/Styles';
 import Styles from './Styles';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
+import theme from '../../styles/theme';
 
 const MyCoursesMain = ({ navigation }) => {
     const [user] = useContext(MyUserContext);
     const [coursesList, setCoursesList] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('enrolled'); // 'enrolled' or 'teaching'
+    const [activeTab, setActiveTab] = useState('enrolled');
     const isFocused = useIsFocused();
 
     const loadCourses = async (tab = activeTab) => {
@@ -57,7 +58,6 @@ const MyCoursesMain = ({ navigation }) => {
         navigation.setOptions({ title: title });
     }, [user, activeTab, navigation]);
 
-    // Trường hợp CHƯA ĐĂNG NHẬP
     if (!user) {
         return (
             <View style={UserStyles.centerContainer}>
@@ -82,7 +82,6 @@ const MyCoursesMain = ({ navigation }) => {
         );
     }
 
-    // Thiết lập tiêu đề và mô tả động theo vai trò người dùng và tab đang chọn
     let screenDesc = "Tiếp tục học tập để tích lũy kiến thức và hoàn thành mục tiêu nghề nghiệp.";
     let emptyTitle = "Bạn chưa đăng ký khóa học nào";
     let emptyDesc = "Hãy khám phá và đăng ký các khóa học chất lượng trên hệ thống để nâng cao kỹ năng của mình nhé!";
@@ -132,14 +131,14 @@ const MyCoursesMain = ({ navigation }) => {
                 </View>
             )}
             <View style={Styles.sectionContainer}>
-                <Text style={[Styles.categoryText, { color: '#6c757d', marginBottom: 15 }]}>
+                <Text style={[Styles.categoryText, { color: theme.colors.textSecondary, marginBottom: 15 }]}>
                     {screenDesc}
                 </Text>
             </View>
 
             {loading && coursesList.length === 0 ? (
                 <View style={{ padding: 40, alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#0d6efd" />
+                    <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
             ) : coursesList.length === 0 ? (
                 <View style={{ padding: 40, alignItems: 'center' }}>
@@ -164,7 +163,6 @@ const MyCoursesMain = ({ navigation }) => {
                     {coursesList.map((item) => {
                         if (!item) return null;
 
-                        // Nhận diện xem item là Enrollment hay Course
                         const isEnrollment = item.progress !== undefined && item.course !== undefined;
                         const course = isEnrollment ? item.course : item;
                         const progress = isEnrollment ? item.progress : null;
@@ -214,7 +212,7 @@ const MyCoursesMain = ({ navigation }) => {
                                             }}
                                             onPress={() => navigation.navigate('CourseForm', { course: course })}
                                         >
-                                            <Ionicons name="pencil" size={20} color="#1877F2" />
+                                            <Ionicons name="pencil" size={20} color={theme.colors.primary} />
                                         </TouchableOpacity>
                                     ) : (
                                         <Ionicons

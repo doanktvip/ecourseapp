@@ -8,7 +8,6 @@ import { Card, Searchbar } from "react-native-paper";
 import { useIsFocused } from '@react-navigation/native';
 
 
-
 const Home = ({ navigation }) => {
     const [categories, setCategories] = useState([]);
     const [courses, setCourses] = useState([]);
@@ -16,7 +15,6 @@ const Home = ({ navigation }) => {
     const [cateId, setCateId] = useState();
     const [q, setQ] = useState("");
     const [page, setPage] = useState(1);
-    // Biến này sẽ có giá trị true nếu mở màn hình Home, false nếu ở màn hình khác
     const isFocused = useIsFocused();
 
 
@@ -24,11 +22,9 @@ const Home = ({ navigation }) => {
         let res = await Apis.get(endpoints['categories']);
         setCategories(res.data);
     }
-    // Hàm load khóa học, isRefresh để ép làm mới từ trang 1
     const loadCourses = async (isRefresh = false) => {
         let currentPage = isRefresh ? 1 : page;
 
-        // Nếu hết trang và không phải lệnh làm mới thì bỏ qua
         if (currentPage === 0 && !isRefresh) return;
 
         try {
@@ -40,12 +36,11 @@ const Home = ({ navigation }) => {
             let res = await Apis.get(url);
 
             if (currentPage === 1) {
-                setCourses(res.data.results); // Nạp lại mới hoàn toàn nếu ở trang 1
+                setCourses(res.data.results);
             } else {
                 setCourses([...courses, ...res.data.results]);
             }
 
-            // Xử lý cờ trang tiếp theo
             if (res.data.next === null) {
                 setPage(0);
             } else if (isRefresh) {
@@ -65,18 +60,16 @@ const Home = ({ navigation }) => {
         loadCategories();
     }, []);
 
-    // 2. RE-RENDER: màn hình Home hiển thị lên làm mới danh sách
     useEffect(() => {
-        if (!isFocused) return; // Nếu đang ở màn hình khác
+        if (!isFocused) return;
 
         let timer = setTimeout(() => {
-            loadCourses(true); // Luôn làm mới về trang 1
+            loadCourses(true);
         }, 500);
 
         return () => clearTimeout(timer);
     }, [q, cateId, isFocused]);
 
-    // Xử lý riêng biệt cho việc cuộn trang
     useEffect(() => {
         if (page > 1 && isFocused) {
             loadCourses(false);
@@ -90,7 +83,6 @@ const Home = ({ navigation }) => {
 
     const renderHeaderComponents = () => (
         <View>
-            {/* Khối 1: Thông tin người dùng / Lời chào */}
             <View style={Styles.profile_home}>
                 <View style={Styles.profile_info}>
                     <Image
@@ -211,14 +203,11 @@ const Home = ({ navigation }) => {
                 keyExtractor={(course) => course.id.toString()}
                 showsVerticalScrollIndicator={false}
 
-                // Nạp toàn bộ các View thành phần phía trên vào đây
                 ListHeaderComponent={renderHeaderComponents()}
 
-                // Cấu hình sự kiện cuộn xuống cuối để load trang tiếp theo
                 onEndReached={loadMore}
                 onEndReachedThreshold={0.2}
 
-                // Khối hiển thị hiệu ứng xoay tròn Loading dưới đáy khi đang tải thêm dữ liệu
                 ListFooterComponent={loading && <ActivityIndicator />}
             />
         </View>

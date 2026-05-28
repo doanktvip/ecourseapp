@@ -5,6 +5,7 @@ import { Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { authApis, endpoints } from '../../../configs/Apis';
 import Styles from '../Styles';
+import theme from '../../../styles/theme';
 
 const AvatarModal = ({ visible, onClose, user, token, onUpdate }) => {
     const [selectedImage, setSelectedImage] = useState(null);
@@ -88,7 +89,7 @@ const AvatarModal = ({ visible, onClose, user, token, onUpdate }) => {
                         <Text style={Styles.modalTitle}>Cập nhật ảnh đại diện</Text>
                         {!loading && (
                             <TouchableOpacity onPress={onClose}>
-                                <Ionicons name="close" size={24} color="#6c757d" />
+                                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -105,7 +106,7 @@ const AvatarModal = ({ visible, onClose, user, token, onUpdate }) => {
                                 <Image source={{ uri: user.avatar }} style={Styles.avatarSelectImage} />
                             ) : (
                                 <View style={Styles.avatarSelectPlaceholder}>
-                                    <Ionicons name="cloud-upload-outline" size={40} color="#1976d2" />
+                                    <Ionicons name="cloud-upload-outline" size={40} color={theme.colors.primary} />
                                     <Text style={Styles.avatarSelectPlaceholderText}>Chọn ảnh</Text>
                                 </View>
                             )}

@@ -106,20 +106,16 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(
         required=True,
         write_only=True,
-        validators=[validate_password]  # kiểm tra độ mạnh mật khẩu của Django
+        validators=[validate_password]
     )
 
     def validate_old_password(self, value):
-        # Lấy user hiện tại từ request của View
         user = self.context['request'].user
-        # Kiểm tra old_password so sánh với mk của user hiện tại
-        # value = old_password
         if not user.check_password(value):
             raise serializers.ValidationError("Mật khẩu cũ không chính xác.")
         return value
 
     def validate(self, data):
-        # Kiểm tra không trùng mk
         if data['old_password'] == data['new_password']:
             raise serializers.ValidationError({
                 "new_password": "Mật khẩu mới không được trùng với mật khẩu cũ."
@@ -169,7 +165,6 @@ class LessonSerializer(serializers.ModelSerializer):
         if request and request.user and request.user.is_authenticated:
             data['liked'] = instance.likes.filter(user=request.user, active=True).exists()
 
-            # Lấy thông tin tiến độ bài học của học viên
             progress = LessonProgress.objects.filter(enrollment__student=request.user, lesson=instance).first()
             if progress:
                 data['completed'] = progress.status == LessonProgress.Status.COMPLETED
@@ -191,7 +186,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = ['id', 'amount', 'payment_method', 'is_successful', 'transaction_id', 'created_date', 
+        fields = ['id', 'amount', 'payment_method', 'is_successful', 'transaction_id', 'created_date',
                   'course_subject', 'student_name', 'student_email', 'course_image', 'course_fee', 'instructor_name']
         read_only_fields = ['id', 'amount', 'is_successful', 'transaction_id', 'created_date']
 
@@ -222,7 +217,8 @@ class PaymentSerializer(serializers.ModelSerializer):
         return None
 
     def get_instructor_name(self, obj):
-        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'course', None) and getattr(obj.enrollment.course, 'instructor', None):
+        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'course', None) and getattr(
+                obj.enrollment.course, 'instructor', None):
             return obj.enrollment.course.instructor.get_full_name()
         return None
 
@@ -243,6 +239,7 @@ class EnrollmentSerializer(serializers.Serializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = SimpleUserSerializer(read_only=True)
+    # hàm tự định nghĩa, tùy chỉnh thuộc tính
     replies = serializers.SerializerMethodField()
 
     class Meta:
@@ -251,9 +248,9 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'lesson', 'created_date']
 
     def get_replies(self, obj):
-        # Tránh đệ quy vô hạn: Chỉ lấy replies cho bình luận cấp gốc (không có parent)
         if obj.parent is not None:
             return []
+        #Lọc ra danh sách phản hồi của cmt đó
         active_replies = obj.replies.filter(active=True).order_by('-created_date')
         return CommentSerializer(active_replies, many=True, context=self.context).data
 
