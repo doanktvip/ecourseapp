@@ -7,6 +7,7 @@ import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình xem thống kê doanh thu và học viên dành cho Giảng viên
 const StatsTab = () => {
   const [user] = useContext(MyUserContext);
   const [loading, setLoading] = useState(true);

@@ -10,6 +10,7 @@ import MyStyles from './Styles';
 import moment from 'moment';
 import theme from '../../styles/theme';
 
+// Màn hình chi tiết phòng chat (Gửi nhận tin nhắn realtime qua Firebase)
 const ChatRoom = ({ route, navigation }) => {
   const { roomId, receiverId, receiverName, receiverAvatar, studentId, instructorId } = route.params;
   const { user } = useUser();
@@ -37,6 +38,7 @@ const ChatRoom = ({ route, navigation }) => {
     return () => unsubscribe();
   }, [roomId]);
 
+  // Xử lý gửi tin nhắn văn bản lên Firebase
   const handleSendMessage = () => {
     if (inputText.trim() === '') return;
 

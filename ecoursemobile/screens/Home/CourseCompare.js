@@ -5,6 +5,7 @@ import Apis, { endpoints } from '../../configs/Apis';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình so sánh thông tin giữa các khóa học
 const CourseCompare = ({ route, navigation }) => {
   const { courseA } = route.params || {};
 

@@ -11,6 +11,7 @@ const AvatarModal = ({ visible, onClose, user, token, onUpdate }) => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    // Hàm mở thư viện hệ thống để người dùng chọn ảnh đại diện
     const handlePickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
@@ -30,6 +31,7 @@ const AvatarModal = ({ visible, onClose, user, token, onUpdate }) => {
         }
     };
 
+    // Hàm xử lý upload file ảnh đại diện lên server qua API (sử dụng FormData)
     const handleUploadAvatar = async () => {
         if (!selectedImage) {
             Alert.alert("Lỗi", "Vui lòng chọn một hình ảnh để tải lên.");

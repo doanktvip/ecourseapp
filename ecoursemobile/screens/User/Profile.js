@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MyUserContext } from '../../configs/Contexts';
 import Styles from './Styles';
@@ -9,6 +10,7 @@ import UpdateProfileModal from './Modal/UpdateProfileModal';
 import ChangePasswordModal from './Modal/ChangePasswordModal';
 import theme from '../../styles/theme';
 
+// Màn hình quản lý hồ sơ cá nhân và cài đặt ứng dụng
 const ProfileMain = ({ navigation }) => {
     const [user, dispatch] = useContext(MyUserContext);
     const [token, setToken] = useState(null);
@@ -25,6 +27,7 @@ const ProfileMain = ({ navigation }) => {
         fetchToken();
     }, [user]);
 
+    // Hàm xử lý đăng xuất khỏi tài khoản
     const logout = async () => {
         Alert.alert(
             "Đăng xuất",
@@ -36,6 +39,14 @@ const ProfileMain = ({ navigation }) => {
                     style: "destructive",
                     onPress: async () => {
                         await AsyncStorage.removeItem('token');
+
+                        navigation.dispatch(
+                            CommonActions.reset({
+                                index: 0,
+                                routes: [{ name: 'Main', params: { screen: 'HomeTab' } }],
+                            })
+                        );
+
                         dispatch({ type: 'logout' });
                     }
                 }

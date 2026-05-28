@@ -7,9 +7,11 @@ from courses.models import Payment
 from courses.payments.factory import PaymentFactory
 
 
+# Webhook xử lý phản hồi từ MoMo
 class MomoWebhookView(views.APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny] # Cho phép cổng thanh toán gọi API không cần token
 
+    # Xử lý thông báo bất đồng bộ từ MoMo (Server-to-Server)
     def post(self, request):
         data = request.data
         order_id = data.get('orderId')
@@ -19,6 +21,7 @@ class MomoWebhookView(views.APIView):
 
         try:
             with transaction.atomic():
+                # Lock row payment để tránh conflict nếu nhận được request đồng thời
                 payment = Payment.objects.select_for_update().get(transaction_id=order_id)
 
                 if payment.is_successful:
@@ -26,11 +29,14 @@ class MomoWebhookView(views.APIView):
 
                 gateway = PaymentFactory.get_payment_gateway(Payment.Method.MOMO)
 
+                # Xác thực chữ ký
                 if gateway.verify_payment(data):
+                    # Kiểm tra số tiền
                     if float(data.get('amount', 0)) != float(payment.amount):
                         return Response({"message": "Số tiền thanh toán không khớp"},
                                         status=status.HTTP_400_BAD_REQUEST)
 
+                    # Cập nhật trạng thái thành công
                     payment.is_successful = True
                     payment.save(update_fields=['is_successful'])
                     return Response(status=status.HTTP_204_NO_CONTENT)
@@ -40,6 +46,7 @@ class MomoWebhookView(views.APIView):
         except Payment.DoesNotExist:
             return Response({"message": "Không tìm thấy giao dịch"}, status=status.HTTP_404_NOT_FOUND)
 
+    # Xử lý chuyển hướng người dùng từ MoMo về (Return URL)
     def get(self, request):
         result_code = request.query_params.get('resultCode')
         message = request.query_params.get('message')
@@ -56,6 +63,7 @@ class MomoWebhookView(views.APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# Webhook xử lý phản hồi từ ZaloPay
 class ZaloPayWebhookView(views.APIView):
     permission_classes = [AllowAny]
 
@@ -107,6 +115,7 @@ class ZaloPayWebhookView(views.APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# Webhook xử lý phản hồi từ Stripe
 class StripeWebhookView(views.APIView):
     permission_classes = [AllowAny]
 
@@ -143,6 +152,7 @@ class StripeWebhookView(views.APIView):
         }, status=status.HTTP_200_OK)
 
 
+# Webhook xử lý phản hồi từ PayPal
 class PayPalWebhookView(views.APIView):
     permission_classes = [AllowAny]
 

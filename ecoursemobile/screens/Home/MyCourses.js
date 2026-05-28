@@ -9,6 +9,7 @@ import Styles from './Styles';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import theme from '../../styles/theme';
 
+// Màn hình quản lý các khóa học (Khóa học đã đăng ký hoặc Khóa học đang giảng dạy)
 const MyCoursesMain = ({ navigation }) => {
     const [user] = useContext(MyUserContext);
     const [coursesList, setCoursesList] = useState([]);
@@ -16,6 +17,7 @@ const MyCoursesMain = ({ navigation }) => {
     const [activeTab, setActiveTab] = useState('enrolled');
     const isFocused = useIsFocused();
 
+    // Tải danh sách khóa học tương ứng với tab đang chọn (học viên/giảng viên)
     const loadCourses = async (tab = activeTab) => {
         if (!user) return;
         try {

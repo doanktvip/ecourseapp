@@ -7,6 +7,7 @@ import { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình dành cho Admin duyệt hồ sơ đăng ký giảng viên
 const VerifyInstructors = ({ navigation }) => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,7 @@ const VerifyInstructors = ({ navigation }) => {
     fetchToken();
   }, [navigation]);
 
+  // Tải danh sách các đơn đăng ký giảng viên
   const loadApplications = useCallback(async (tk = token, status = filterStatus) => {
     if (!tk) return;
     try {
@@ -94,6 +96,7 @@ const VerifyInstructors = ({ navigation }) => {
     }
   };
 
+  // Xử lý cập nhật trạng thái đơn (Duyệt/Từ chối)
   const handleUpdateStatus = async (id, newStatus, candidateName) => {
     const actionText = newStatus === 'APPROVED' ? 'DUYỆT' : 'TỪ CHỐI';
 

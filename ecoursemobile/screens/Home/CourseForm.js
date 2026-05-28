@@ -9,6 +9,7 @@ import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình thêm mới hoặc chỉnh sửa thông tin khóa học (dành cho Giảng viên)
 const CourseForm = ({ route, navigation }) => {
     const [user] = useContext(MyUserContext);
 
@@ -66,6 +67,7 @@ const CourseForm = ({ route, navigation }) => {
         }
     }, [course]);
 
+    // Hàm xử lý xin quyền và mở thư viện ảnh để tải lên ảnh bìa thiết kế của khóa học
     const handlePickImage = async () => {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -96,6 +98,7 @@ const CourseForm = ({ route, navigation }) => {
         setCategoryModalVisible(false);
     };
 
+    // Hàm thu thập dữ liệu form và gửi API tạo mới hoặc cập nhật khóa học
     const handleCreateCourse = async () => {
         if (!subject || !subject.trim()) {
             Alert.alert("Lỗi nhập liệu", "Vui lòng nhập tên khóa học.");

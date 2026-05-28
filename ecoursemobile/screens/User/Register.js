@@ -8,6 +8,7 @@ import Apis, { endpoints } from '../../configs/Apis';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình đăng ký tài khoản mới
 const Register = () => {
   const registerFields = [
     {
@@ -70,6 +71,7 @@ const Register = () => {
 
   const nav = useNavigation();
 
+  // Hàm mở thư viện ảnh để chọn avatar
   const handlePickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -89,6 +91,7 @@ const Register = () => {
     }
   };
 
+  // Hàm kiểm tra hợp lệ dữ liệu đăng ký
   const validate = () => {
     const { firstName, lastName, email, username, password, confirmPassword } = formData;
     if (!firstName || !lastName || !email || !username || !password || !confirmPassword) {
@@ -103,6 +106,7 @@ const Register = () => {
     return true;
   };
 
+  // Hàm xử lý gửi yêu cầu đăng ký lên server
   const handleRegister = async () => {
     if (!validate()) return;
 

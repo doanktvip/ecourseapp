@@ -9,6 +9,7 @@ import { MyUserContext } from "../../configs/Contexts";
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../../styles/theme';
 
+// Màn hình đăng nhập tài khoản
 const Login = ({ route }) => {
 
     const userInfo = [{
@@ -35,6 +36,7 @@ const Login = ({ route }) => {
 
     const [showPassword, setShowPassword] = useState(false);
 
+    // Kiểm tra dữ liệu đầu vào trước khi submit
     const validate = () => {
         if (!user.username) {
             setErr('Vui lòng nhập tên đăng nhập');
@@ -48,6 +50,7 @@ const Login = ({ route }) => {
         }
     }
 
+    // Hàm xử lý đăng nhập qua API
     const login = async () => {
         if (validate()) {
             try {
@@ -99,6 +102,7 @@ const Login = ({ route }) => {
         }
     }
 
+    // Hàm xử lý đăng nhập bằng Google (Đang phát triển)
     const loginWithGoogle = () => {
         Alert.alert(
             "Đăng nhập bằng Google",

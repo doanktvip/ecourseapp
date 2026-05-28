@@ -4,6 +4,7 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 
+# Validator: Kiểm tra độ dài mật khẩu (6-30 ký tự)
 class PasswordLengthValidator:
     def validate(self, password, user=None):
         if len(password) < 6 or len(password) > 30:
@@ -15,6 +16,7 @@ class PasswordLengthValidator:
         return "Mật khẩu phải có độ dài từ 6 đến 30 ký tự."
 
 
+# Validator: Kiểm tra mật khẩu không chứa khoảng trắng
 class PasswordWhitespaceValidator:
     def validate(self, password, user=None):
         if re.search(r'\s', password):
@@ -26,6 +28,7 @@ class PasswordWhitespaceValidator:
         return "Mật khẩu không được chứa khoảng trắng."
 
 
+# Validator: Kiểm tra mật khẩu không chứa tiếng Việt có dấu/ký tự đặc biệt lạ
 class PasswordAsciiValidator:
     def validate(self, password, user=None):
         if not password.isascii():
@@ -37,6 +40,7 @@ class PasswordAsciiValidator:
         return "Mật khẩu không được chứa ký tự tiếng Việt có dấu."
 
 
+# Validator: Kiểm tra độ dài username (6-30 ký tự)
 class UsernameLengthValidator:
     def validate(self, username, user=None):
         if len(username) < 6 or len(username) > 30:
@@ -46,6 +50,7 @@ class UsernameLengthValidator:
         return "Tên đăng nhập phải có độ dài từ 6 đến 30 ký tự."
 
 
+# Validator: Kiểm tra username không chứa khoảng trắng
 class UsernameWhitespaceValidator:
     def validate(self, username, user=None):
         if re.search(r'\s', username):
@@ -55,6 +60,7 @@ class UsernameWhitespaceValidator:
         return "Tên đăng nhập không được chứa khoảng trắng."
 
 
+# Validator: Kiểm tra username không chứa tiếng Việt có dấu
 class UsernameAsciiValidator:
     def validate(self, username, user=None):
         if not username.isascii():
@@ -64,6 +70,7 @@ class UsernameAsciiValidator:
         return "Tên đăng nhập không được chứa ký tự tiếng Việt có dấu."
 
 
+# Hàm gọi các Validator Custom cho Username được định nghĩa trong settings
 def validate_custom_username(value, serializer_instance=None):
     validators_config = getattr(settings, 'CUSTOM_USERNAME_VALIDATORS', [])
 

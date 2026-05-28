@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import theme from '../../styles/theme';
 
+// Màn hình chi tiết khóa học (Hiển thị thông tin, danh sách bài học, đánh giá)
 const CourseDetail = ({ route, navigation }) => {
   const { course } = route.params || {};
   const currentCourse = course || {};
@@ -44,6 +45,7 @@ const CourseDetail = ({ route, navigation }) => {
     return true;
   }, [isEnrolled, user, currentCourse]);
 
+  // Tải danh sách các bài học thuộc khóa học này
   const loadLessons = async () => {
     if (!currentCourse.id) return;
     try {
@@ -104,6 +106,7 @@ const CourseDetail = ({ route, navigation }) => {
     }
   };
 
+  // Kiểm tra trạng thái học viên đã đăng ký/thanh toán khóa học chưa
   const checkEnrollmentStatus = async () => {
     if (!user || !currentCourse.id) {
       setEnrollmentRecord(null);
@@ -133,6 +136,7 @@ const CourseDetail = ({ route, navigation }) => {
     }
   };
 
+  // Xử lý đăng ký hoặc chuyển hướng sang trang thanh toán khóa học
   const handleEnroll = async () => {
     if (!user) {
       navigation.navigate('Login', {
