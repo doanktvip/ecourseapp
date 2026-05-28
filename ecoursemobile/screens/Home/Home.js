@@ -8,6 +8,7 @@ import { Card, Searchbar } from "react-native-paper";
 import { useIsFocused } from '@react-navigation/native';
 
 
+// Màn hình chính (Trang chủ) hiển thị danh sách khóa học và danh mục
 const Home = ({ navigation }) => {
     const [categories, setCategories] = useState([]);
     const [courses, setCourses] = useState([]);
@@ -18,10 +19,12 @@ const Home = ({ navigation }) => {
     const isFocused = useIsFocused();
 
 
+    // Tải danh sách danh mục từ API
     const loadCategories = async () => {
         let res = await Apis.get(endpoints['categories']);
         setCategories(res.data);
     }
+    // Tải danh sách khóa học (hỗ trợ phân trang, tìm kiếm, lọc theo danh mục)
     const loadCourses = async (isRefresh = false) => {
         let currentPage = isRefresh ? 1 : page;
 
@@ -76,6 +79,7 @@ const Home = ({ navigation }) => {
         }
     }, [page]);
 
+    // Tải thêm trang khóa học tiếp theo khi cuộn xuống cuối
     const loadMore = () => {
         if (page > 0 && !loading && courses.length > 0)
             setPage(page + 1);

@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import theme from "./theme";
 
+// Các style chung được sử dụng ở nhiều màn hình khác nhau
 export default StyleSheet.create({
     container: {
         flex: 1,
@@ -49,6 +50,7 @@ export default StyleSheet.create({
     searchIcon: {
         marginRight: 10,
     },
+    // Style cho các Dialog/Modal
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -96,6 +98,7 @@ export default StyleSheet.create({
         color: theme.colors.primary,
         fontWeight: 'bold',
     },
+    // Style cho các khối thông tin (Card)
     card: {
         backgroundColor: theme.colors.white,
         borderRadius: 12,
@@ -139,6 +142,7 @@ export default StyleSheet.create({
         marginBottom: 30,
         paddingHorizontal: 20,
     },
+    // Nút bấm chính
     btnPrimary: {
         backgroundColor: theme.colors.primary,
         paddingVertical: 12,
@@ -153,6 +157,7 @@ export default StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    // Nút bấm phụ
     btnSecondary: {
         backgroundColor: theme.colors.white,
         paddingVertical: 12,

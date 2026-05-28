@@ -6,6 +6,7 @@ import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình chọn phương thức thanh toán và xử lý thanh toán khóa học
 const PaymentProcess = ({ route, navigation }) => {
   const { course, payment } = route.params || {};
   const currentCourse = course || {};
@@ -57,6 +58,7 @@ const PaymentProcess = ({ route, navigation }) => {
     },
   ];
 
+  // Xử lý tạo phiên thanh toán thông qua API
   const handleProcessPayment = async () => {
     if (!selectedMethod) {
       Alert.alert("Thông báo", "Vui lòng chọn một phương thức thanh toán trước khi tiếp tục.");

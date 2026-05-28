@@ -9,6 +9,7 @@ import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình thêm mới hoặc chỉnh sửa bài giảng (dành cho Giảng viên)
 const LessonForm = ({ route, navigation }) => {
     const [user] = useContext(MyUserContext);
     const { courseId, lesson } = route?.params || {};
@@ -74,6 +75,7 @@ const LessonForm = ({ route, navigation }) => {
         });
     }, [lesson, navigation]);
 
+    // Hàm xử lý xin quyền và mở thư viện ảnh để chọn ảnh bìa minh họa cho bài học
     const handlePickImage = async () => {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -98,6 +100,7 @@ const LessonForm = ({ route, navigation }) => {
         }
     };
 
+    // Hàm xử lý xin quyền và mở thư viện video để tải lên video bài giảng
     const handlePickVideo = async () => {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -127,6 +130,7 @@ const LessonForm = ({ route, navigation }) => {
         );
     };
 
+    // Hàm xử lý tạo mới hoặc cập nhật thông tin bài học lên server
     const handleSaveLesson = async () => {
         if (!subject || !subject.trim()) {
             Alert.alert("Lỗi nhập liệu", "Vui lòng nhập tên bài học.");

@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+// Lấy địa chỉ IP/domain của backend từ biến môi trường
 export const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
 
+// Định nghĩa các endpoint (đường dẫn API) để tái sử dụng
 export const endpoints = {
     'categories': '/categories/',
     'courses': '/courses/',
@@ -42,6 +44,7 @@ export const endpoints = {
     'stats': '/stats/',
 };
 
+// Hàm tạo axios instance có đính kèm sẵn token để gọi các API cần xác thực
 export const authApi = (token) => {
     return axios.create({
         baseURL: BASE_URL,
@@ -53,6 +56,7 @@ export const authApi = (token) => {
 
 export const authApis = authApi;
 
+// Axios instance mặc định (không đính kèm token)
 export default axios.create({
     baseURL: BASE_URL
 });

@@ -12,6 +12,7 @@ import theme from '../../styles/theme';
 
 moment.locale('vi');
 
+// Màn hình chi tiết một giao dịch thanh toán cụ thể
 const PaymentDetail = () => {
     const route = useRoute();
     const navigation = useNavigation();

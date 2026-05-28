@@ -18,6 +18,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from courses.serializers import TagSerializer, AddTagsSerializer
 
 
+# API quản lý Danh mục khóa học
 class CategoryViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
@@ -28,6 +29,7 @@ class CategoryViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Cre
         return [permissions.AllowAny()]
 
 
+# API quản lý Khóa học
 class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
                     mixins.UpdateModelMixin, mixins.DestroyModelMixin):
     queryset = Course.objects.filter(active=True).order_by('-created_date')
@@ -38,24 +40,20 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
     search_fields = ['subject', 'instructor__first_name', 'instructor__last_name']
     ordering_fields = ['id']
 
+    # Xử lý quyền truy cập cho từng action
     def get_permissions(self):
         if self.action in ['create']:
             return [perms.IsInstructor()]
-
         if self.action in ['partial_update', 'destroy', 'students']:
             return [perms.IsCourseOwner()]
-
         if self.action == 'lessons':
             if self.request.method == 'POST':
                 return [perms.IsCourseOwner()]
             return [permissions.AllowAny()]
-
         if self.action == 'enrolls':
             return [perms.IsAuthenticatedUser()]
-
         if self.action == 'reviews' and self.request.method == 'POST':
             return [perms.IsEnrolled()]
-
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):
@@ -63,13 +61,15 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
             return serializers.CourseDetailSerializer
         if self.action == 'reviews':
             return serializers.CourseReviewSerializer
-
         return serializers.CourseSerializer
 
+    # Lưu thông tin khóa học mới, tự động gán user hiện tại làm giảng viên và xử lý lưu file ảnh bìa (image) nếu có
     def perform_create(self, serializer):
+        # Tự động gán giảng viên là user đang đăng nhập
         serializer.save(instructor=self.request.user)
 
     def perform_destroy(self, instance):
+        # Xóa mềm khóa học
         instance.active = False
         instance.save()
 
@@ -83,13 +83,13 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
             return Response({"detail": "Lỗi hệ thống khi vô hiệu hóa khóa học."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # API so sánh nhiều khóa học
     @action(methods=['get'], detail=False, url_path='compare')
     def compare(self, request):
         if 'ids' not in request.query_params:
             return Response({"error": "Vui lòng cung cấp danh sách ids cần so sánh"},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        #lọc danh sách khóa học theo truy vấn
         courses = self.filter_queryset(self.get_queryset())
 
         if not courses.exists():
@@ -99,6 +99,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
         serializer = self.get_serializer(courses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    # API lấy danh sách bài học hoặc thêm bài học mới (hỗ trợ upload file ảnh minh họa và video bài giảng)
     @action(methods=['get', 'post'], detail=True, url_path='lessons')
     def lessons(self, request, pk=None):
         course = self.get_object()
@@ -117,14 +118,15 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
                 "previous": None,
                 "results": serializer.data
             }, status=status.HTTP_200_OK)
+            
         if request.method == 'POST':
             serializer = serializers.LessonSerializer(data=request.data)
-
             if serializer.is_valid():
                 serializer.save(course=course)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # API đăng ký khóa học
     @action(methods=['post'], detail=True, url_path='enrolls')
     def enrolls(self, request, pk=None):
         course = self.get_object()
@@ -140,6 +142,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
         with transaction.atomic():
             enrollment = Enrollment.objects.create(student=user, course=course)
 
+            # Nếu khóa học miễn phí, tạo thanh toán thành công luôn
             if course.fee == 0:
                 Payment.objects.create(enrollment=enrollment, amount=0, payment_method=Payment.Method.CASH,
                                        is_successful=True, transaction_id=str(uuid.uuid4()))
@@ -149,14 +152,15 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
 
         return Response(serializers.EnrollmentDetailSerializer(enrollment).data, status=status.HTTP_201_CREATED)
 
+    # Lấy danh sách học viên của khóa học (đã thanh toán)
     @action(methods=['get'], detail=True, url_path='students')
     def students(self, request, pk=None):
         course = self.get_object()
         enrollments = Enrollment.objects.filter(course=course, payment__is_successful=True)
-
         serializer = serializers.EnrollmentDetailSerializer(enrollments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    # Xem và thêm đánh giá khóa học
     @action(methods=['get', 'post'], detail=True, url_path='reviews')
     def reviews(self, request, pk):
         if request.method.__eq__('GET'):
@@ -164,31 +168,26 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
             reviews = course.reviews.filter(active=True).order_by('-created_date')
             p = paginators.CourseReviewPaginator()
             page = p.paginate_queryset(reviews, request)
-
             if page is not None:
                 serializer = serializers.CourseReviewSerializer(page, many=True)
                 return p.get_paginated_response(serializer.data)
-
             return Response(serializers.CourseReviewSerializer(reviews, many=True).data, status=status.HTTP_200_OK)
 
         if request.method.__eq__('POST'):
             course = self.get_object()
-
             data = request.data.copy()
             data['course'] = course.id
-
             serializer = serializers.CourseReviewSerializer(data=data)
             if serializer.is_valid():
                 try:
                     review = serializer.save(user=request.user, course=course)
                     return Response(serializers.CourseReviewSerializer(review).data, status=status.HTTP_201_CREATED)
-
                 except DjangoValidationError as e:
                     return Response({"detail": e.messages}, status=status.HTTP_400_BAD_REQUEST)
-
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# API Quản lý Người dùng
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
@@ -205,6 +204,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             return [(perms.IsInstructor | perms.IsAdmin)()]
         return [permissions.AllowAny()]
 
+    # Lấy/Cập nhật thông tin user hiện tại (bao gồm xử lý upload thay đổi ảnh đại diện - avatar thông qua MultiPartParser)
     @action(methods=['get', 'patch'], url_path='me', detail=False)
     def me(self, request):
         u = request.user
@@ -214,6 +214,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             u = s.save()
         return Response(serializers.UserSerializer(u).data, status=status.HTTP_200_OK)
 
+    # Đổi mật khẩu
     @action(methods=['post'], detail=False, url_path='me/change-password')
     def change_password(self, request):
         s = serializers.ChangePasswordSerializer(data=request.data, context={'request': request})
@@ -224,28 +225,26 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             return Response({"message": "Đổi mật khẩu thành công!"}, status=status.HTTP_200_OK)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # Đăng ký làm giảng viên (cho phép học viên upload tệp CV/Hồ sơ dưới dạng file đính kèm)
     @action(methods=['get', 'post'], detail=False, url_path='me/apply', parser_classes=[parsers.MultiPartParser])
     def apply_instructor(self, request):
         application = InstructorApplication.objects.filter(user=request.user).first()
-
         if request.method == 'GET':
             if not application:
                 return Response({"detail": "Bạn chưa nộp đơn nào."}, status=status.HTTP_404_NOT_FOUND)
             serializer = serializers.ApplySerializer(application)
             return Response(serializer.data)
-
         if request.method == 'POST':
             if application:
                 return Response({"detail": "Bạn đã nộp đơn rồi. Trạng thái hiện tại: " + application.status},
                                 status=status.HTTP_400_BAD_REQUEST)
-
             serializer = serializers.ApplySerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save(user=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # Khóa học do mình giảng dạy
     @action(methods=['get'], detail=False, url_path='me/courses')
     def my_courses(self, request):
         user = request.user
@@ -259,6 +258,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
         serializer = serializers.CourseSerializer(courses, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    # Các khóa học đã đăng ký tham gia
     @action(methods=['get'], detail=False, url_path='me/enrolls')
     def my_enrolls(self, request):
         user = request.user
@@ -267,19 +267,19 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# API duyệt đơn đăng ký giảng viên (dành cho Admin)
 class ApplicationViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.UpdateModelMixin):
     http_method_names = ['get', 'patch', 'head', 'options']
     queryset = InstructorApplication.objects.all()
     serializer_class = serializers.ApplySerializer
     permission_classes = [perms.IsAdmin]
-
     filter_backends = [DjangoFilterBackend]
     filterset_class = ApplicationFilter
 
     def update(self, request, *args, **kwargs):
+        # kwargs.pop('partial', True) là kỹ thuật phổ biến để thiết lập mặc định partial=True nếu không truyền vào, giúp DRF hiểu đây là lệnh PATCH thay vì PUT
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
-
         new_status = request.data.get('status')
         old_status = instance.status
 
@@ -299,17 +299,18 @@ class ApplicationViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.
         try:
             with transaction.atomic():
                 updated_instance = serializer.save(status=new_status)
+                # Nếu duyệt thành công, chuyển user thành giảng viên
                 if new_status == InstructorApplication.Status.APPROVED:
                     user = updated_instance.user
                     user.role = User.Role.INSTRUCTOR
                     user.save(update_fields=['role'])
-
                 return Response(serializer.data)
         except Exception:
             return Response({"detail": "Lỗi hệ thống khi cập nhật trạng thái đơn."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# API Quản lý Bài học
 class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.ListAPIView, mixins.UpdateModelMixin,
                     mixins.DestroyModelMixin):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
@@ -319,43 +320,35 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
     def get_permissions(self):
         if self.action == 'retrieve':
             return [perms.IsEnrolledOrPreview()]
-
         if self.action in ['complete', 'update_progress']:
             return [perms.IsEnrolled()]
-
         if self.action in ['partial_update', 'destroy', 'add_tags']:
             return [perms.IsCourseOwner()]
-
         if self.action == 'list':
             return [perms.IsAdmin()]
-
         if self.action == 'comments':
             if self.request.method == 'POST':
                 return [perms.HasEnrollmentRecord()]
             return [permissions.AllowAny()]
-
         if self.action == 'like':
             return [perms.HasEnrollmentRecord()]
-
         return [permissions.AllowAny()]
 
+    # Thêm tag cho bài học
     @action(methods=['post'], detail=True, url_path='tags')
     def add_tags(self, request, pk=None):
         lesson = self.get_object()
-
         serializer = AddTagsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         tags_objects = serializer.validated_data['tags']
         lesson.tags.set(tags_objects)
-
         return Response({"detail": "Cập nhật tags thành công!"}, status=status.HTTP_200_OK)
 
+    # Đánh dấu bài học hoàn thành
     @action(methods=['post'], detail=True, url_path='complete')
     def complete(self, request, pk=None):
         lesson = self.get_object()
         enrollment = Enrollment.objects.filter(student=request.user, course=lesson.course).first()
-
         if not enrollment:
             return Response({"detail": "Không tìm thấy thông tin đăng ký."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -373,22 +366,20 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
             progress.save(update_fields=['watched_seconds', 'status'])
 
         enrollment.refresh_from_db()
-
         return Response({"detail": "Đã đánh dấu hoàn thành bài học.",
                          "current_progress": enrollment.progress}, status=status.HTTP_200_OK)
 
+    # Cập nhật tiến độ xem video bài học
     @action(methods=['post'], detail=True, url_path='update-progress')
     def update_progress(self, request, pk=None):
         lesson = self.get_object()
         enrollment = Enrollment.objects.filter(student=request.user, course=lesson.course).first()
-
         if not enrollment:
             return Response({"detail": "Không tìm thấy thông tin đăng ký."}, status=status.HTTP_404_NOT_FOUND)
 
         seconds = request.data.get('watched_seconds')
         if seconds is None:
             return Response({"detail": "Thiếu thông tin watched_seconds."}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             seconds = int(seconds)
         except ValueError:
@@ -397,6 +388,8 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
         if seconds > lesson.video_seconds:
             seconds = lesson.video_seconds
 
+        # get_or_create() là 1 hàm hữu ích của Django ORM. Nó sẽ thử lấy bản ghi ra, nếu chưa tồn tại trong DB thì sẽ TỰ ĐỘNG TẠO MỚI.
+        # Giúp tiết kiệm bước viết if/else kiểm tra tồn tại thủ công.
         progress, created = LessonProgress.objects.get_or_create(
             enrollment=enrollment,
             lesson=lesson,
@@ -405,6 +398,7 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
 
         if not created:
             progress.watched_seconds = seconds
+            # Nếu xem được 90% thời lượng thì đánh dấu là hoàn thành
             if lesson.video_seconds > 0 and (seconds / lesson.video_seconds) >= 0.9:
                 progress.status = LessonProgress.Status.COMPLETED
                 progress.watched_seconds = lesson.video_seconds
@@ -418,19 +412,16 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
             "current_progress": enrollment.progress
         }, status=status.HTTP_200_OK)
 
+    # API bình luận bài học
     @action(methods=['get', 'post'], detail=True, url_path='comments')
     def comments(self, request, pk=None):
         lesson = self.get_object()
-
         if request.method == 'GET':
             comments = lesson.comments.select_related('user').filter(active=True, parent__isnull=True).order_by(
                 '-created_date')
-
             p = paginators.CommentPaginator()
             page = p.paginate_queryset(comments, request)
-
             total_count = lesson.comments.filter(active=True).count()
-
             if page is not None:
                 serializer = serializers.CommentSerializer(page, many=True)
                 return Response({
@@ -452,13 +443,12 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
             serializer = serializers.CommentSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             comment = serializer.save(user=request.user, lesson=lesson)
-
             return Response(serializers.CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
 
+    # API thích/bỏ thích bài học
     @action(methods=['post'], url_path='like', detail=True)
     def like(self, request, pk):
         lesson = self.get_object()
-
         li, created = Like.objects.get_or_create(lesson=lesson, user=request.user)
         if not created:
             li.active = not li.active
@@ -470,11 +460,11 @@ class LessonViewSet(viewsets.GenericViewSet, generics.RetrieveAPIView, generics.
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# API quản lý Tag
 class TagViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                  mixins.DestroyModelMixin):
     queryset = Tag.objects.all()
     serializer_class = serializers.TagSerializer
-
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_permissions(self):
@@ -483,6 +473,7 @@ class TagViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
         return [perms.IsAdmin()]
 
 
+# API quản lý Thanh toán
 class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     http_method_names = ['get', 'post', 'head', 'options']
     queryset = Payment.objects.all().order_by('-created_date')
@@ -510,7 +501,6 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
         user_role = getattr(user, 'role', None)
         if user_role == User.Role.ADMIN:
             return Payment.objects.all().order_by('-created_date')
-
         if user_role == User.Role.INSTRUCTOR:
             return Payment.objects.filter(enrollment__course__instructor=user).order_by('-created_date')
 
@@ -518,7 +508,6 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-
         search_backend = filters.SearchFilter()
         searched_queryset = search_backend.filter_queryset(request, queryset, self)
 
@@ -530,7 +519,6 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
         total_pending_count = pending_qs.count()
 
         final_queryset = self.filter_queryset(searched_queryset)
-
         page = self.paginate_queryset(final_queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -551,10 +539,10 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
             'total_pending_count': total_pending_count
         }, status=status.HTTP_200_OK)
 
+    # Khởi tạo quá trình thanh toán qua cổng thứ 3
     @action(methods=['post'], detail=True, url_path='process')
     def process(self, request, pk=None):
         payment = self.get_object()
-
         if payment.is_successful:
             return Response({"detail": "Giao dịch này đã được xác nhận thanh toán trước đó."},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -567,25 +555,23 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
         payment.save(update_fields=['payment_method'])
 
         try:
+            # Tạo URL thanh toán thông qua PaymentFactory
             gateway = PaymentFactory.get_payment_gateway(payment.payment_method)
             payment_info = gateway.create_payment(
                 enrollment=payment.enrollment,
                 amount=float(payment.amount)
             )
-
             if payment_info.get('transaction_id'):
                 payment.transaction_id = payment_info['transaction_id']
                 payment.save(update_fields=['transaction_id'])
-
             return Response(payment_info, status=status.HTTP_200_OK)
-
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # Xác nhận thu tiền mặt (Dành cho Giảng viên/Admin)
     @action(methods=['post'], detail=True, url_path='confirm-cash')
     def confirm_cash(self, request, pk=None):
         payment = self.get_object()
-
         if payment.is_successful:
             return Response({"detail": "Giao dịch này đã được xác nhận thanh toán trước đó."},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -601,22 +587,25 @@ class PaymentViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
         }, status=status.HTTP_200_OK)
 
 
+# API Lấy thống kê khóa học (Dành cho Giảng viên)
 class StatsViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action == 'list':
             return [perms.IsInstructor()]
-
         return [permissions.AllowAny()]
 
     def list(self, request):
         user = request.user
         payments = Payment.objects.filter(is_successful=True, enrollment__course__instructor=user)
 
+        # Thống kê theo khóa học
+        # Sử dụng .annotate() kết hợp Count, Sum... để GROUP BY và tính toán tổng số học viên/doanh thu trực tiếp dưới DB (tối ưu hiệu năng hơn query bằng vòng lặp Python)
         stat_course = payments.values('enrollment__course__subject').annotate(
             total_students=Count('enrollment__student', distinct=True),
             total_revenue=Sum('amount')
         ).order_by('-total_revenue')
 
+        # Hàm trợ giúp nhóm dữ liệu theo thời gian
         def get_time_stats(trunc_class):
             data = payments.annotate(period=trunc_class('created_date')).values('period').annotate(
                 total_students=Count('enrollment__student', distinct=True),

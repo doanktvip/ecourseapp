@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
 import theme from '../../styles/theme';
 
+// Màn hình quản lý danh mục khóa học (dành cho Admin)
 const CategoryManage = ({ navigation }) => {
     const [categoryName, setCategoryName] = useState('');
     const [submitting, setSubmitting] = useState(false);

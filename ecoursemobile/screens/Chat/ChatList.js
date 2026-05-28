@@ -12,6 +12,7 @@ import MyStyles from './Styles';
 import moment from 'moment';
 import theme from '../../styles/theme';
 
+// Màn hình danh sách cuộc trò chuyện và danh bạ liên hệ
 const ChatListMain = ({ navigation }) => {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState('chats');

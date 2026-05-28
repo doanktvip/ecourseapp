@@ -6,6 +6,7 @@ import Apis, { authApis, endpoints } from '../../configs/Apis';
 import Styles from './Styles';
 import theme from '../../styles/theme';
 
+// Màn hình quản lý các thẻ (Tags) cho khóa học (dành cho Admin)
 const TagManage = ({ navigation }) => {
     const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
