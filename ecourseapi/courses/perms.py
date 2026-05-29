@@ -118,6 +118,11 @@ class CanReviewCourse(IsAuthenticatedUser):
     message = "Bạn không đủ điều kiện để đánh giá khóa học này."
 
     def has_object_permission(self, request, view, obj):
+        # Kiểm tra xem người dùng đã đánh giá khóa học này chưa
+        if CourseReview.objects.filter(user=request.user, course=obj).exists():
+            self.message = "Bạn đã đánh giá khóa học này rồi."
+            return False
+
         # Khởi tạo đối tượng CourseReview tạm thời để chạy hàm clean()
         temp_review = CourseReview(user=request.user, course=obj)
         try:
