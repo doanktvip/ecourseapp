@@ -1,6 +1,6 @@
 from rest_framework import permissions
-from courses.models import User, Enrollment, Payment
-
+from courses.models import User, Enrollment, Payment,CourseReview
+from django.core.exceptions import ValidationError
 
 # Phân quyền cơ bản: User đã đăng nhập
 class IsAuthenticatedUser(permissions.BasePermission):
@@ -111,3 +111,21 @@ class IsPaymentCourseInstructor(IsAuthenticatedUser):
         if request.user.role == User.Role.ADMIN:
             return True
         return request.user == obj.enrollment.course.instructor
+
+
+# Phân quyền: Được phép đánh giá khóa học (phải đăng ký, thanh toán thành công và hoàn thành >= 20% tiến độ)
+class CanReviewCourse(IsAuthenticatedUser):
+    message = "Bạn không đủ điều kiện để đánh giá khóa học này."
+
+    def has_object_permission(self, request, view, obj):
+        # Khởi tạo đối tượng CourseReview tạm thời để chạy hàm clean()
+        temp_review = CourseReview(user=request.user, course=obj)
+        try:
+            temp_review.clean()
+            return True
+        except ValidationError as e:
+            # Gán thông điệp lỗi chi tiết từ clean() vào self.message để trả về 403 cụ thể
+            if e.messages:
+                self.message = e.messages[0]
+            return False
+
