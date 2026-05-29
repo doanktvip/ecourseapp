@@ -11,10 +11,6 @@ from django.db.models.aggregates import Sum, Avg
 
 
 class User(AbstractUser):
-    """
-    Model User mở rộng từ AbstractUser của Django để lưu trữ thông tin người dùng.
-    Mỗi User có một vai trò (role) cụ thể trong hệ thống.
-    """
     class Role(models.TextChoices):
         ADMIN = 'ADMIN', 'Quản trị viên'
         INSTRUCTOR = 'INSTRUCTOR', 'Giảng viên'
@@ -35,10 +31,6 @@ class User(AbstractUser):
 
 
 class BaseModel(models.Model):
-    """
-    Model cơ sở chứa các trường chung cho nhiều model khác (active, created_date, updated_date).
-    Được thiết kế dưới dạng abstract class để không tạo bảng riêng trong database.
-    """
     active = models.BooleanField(default=True) # Trạng thái kích hoạt (soft delete)
     created_date = models.DateTimeField(auto_now_add=True) # Thời gian tạo (tự động gán)
     updated_date = models.DateTimeField(auto_now=True) # Thời gian cập nhật (tự động cập nhật mỗi khi save)
@@ -48,10 +40,6 @@ class BaseModel(models.Model):
 
 
 class InstructorApplication(BaseModel):
-    """
-    Đơn đăng ký làm giảng viên của User.
-    Admin sẽ dựa vào đơn này (và file CV) để xét duyệt.
-    """
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Đang chờ duyệt'
         APPROVED = 'APPROVED', 'Đã duyệt'
@@ -66,9 +54,6 @@ class InstructorApplication(BaseModel):
 
 
 class Category(BaseModel):
-    """
-    Danh mục khóa học (vd: Lập trình, Thiết kế, Marketing...).
-    """
     name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -76,10 +61,6 @@ class Category(BaseModel):
 
 
 class Course(BaseModel):
-    """
-    Thông tin về khóa học, bao gồm các thống kê được tính toán tự động 
-    để tối ưu hiệu suất truy vấn thay vì tính toán (count, sum) realtime.
-    """
     subject = models.CharField(max_length=255) # Tên khóa học
     description = models.TextField(null=True, blank=True) # Mô tả chi tiết
     image = CloudinaryField('image', null=True, blank=True) # Ảnh bìa
@@ -123,9 +104,6 @@ class Course(BaseModel):
 
 
 class Tag(BaseModel):
-    """
-    Từ khóa để phân loại nội dung bài học.
-    """
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
@@ -133,9 +111,6 @@ class Tag(BaseModel):
 
 
 class Lesson(BaseModel):
-    """
-    Bài học thuộc về một khóa học. Mỗi bài học có nội dung văn bản và/hoặc video.
-    """
     subject = models.CharField(max_length=255)
     content = RichTextField() # Nội dung định dạng HTML (CKEditor)
     image = CloudinaryField('image', null=True, blank=True)
@@ -153,15 +128,6 @@ class Lesson(BaseModel):
         ordering = ['order'] # Mặc định sắp xếp theo thứ tự (order)
 
     def save(self, *args, **kwargs):
-        # Xử lý dọn dẹp các đường dẫn (URL) cho video/image không hợp lệ trước khi lưu
-        if self.video and isinstance(self.video, str) and not self.video.startswith(
-                'http') and 'upload/' not in self.video:
-            self.video = None
-
-        if self.image and isinstance(self.image, str) and not self.image.startswith(
-                'http') and 'upload/' not in self.image:
-            self.image = None
-
         # Tự động gán thứ tự bài học tiếp theo (max order + 1) nếu là tạo mới
         if not self.pk:
             result = Lesson.objects.filter(course=self.course).aggregate(order_max=Max('order'))
@@ -196,10 +162,6 @@ class Lesson(BaseModel):
 
 
 class Enrollment(BaseModel):
-    """
-    Bảng ghi lại việc học viên đăng ký tham gia một khóa học.
-    Đồng thời lưu tiến độ hoàn thành khóa học của học viên.
-    """
     student = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='enrollments')
     course = models.ForeignKey(Course, on_delete=models.RESTRICT, related_name='enrollments')
     progress = models.FloatField(default=0.0, help_text="Tiến độ học tập (%)")
@@ -219,9 +181,6 @@ class Enrollment(BaseModel):
 
 
 class LessonProgress(BaseModel):
-    """
-    Bảng theo dõi tiến độ của học viên cho TỪNG BÀI HỌC cụ thể.
-    """
     class Status(models.TextChoices):
         IN_PROGRESS = 'IN_PROGRESS', 'Đang học'
         COMPLETED = 'COMPLETED', 'Đã hoàn thành'
@@ -246,9 +205,6 @@ class LessonProgress(BaseModel):
 
 
 class Payment(BaseModel):
-    """
-    Lưu trữ lịch sử thanh toán cho khóa học.
-    """
     class Method(models.TextChoices):
         CASH = 'CASH', 'Tiền mặt trực tiếp'
         PAYPAL = 'PAYPAL', 'PayPal'
@@ -270,9 +226,6 @@ class Payment(BaseModel):
 
 
 class Interaction(BaseModel):
-    """
-    Model abstract chung cho các tương tác của user (bình luận, like, đánh giá).
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
@@ -280,9 +233,6 @@ class Interaction(BaseModel):
 
 
 class Comment(Interaction):
-    """
-    Bình luận của user về một bài học cụ thể.
-    """
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='comments')
     content = models.CharField(max_length=255)
     # Hỗ trợ reply bình luận bằng cách tự liên kết với chính Comment (Self-referential)
@@ -290,9 +240,6 @@ class Comment(Interaction):
 
 
 class Like(Interaction):
-    """
-    Chức năng thích (Like) bài học.
-    """
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='likes')
 
     class Meta:
@@ -300,9 +247,6 @@ class Like(Interaction):
 
 
 class CourseReview(Interaction):
-    """
-    Đánh giá khóa học (từ 1-5 sao) kèm nhận xét.
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews')
     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])

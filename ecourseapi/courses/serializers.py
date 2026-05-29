@@ -30,12 +30,18 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         return data
 
 
-# Serializer chung cho các Item có hình ảnh
 class ItemSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.image:
-            data['image'] = instance.image.url
+            try:
+                data['image'] = instance.image.url
+            except AttributeError:
+                val = str(instance.image)
+                if val.startswith('http') or 'upload/' in val:
+                    data['image'] = val
+                else:
+                    data['image'] = None
         return data
 
 
@@ -194,12 +200,12 @@ class LessonSerializer(serializers.ModelSerializer):
 
 # Serializer chi tiết Thanh toán
 class PaymentSerializer(serializers.ModelSerializer):
-    course_subject = serializers.SerializerMethodField()
-    student_name = serializers.SerializerMethodField()
-    student_email = serializers.SerializerMethodField()
+    course_subject = serializers.CharField(source='enrollment.course.subject', read_only=True, default=None)
+    student_name = serializers.CharField(source='enrollment.student.get_full_name', read_only=True, default=None)
+    student_email = serializers.EmailField(source='enrollment.student.email', read_only=True, default=None)
+    course_fee = serializers.DecimalField(source='enrollment.course.fee', max_digits=10, decimal_places=2, read_only=True, default=None)
+    instructor_name = serializers.CharField(source='enrollment.course.instructor.get_full_name', read_only=True, default=None)
     course_image = serializers.SerializerMethodField()
-    course_fee = serializers.SerializerMethodField()
-    instructor_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Payment
@@ -207,36 +213,12 @@ class PaymentSerializer(serializers.ModelSerializer):
                   'course_subject', 'student_name', 'student_email', 'course_image', 'course_fee', 'instructor_name']
         read_only_fields = ['id', 'amount', 'is_successful', 'transaction_id', 'created_date']
 
-    def get_course_subject(self, obj):
-        return obj.enrollment.course.subject if getattr(obj, 'enrollment', None) else None
-
-    def get_student_name(self, obj):
-        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'student', None):
-            return obj.enrollment.student.get_full_name()
-        return None
-
-    def get_student_email(self, obj):
-        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'student', None):
-            return obj.enrollment.student.email
-        return None
-
     def get_course_image(self, obj):
         if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'course', None) and obj.enrollment.course.image:
             try:
                 return obj.enrollment.course.image.url
             except AttributeError:
                 return f"https://res.cloudinary.com/db4bjqp4f/{obj.enrollment.course.image}"
-        return None
-
-    def get_course_fee(self, obj):
-        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'course', None):
-            return obj.enrollment.course.fee
-        return None
-
-    def get_instructor_name(self, obj):
-        if getattr(obj, 'enrollment', None) and getattr(obj.enrollment, 'course', None) and getattr(
-                obj.enrollment.course, 'instructor', None):
-            return obj.enrollment.course.instructor.get_full_name()
         return None
 
 
