@@ -303,8 +303,7 @@ class CourseReview(Interaction):
     """
     Đánh giá khóa học (từ 1-5 sao) kèm nhận xét.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'STUDENT'},
-                             related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='reviews')
     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField(blank=True, null=True)
@@ -315,6 +314,10 @@ class CourseReview(Interaction):
     def clean(self):
         # Custom logic để kiểm tra (validate) dữ liệu trước khi save
         MIN_PROGRESS = 20.0
+
+        # Giảng viên chính của khóa học không thể tự đánh giá
+        if self.course.instructor == self.user:
+            raise ValidationError("Bạn không thể đánh giá khóa học do chính mình giảng dạy.")
 
         # Kiểm tra user đã mua khóa học hay chưa
         enrollment = self.user.enrollments.filter(course=self.course, payment__is_successful=True).first()

@@ -40,37 +40,11 @@ const CourseReviews = ({ route, navigation }) => {
             return;
         }
 
-        if (user.role !== 'STUDENT') {
-            Alert.alert("Quyền truy cập bị từ chối", "Hệ thống chỉ cho phép tài khoản thuộc vai trò Sinh viên viết đánh giá khóa học.");
-            return;
-        }
-
         setSubmittingReview(true);
         try {
             const token = await AsyncStorage.getItem("token");
             if (!token) {
                 Alert.alert("Lỗi xác thực", "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
-                setSubmittingReview(false);
-                return;
-            }
-
-            let enrollRes = await authApis(token).get(endpoints['my-courses']);
-            const myCoursesList = enrollRes.data || [];
-
-            const currentCourseData = myCoursesList.find(c => c.id === courseId);
-
-            if (!currentCourseData || !currentCourseData.enrollment) {
-                Alert.alert("Chặn quyền đánh giá", "Bạn chưa đăng ký khóa học này hoặc trạng thái giao dịch thanh toán chưa thành công.");
-                setSubmittingReview(false);
-                return;
-            }
-
-            const currentProgress = currentCourseData.enrollment.progress || 0;
-            if (currentProgress < 20) {
-                Alert.alert(
-                    "Tiến độ không đủ điều kiện",
-                    `Tiến độ học hiện tại của bạn mới đạt ${currentProgress}%. Bạn cần hoàn thành tối thiểu 20% thời lượng khóa học để gửi đánh giá.`
-                );
                 setSubmittingReview(false);
                 return;
             }
@@ -94,10 +68,19 @@ const CourseReviews = ({ route, navigation }) => {
             }
         } catch (ex) {
             console.error("Lỗi xử lý gửi đánh giá:", ex);
-            if (ex.response && ex.response.data && ex.response.data.non_field_errors) {
-                Alert.alert("Thất bại", ex.response.data.non_field_errors[0]);
+            if (ex.response && ex.response.data) {
+                if (ex.response.data.detail) {
+                    Alert.alert("Thất bại", ex.response.data.detail);
+                } else if (ex.response.data.non_field_errors) {
+                    Alert.alert("Thất bại", ex.response.data.non_field_errors[0]);
+                } else if (typeof ex.response.data === 'object') {
+                    const errors = Object.values(ex.response.data).flat();
+                    Alert.alert("Thất bại", errors[0]);
+                } else {
+                    Alert.alert("Thất bại", "Không thể gửi đánh giá lúc này.");
+                }
             } else {
-                Alert.alert("Lỗi", "Không thể gửi đánh giá lúc này. Mỗi học viên chỉ được đánh giá một khóa học một lần.");
+                Alert.alert("Lỗi", "Không thể kết nối đến máy chủ.");
             }
         } finally {
             setSubmittingReview(false);
