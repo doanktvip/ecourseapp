@@ -53,7 +53,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Retri
         if self.action == 'enrolls':
             return [perms.IsAuthenticatedUser()]
         if self.action == 'reviews' and self.request.method == 'POST':
-            return [perms.IsEnrolled()]
+            return [perms.CanReviewCourse()]
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):
